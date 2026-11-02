@@ -25,6 +25,8 @@ export function ResearchWorldStory() {
   const endRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<Controls | null>(null);
   const savedIndex = useRef(0);
+  // Capture before pin teardown; rebuilding the timeline must not overwrite this.
+  const pendingResume = useRef<number | null>(null);
   const [active, setActive] = useState(0);
   const [mode, setMode] = useState<"scroll" | "slides">("scroll");
   const [ready, setReady] = useState(false);
@@ -40,10 +42,14 @@ export function ResearchWorldStory() {
     let disposeAnimation = () => {};
     let refreshFrame = 0;
     const render = createSceneRenderer(root);
-    const resumeIndex = savedIndex.current;
+    const resumeIndex = pendingResume.current ?? savedIndex.current;
+    const restoreViewport = pendingResume.current !== null;
+    let initializing = true;
     const cursor = { step: resumeIndex };
     const update = () => {
+      if (disposed) return;
       const index = render(cursor.step, chapters.length);
+      if (initializing) return;
       if (index !== savedIndex.current) {
         savedIndex.current = index;
         setActive(index);
@@ -110,10 +116,20 @@ export function ResearchWorldStory() {
             }
           };
           controlsRef.current = { go, cancel };
-          // Restore the settled chapter when explicitly switching interaction modes.
-          if (scroll && resumeIndex > 0 && root.getBoundingClientRect().top < window.innerHeight && root.getBoundingClientRect().bottom > 0) {
-            window.scrollTo({ top: scroll.labelToScroll(chapters[resumeIndex].id), behavior: "instant" });
+          // ScrollTrigger creation may render its initial position. Restore only after
+          // pin spacing is established, and keep the stage anchored when pinning is removed.
+          if (restoreViewport) {
+            const y = scroll
+              ? scroll.labelToScroll(chapters[resumeIndex].id)
+              : root.getBoundingClientRect().top + window.scrollY - top;
+            window.scrollTo({ top: Math.max(0, y), behavior: "instant" });
+            scroll?.update();
+            scroll?.getTween()?.progress(1);
           }
+          if (manual || restoreViewport) timeline.time(resumeIndex, false);
+          initializing = false;
+          update();
+          pendingResume.current = null;
         }, root);
         const interruptKey = (event: KeyboardEvent) => {
           if (["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " "].includes(event.key)) cancel();
@@ -135,13 +151,28 @@ export function ResearchWorldStory() {
         setReady(true);
         setError(false);
       } catch {
-        if (!disposed) { setError(true); setReady(false); }
+        if (!disposed) { initializing = false; update(); setError(true); setReady(false); }
       }
     })();
-    return () => { disposed = true; cancelAnimationFrame(refreshFrame); disposeAnimation(); };
+    return () => {
+      disposed = true;
+      // Media-preference changes also rebuild the pin. Keep the visible chapter.
+      const bounds = stage.getBoundingClientRect();
+      if (pendingResume.current === null && bounds.top < window.innerHeight && bounds.bottom > 0) {
+        pendingResume.current = savedIndex.current;
+      }
+      cancelAnimationFrame(refreshFrame);
+      disposeAnimation();
+    };
   }, [manual, reduce]);
 
   function go(index: number) { controlsRef.current?.go(index); }
+  function switchMode() {
+    controlsRef.current?.cancel();
+    pendingResume.current = savedIndex.current;
+    setReady(false);
+    setMode((current) => current === "scroll" ? "slides" : "scroll");
+  }
   function skip() {
     controlsRef.current?.cancel();
     endRef.current?.scrollIntoView({ behavior: "instant", block: "start" });
@@ -150,7 +181,7 @@ export function ResearchWorldStory() {
 
   return (
     <section ref={rootRef} id="research-world" className={`rw-story${manual ? " rw-manual" : ""}${short ? " rw-short" : ""}`} aria-label="Research World 图谱讲解">
-      <div ref={stageRef} className="rw-stage" onKeyDown={(event) => {
+      <div ref={stageRef} className="rw-stage" data-rw-active={active} data-rw-mode={manual ? "slides" : "scroll"} onKeyDown={(event) => {
         if (event.target instanceof HTMLElement && ["INPUT", "SELECT", "TEXTAREA"].includes(event.target.tagName)) return;
         if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
           event.preventDefault(); go(active + (event.key === "ArrowRight" ? 1 : -1));
@@ -167,7 +198,7 @@ export function ResearchWorldStory() {
         <div className="rw-progress-track" aria-hidden="true"><span data-rw-progress="" /></div>
         <nav className="rw-controls" aria-label="研究故事章节">
           <div className="rw-mode">
-            {reduce ? <span>已启用减少动态效果</span> : short ? <span>小高度屏幕 · 点击翻页</span> : <button type="button" onClick={() => setMode(mode === "scroll" ? "slides" : "scroll")} aria-pressed={mode === "slides"}>{manual ? "切换滚动讲解" : "切换点击演示"}</button>}
+            {reduce ? <span>已启用减少动态效果</span> : short ? <span>小高度屏幕 · 点击翻页</span> : <button type="button" onClick={switchMode} disabled={!ready} aria-pressed={mode === "slides"}>{manual ? "切换滚动讲解" : "切换点击演示"}</button>}
           </div>
           <label className="rw-chapter-picker"><span className="rw-sr-only">跳转章节</span><select value={active} onChange={(event) => go(Number(event.target.value))} disabled={!ready}>{chapters.map((chapter, i) => <option key={chapter.id} value={i}>{i + 1} / {chapters.length} · {chapter.title}</option>)}</select></label>
           <div className="rw-buttons"><button type="button" onClick={() => go(active - 1)} disabled={!ready || active === 0} aria-label="上一场景">← 上一步</button><button type="button" className="rw-next" onClick={() => active === chapters.length - 1 ? go(0) : go(active + 1)} disabled={!ready}>{active === chapters.length - 1 ? "重新观看 ↺" : "下一步 →"}</button></div>

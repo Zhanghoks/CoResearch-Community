@@ -9,6 +9,8 @@ export type ResearchNode = {
   kind: NodeKind;
   label?: string;
   domains: string[];
+  /** Ordered appearance in the growing network. */
+  born: number;
 };
 
 export type ResearchEdge = {
@@ -35,7 +37,7 @@ export type GraphWorld = {
 
 export type Pose = {
   cx: number; cy: number; zoom: number; base: number;
-  ring: number; papers: number; lineage: number;
+  growth: number; domains: number; slice: number; ring: number; papers: number; lineage: number;
   core: number; frontier: number; margin: number; boundary: number;
   idea: number; intent: number; explore: number; gap: number;
   transfer: number; candidate: number; markerX: number; markerY: number;

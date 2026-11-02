@@ -1,54 +1,38 @@
 import { nodeAt } from "./mock-world";
 import type { Pose, StoryChapter } from "./types";
-
 const initial: Pose = {
-  cx: 720, cy: 425, zoom: 1, base: 1, ring: 0, papers: 0, lineage: 0,
-  core: 0, frontier: 0, margin: 0, boundary: 0, idea: 0, intent: 0,
-  explore: 0, gap: 0, transfer: 0, candidate: 0,
+  cx: 720, cy: 425, zoom: 1, base: 1, growth: 0, domains: 0, slice: 0, ring: 0, papers: 0, lineage: 0,
+  core: 0, frontier: 0, margin: 0, boundary: 0, idea: 0, intent: 0, explore: 0, gap: 0, transfer: 0, candidate: 0,
   markerX: nodeAt("video").x, markerY: nodeAt("video").y,
 };
 const entries: Array<Omit<StoryChapter, "pose"> & { pose: Partial<Pose> }> = [
-  { id: "graph", tag: "A CONNECTED WORLD", title: "先看到一张图", body: "一个节点，一份研究；一条连线，一种联系。它们一起形成一张庞大而持续生长的知识网络。", takeaway: "先有相互关联的研究，再从中看见领域。", pose: {} },
-  { id: "world", tag: "RESEARCH WORLD", title: "这就是研究世界", body: "自然科学、工程、社会科学与人文并非孤岛。问题、方法与证据跨越领域，构成我们探索的共同基础。", takeaway: "Research World 包含文献空间与想法空间。", pose: { ring: 1 } },
-  { id: "literature", tag: "LITERATURE SPACE", title: "每项工作，都有来处", body: "把镜头靠近：一份工作提出问题，另一份改进方法，后续工作再比较与验证。文献空间记录这些可追溯的联系。", takeaway: "连线可表示引用、改进或比较，不代表所有研究都是单线继承。", pose: { base: .24, papers: 1, lineage: 1, cx: 750, cy: 445, zoom: 1.12 } },
-  { id: "core", tag: "CORE", title: "成熟知识，构成核心", body: "在同一个局部方向里，较成熟的方法与较充分的证据构成研究基础。核心并不意味着这里已经没有新问题。", takeaway: "色块描述局部证据状态，不是把整个学科划为成熟或不成熟。", pose: { cx: 720, cy: 425, zoom: 1, base: .6, lineage: .2, papers: .45, core: 1 } },
-  { id: "frontier", tag: "ACTIVE FRONTIER", title: "沿着工作，来到前沿", body: "已有问题继续催生新方法与新比较。这里的知识仍在快速演进，结论和适用条件需要持续核查。", takeaway: "从研究历史走向最新进展，而不是仅按节点位置判断前沿。", pose: { core: .32, frontier: 1 } },
-  { id: "margin", tag: "MARGIN & BOUNDARY", title: "边界附近，还有未知", body: "一些限制尚未被充分解决。虚线表示这个方向当前可确认的证据边界；它会随新的工作发生变化。", takeaway: "没检索到，不等于没人研究。边界判断也需要证据。", pose: { core: .22, frontier: .35, margin: 1, boundary: 1 } },
-  { id: "idea", tag: "IDEA SPACE", title: "你的想法，也在图谱里", body: "金色标记表示当前聚焦的位置，蓝色虚线表示下一步探索倾向。你的已知、未知与研究构想，会随着文献反馈变化。", takeaway: "Idea State 是研究状态；图上的点只是它的位置投影。", pose: { core: 0, frontier: 0, margin: 0, boundary: 0, papers: 0, lineage: 0, base: .7, idea: 1, intent: 1 } },
-  { id: "explore-domain", tag: "EXPLORE · 选择方向", title: "先找真正感兴趣的分支", body: "演示：从「视频生成」出发，选择「生成一致性」，再聚焦「主体身份」。未选择的研究仍在原处，不会被删除。", takeaway: "Explore 只定位兴趣，不提前生成方法、基线或研究 Gap。", pose: { cx: 560, cy: 395, zoom: 1.2, base: .16, explore: .5, intent: 0, markerX: nodeAt("subject").x, markerY: nodeAt("subject").y } },
-  { id: "explore-focus", tag: "EXPLORE · 继续细分", title: "逐步聚焦到一个具体点", body: "继续选择「跨镜头」，最终关注「动作变化时的身份保持」。用户明确认领这个方向后，才进入更深入的研究。", takeaway: "定位一个值得深入的问题，就是 Explore 的终点。", pose: { cx: 650, cy: 380, zoom: 1.18, explore: 1, markerX: nodeAt("motion").x, markerY: nodeAt("motion").y } },
-  { id: "dive", tag: "DEEP DIVE", title: "理解这个点的前后脉络", body: "沿相关论文向前追溯、向后比较：问题如何提出，方法怎样演进，实验支持了什么，又留下了哪些限制？", takeaway: "展开已有工作的上下文，逐步触及局部研究边界。", pose: { cx: 860, cy: 420, zoom: 1.13, explore: .18, lineage: 1, papers: 1, boundary: 1, margin: .24, markerX: nodeAt("paper-frontier").x, markerY: nodeAt("paper-frontier").y } },
-  { id: "gap", tag: "DEEP RESEARCH · GAP FINDER", title: "把限制变成可核查的问题", body: "Gap Finder 比较最接近的已有方法，寻找具体不足，同时检查可能推翻判断的反例。图中只展示一个待核实的缺口。", takeaway: "候选 Gap 不是已证实的研究空白。", pose: { cx: 930, cy: 425, zoom: 1.1, gap: 1, markerX: nodeAt("gap").x, markerY: nodeAt("gap").y } },
-  { id: "transfer", tag: "DEEP RESEARCH · INNOVATOR", title: "去别处，寻找可迁移的机制", body: "Innovator 从其他研究群落寻找类似挑战与解决机制。将来源方法与目标问题连接起来，再检查迁移前提和失败风险。", takeaway: "跨领域的连线代表候选迁移，不是已经验证的有效方法。", pose: { cx: 870, cy: 450, zoom: 1.02, transfer: 1, lineage: .4, papers: .45 } },
-  { id: "candidate", tag: "IDEA ITERATION", title: "在前人基础上，迈出下一步", body: "经综合与审查，形成边界之外的候选方法。旧轨迹仍被保留；只有经过近邻工作核查与实验，才能判断是否真正推进了边界。", takeaway: "提出方案不等于取得突破。下一轮研究仍由用户决定。", pose: { cx: 820, cy: 425, zoom: 1, candidate: 1, base: .45, markerX: nodeAt("candidate").x, markerY: nodeAt("candidate").y } },
+  { id: "blank", tag: "01 / 从前人的工作开始", title: "研究，从来不是凭空开始", body: "先留下一张空白的地图。接下来，看一项工作如何成为另一项工作的起点。", takeaway: "一个节点代表一项工作，一条连接代表研究之间的联系。", pose: {} },
+  { id: "seed", tag: "01 / 一项已有研究", title: "先有一项工作", body: "它提出问题、尝试方法，也留下可以继续追问的地方。", takeaway: "每个新的想法，都有可以回溯的来处。", pose: { growth: .13, zoom: 1.65 } },
+  { id: "growth", tag: "01 / 研究不断延伸", title: "后来者，接着向前走", body: "改进、比较、验证，再分出新的方向。相互连接的工作，逐渐展开成一张知识图谱。", takeaway: "这是关系示意，不是真实论文的引用结论。", pose: { growth: 1, zoom: 1 } },
+  { id: "core", tag: "02 / 由内向外的层次", title: "最里面，是已有的基础", body: "较成熟的方法与较充分的证据形成核心。它托住后续探索，却不意味着没有新问题。", takeaway: "环层描述局部研究的成熟程度，不是论文的新旧或价值排名。", pose: { ring: 1, core: 1, base: .7 } },
+  { id: "frontier", tag: "02 / 由内向外的层次", title: "往外，是活跃的研究前沿", body: "新的方法不断出现，结论还在比较和检验之中。", takeaway: "核心、前沿和边缘属于同一张连续的地图。", pose: { frontier: 1 } },
+  { id: "margin", tag: "02 / 由内向外的层次", title: "再往外，仍有待解的问题", body: "接近证据边界，工作更稀疏，结论更不确定。边界之外，不等于无人研究。", takeaway: "虚线是当前证据的边界，不是已经证实的空白。", pose: { margin: 1, boundary: 0 } },
+  { id: "domains", tag: "03 / 不同领域，同一世界", title: "不同 domain，展开不同方向", body: "视觉、生命、语言、数学……沿不同方向展开，各自都有核心与前沿，也会彼此连接。", takeaway: "方向区分领域，距离描述成熟程度；领域之间并非互斥。", pose: { domains: 1, base: .55 } },
+  { id: "slice", tag: "04 / 进入一个局部切片", title: "走进「视觉与生成」这一片", body: "沿着高亮方向靠近。世界没有换掉，只是镜头进入其中一块切片。", takeaway: "从左侧的核心出发，向右走向前沿与未知。", pose: { slice: 1, domains: 0, cx: 1050, cy: 438, zoom: 1.95, base: .12, lineage: 1, papers: 1, boundary: 1 } },
+  { id: "lineage", tag: "04 / 沿一条研究线路", title: "从基础工作，走到最新证据", body: "A 提供基础，B 改进方法，C 比较证据，D 暴露适用条件。先理解已有工作，再讨论下一步。", takeaway: "高亮的是一条示意脉络，不是所有研究的单线继承。", pose: { cx: 1060, cy: 455, zoom: 1.85 } },
+  { id: "idea", tag: "05 / 你的 IDEA", title: "你的想法，落在这条路上", body: "金色标记是当前研究位置。它不是凭空漂浮，而是从已有知识中选择一个起点。", takeaway: "Idea State 是研究状态；地图只展示它的位置。", pose: { idea: 1, intent: 1, lineage: .3, papers: .65 } },
+  { id: "explore-domain", tag: "05 / EXPLORE", title: "先选方向，再聚焦问题", body: "从视频生成，进入生成一致性，再找到主体身份。没有选择的方向仍留在地图中。", takeaway: "Explore 定位兴趣，不提前宣称发现研究 Gap。", pose: { intent: 0, explore: .5, markerX: nodeAt("subject").x, markerY: nodeAt("subject").y } },
+  { id: "explore-focus", tag: "05 / EXPLORE", title: "找到值得深入的具体点", body: "继续聚焦跨镜头，以及动作变化时的身份保持。由你确认，是否沿这个方向深入。", takeaway: "兴趣逐步收敛，不是一步跳到一个答案。", pose: { explore: 1, markerX: nodeAt("motion").x, markerY: nodeAt("motion").y } },
+  { id: "dive", tag: "06 / DEEP DIVE", title: "把问题放回文献脉络", body: "回看基础，比较邻近方法，检查实验与限制。理解这条线路为什么走到了这里。", takeaway: "先建立证据，再判断哪里值得推进。", pose: { explore: .15, lineage: 1, papers: 1, markerX: nodeAt("paper-frontier").x, markerY: nodeAt("paper-frontier").y } },
+  { id: "gap", tag: "06 / GAP FINDER", title: "让限制，成为可核查的问题", body: "比较最接近的工作，标出候选缺口，同时寻找可能推翻判断的反例。", takeaway: "候选 Gap 仍待验证，不等于已经发现研究空白。", pose: { gap: 1, markerX: nodeAt("gap").x, markerY: nodeAt("gap").y } },
+  { id: "transfer", tag: "06 / INNOVATOR", title: "从另一领域，借来一种机制", body: "保留目标问题，连接其他领域的机制。先检查迁移前提，再提出方案。", takeaway: "这条跨域连接是迁移候选，并非有效性证明。", pose: { transfer: 1, cx: 1060, cy: 480, zoom: 1.65, lineage: .5 } },
+  { id: "candidate", tag: "07 / 继续向前", title: "在前人的基础上，迈出下一步", body: "一个候选方法延伸出来。原来的工作和探索轨迹仍在，下一步是审查与实验。", takeaway: "提出方案不等于突破；是否推进边界，仍需证据。", pose: { candidate: 1, cx: 1090, cy: 465, zoom: 1.65, markerX: nodeAt("candidate").x, markerY: nodeAt("candidate").y } },
 ];
 let previous = initial;
-export const chapters: readonly StoryChapter[] = entries.map((entry) => {
-  previous = { ...previous, ...entry.pose };
-  return { ...entry, pose: previous };
-});
-
-/** Pure evaluation: the same progress always yields the same scene, in either direction. */
+export const chapters: readonly StoryChapter[] = entries.map(entry => { previous = { ...previous, ...entry.pose }; return { ...entry, pose: previous }; });
 export function sampleStory(progress: number): { pose: Pose; active: number } {
   const p = Number.isFinite(progress) ? Math.min(chapters.length - 1, Math.max(0, progress)) : 0;
   const from = Math.floor(p), to = Math.min(from + 1, chapters.length - 1);
   const t = p - from, eased = t * t * (3 - 2 * t);
   const pose = { ...chapters[from].pose };
-  for (const key of Object.keys(pose) as Array<keyof Pose>) {
-    pose[key] += (chapters[to].pose[key] - pose[key]) * eased;
-  }
-  // Follow the actual, explicitly defined Explore route rather than cutting across it.
-  const path = from === 6 ? ["video", "consistency", "subject"] : from === 7 ? ["subject", "multi-shot", "motion"] : null;
-  if (path) {
-    const segment = Math.min(1, Math.floor(eased * 2));
-    const local = Math.min(1, eased * 2 - segment);
-    const a = nodeAt(path[segment]), b = nodeAt(path[segment + 1]);
-    pose.markerX = a.x + (b.x - a.x) * local;
-    pose.markerY = a.y + (b.y - a.y) * local;
-  }
+  for (const key of Object.keys(pose) as Array<keyof Pose>) pose[key] += (chapters[to].pose[key] - pose[key]) * eased;
+  const path = chapters[from].id === "idea" ? ["video", "consistency", "subject"] : chapters[from].id === "explore-domain" ? ["subject", "multi-shot", "motion"] : null;
+  if (path) { const segment = Math.min(1, Math.floor(eased * 2)), local = Math.min(1, eased * 2 - segment), a = nodeAt(path[segment]), b = nodeAt(path[segment + 1]); pose.markerX = a.x + (b.x - a.x) * local; pose.markerY = a.y + (b.y - a.y) * local; }
   return { pose, active: Math.round(p) };
 }
-
-export function cameraTransform(pose: Pose): string {
-  return `translate(${720 - pose.cx * pose.zoom} ${425 - pose.cy * pose.zoom}) scale(${pose.zoom})`;
-}
+export function cameraTransform(pose: Pose): string { return `translate(${720 - pose.cx * pose.zoom} ${425 - pose.cy * pose.zoom}) scale(${pose.zoom})`; }

@@ -63,3 +63,78 @@
   .rw-transcript details > div { grid-template-columns: 1fr; }
 }
 @media(prefers-reduced-motion: reduce) { .rw-story { scroll-behavior: auto; } }
+
+/* A stable presentation stage: the graph gets the space, the caption gives direction. */
+.rw-story { background: #faf9f3; color: #263e50; }
+.rw-stage { max-width: none; padding: 16px clamp(16px, 2.5vw, 44px) 10px; background: #faf9f3; border-color: #dfE4df; }
+.rw-heading { min-height: 48px; }
+.rw-kicker { color: #647a82; font-size: 9px; }
+.rw-heading h2 { font-size: clamp(20px, 1.8vw, 26px); }
+.rw-heading h2 span { color: #637784; }
+.rw-content { grid-template-columns: minmax(0, 1fr) minmax(220px, 265px); gap: clamp(16px, 2.6vw, 38px); }
+.rw-canvas { min-height: 0; }
+.rw-narration { border-left: 2px solid #d9e1df; padding-left: 22px; }
+.rw-caption-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+.rw-caption-meta .rw-eyebrow { margin: 0; font-size: 10px; line-height: 1.5; }
+.rw-step-count { font-size: 11px; font-variant-numeric: tabular-nums; color: #647782; white-space: nowrap; }
+.rw-narration h3 { font-size: clamp(23px, 2vw, 30px); line-height: 1.35; margin-bottom: 14px; color: #223c4e; }
+.rw-body { color: #435b69; font-size: 14px; line-height: 1.8; margin-bottom: 16px; }
+.rw-takeaway { color: #657680; font-size: 11px; line-height: 1.7; padding-top: 12px; }
+.rw-key { margin-top: 16px; color: #526977; gap: 10px; }
+.rw-key i { width: 8px; height: 8px; }
+.rw-key-paper { background: #365b75; }
+.rw-key-idea { background: #c39132; }
+.rw-progress-track { background: #dfe7e7; }
+.rw-progress-track span { background: #385e77; }
+.rw-controls { padding-top: 10px; min-height: 44px; }
+.rw-mode, .rw-chapter-picker select { color: #445f70; }
+.rw-mode button, .rw-skip { min-height: 44px; }
+.rw-chapter-picker { min-width: 0; }
+.rw-chapter-picker select { max-width: min(30vw, 310px); min-height: 44px; }
+.rw-buttons button { min-height: 44px; }
+.rw-demo-note { color: #657983; margin-top: 5px; }
+.rw-error { position: absolute; top: 70px; right: 24px; max-width: 260px; padding: 10px; background: #fff4dc; color: #72551f; }
+.rw-short .rw-stage { height: calc(100svh - var(--rw-top)); min-height: 370px; }
+@media (max-width: 760px) {
+  .rw-stage { padding: 10px 16px 8px; }
+  .rw-heading { min-height: 40px; }
+  .rw-kicker { font-size: 8px; letter-spacing: .1em; }
+  .rw-heading h2 { font-size: 19px; }
+  .rw-skip { font-size: 11px; }
+  .rw-content { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: 8px; }
+  .rw-narration { border-left: 0; padding: 0 0 12px; }
+  .rw-caption-meta { margin-bottom: 5px; }
+  .rw-caption-meta .rw-eyebrow { font-size: 9px; }
+  .rw-narration h3 { font-size: 21px; margin-bottom: 6px; }
+  .rw-body { font-size: 13px; line-height: 1.6; margin-bottom: 0; }
+  .rw-takeaway { display: none; } /* The full note remains in the accessible transcript below. */
+  .rw-controls { gap: 4px 8px; padding-top: 6px; }
+  .rw-mode { font-size: 10px; }
+  .rw-chapter-picker select { max-width: 190px; font-size: 10px; padding-inline: 3px; }
+  .rw-buttons { flex-basis: 100%; justify-content: space-between; }
+  .rw-buttons button { padding: 8px 16px; }
+  .rw-demo-note { font-size: 9px; margin-top: 5px; }
+}
+@media (max-height: 560px) and (min-width: 650px) {
+  .rw-stage { padding-top: 6px; padding-bottom: 5px; }
+  .rw-heading { min-height: 30px; }
+  .rw-kicker { display: none; }
+  .rw-content { grid-template-columns: minmax(0, 1fr) minmax(200px, 250px); grid-template-rows: minmax(0, 1fr); gap: 16px; }
+  .rw-narration { padding-left: 14px; padding-bottom: 0; }
+  .rw-narration h3 { font-size: 20px; margin-bottom: 8px; }
+  .rw-body { font-size: 12px; line-height: 1.6; margin: 0; }
+  .rw-takeaway, .rw-key { display: none; }
+  .rw-caption-meta { margin-bottom: 7px; }
+  .rw-controls { flex-wrap: nowrap; padding-top: 4px; }
+  .rw-buttons { flex-basis: auto; }
+  .rw-chapter-picker select { max-width: 180px; }
+}
+.rw-zone-title { font-size: 26px; font-weight: 650; fill: #274b64; paint-order: stroke; stroke: #fffdf7; stroke-width: 7px; }
+.rw-zone-caption { font-size: 17px; fill: #4e6576; paint-order: stroke; stroke: #fffdf7; stroke-width: 5px; }
+.rw-domain-label { font-size: 22px; font-weight: 650; paint-order: stroke; stroke: #fffdf7; stroke-width: 6px; }
+.rw-slice-label { font-size: 17px; font-weight: 650; fill: #3b566a; paint-order: stroke; stroke: #fffdf7; stroke-width: 5px; }
+.rw-detail-label { font-size: 15px; font-weight: 600; fill: #294b63; paint-order: stroke; stroke: #fffdf7; stroke-width: 4px; stroke-linejoin: round; }
+.rw-detail-caption { font-size: 12px; fill: #536a77; paint-order: stroke; stroke: #fffdf7; stroke-width: 3px; }
+
+/* Empty before hydration too: the controller reveals these as work grows. */
+[data-rw-born], [data-rw-grow] { visibility: hidden; }

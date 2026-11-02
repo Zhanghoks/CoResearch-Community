@@ -4,7 +4,7 @@ export function StoryNarration({ active }: { active: number }) {
   const chapter = chapters[active];
   return (
     <aside className="rw-narration" aria-label="当前图谱讲解">
-      <p className="rw-eyebrow">{chapter.tag}</p>
+      <div className="rw-caption-meta"><p className="rw-eyebrow">{chapter.tag}</p><span className="rw-step-count" aria-label={`第 ${active + 1} 步，共 ${chapters.length} 步`}>{String(active + 1).padStart(2, "0")} / {String(chapters.length).padStart(2, "0")}</span></div>
       <h3>{chapter.title}</h3>
       <p className="rw-body">{chapter.body}</p>
       <p className="rw-takeaway">{chapter.takeaway}</p>
