@@ -16,7 +16,7 @@ export default function DocsPage() {
           文档
         </h1>
         <p className="mt-5 max-w-2xl text-lg leading-8 text-[#3f413c]">
-          这些说明描述产品愿景和研究工作流。它们还在演进，不代表每个模块都已在公开版本中完整实现。
+          这些说明描述产品愿景和研究工作流。它们还在演进，不代表每个模块都已在公开版本中完整实现。产品源码开源准备中，暂未公开。
         </p>
         <div className="mt-12 grid gap-4">
           {docs.map((doc) => (

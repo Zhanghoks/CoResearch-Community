@@ -7,6 +7,8 @@
 
 本仓库 **CoResearch-Community** 用于社区交流、功能建议与 Bug 反馈。欢迎通过 [Issues](https://github.com/Zhanghoks/CoResearch-Community/issues) 分享体验和想法。
 
+产品仓库的源码正在准备开源，**目前暂未公开**。请通过本社区仓库反馈；不要把访客打不开的主仓地址当成可以浏览的产品源码。
+
 > **说明**：下文重点介绍 CoResearch 的产品愿景与研究工作流。它是一套持续演进的设计，不代表所有模块或 Agent 角色都已经在公开版本中完整实现。具体可用能力以实际产品为准。
 
 ## 1. 核心理念：Research World
@@ -224,8 +226,8 @@ Agent 可以协助检索、分析、归纳、提出候选方案并记录新认�
 
 本仓库主要用于收集与 CoResearch 相关的问题、Bug 和设计建议：
 
-- [提交 Bug](https://github.com/Zhanghoks/CoResearch-Community/issues/new)：说明复现步骤、预期行为、实际行为，以及必要的环境信息。
-- [提出功能建议](https://github.com/Zhanghoks/CoResearch-Community/issues/new)：描述真实科研场景、目前遇到的困难，以及希望改善的使用流程。
+- [提交 Bug](https://github.com/Zhanghoks/CoResearch-Community/issues/new?template=bug_report.md)：说明复现步骤、预期行为、实际行为，以及必要的环境信息。请不要把功能想法写在 Bug 里。
+- [提出功能建议](https://github.com/Zhanghoks/CoResearch-Community/issues/new?template=feature_request.md)：描述真实科研场景、目前遇到的困难，以及希望改善的使用流程。已发生的故障请改用 Bug 模板。
 - [参与讨论](https://github.com/Zhanghoks/CoResearch-Community/issues)：欢迎讨论 Explore、Literature Space、Idea Space、Frontier Exploration、多 Agent 协作和科研知识组织方式。
 
 提交 Issue 前，欢迎先搜索是否已有类似问题。分享日志、截图或文献材料时，请删除 API Key、账号信息、私人研究数据及其他敏感内容。
