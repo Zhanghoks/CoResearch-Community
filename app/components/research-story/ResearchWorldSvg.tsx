@@ -88,13 +88,13 @@ export function ResearchWorldSvg() {
         <g data-rw-layer="gap" className="rw-reveal">
           <circle cx="1122" cy="352" r="26" fill="#fff8e9" stroke="#c49654" strokeWidth="2" strokeDasharray="6 5" />
           <text x="1122" y="302" textAnchor="middle" className="rw-node-label">Gap Finder</text>
-          <text x="1122" y="409" textAnchor="middle" className="rw-small-label">候选缺口 · 待核实</text>
+          <text x="1122" y="409" textAnchor="middle" className="rw-small-label">未默认上线 · 待核实</text>
         </g>
         <g data-rw-layer="transfer" className="rw-reveal">
           <path data-rw-draw="transfer" pathLength="1" d="M526 660 C665 790 844 693 954 510 S1045 361 1122 352" className="rw-route" stroke="#598a80" />
           <circle cx="526" cy="660" r="12" fill="#eff7f3" stroke="#598a80" strokeWidth="2" />
           <text x="526" y="704" textAnchor="middle" className="rw-node-label">其他领域的机制</text>
-          <text x="831" y="671" className="rw-node-label" fill="#598a80">Innovator · 迁移候选</text>
+          <text x="831" y="671" className="rw-node-label" fill="#598a80">Innovator · 愿景</text>
         </g>
         <g data-rw-layer="candidate" className="rw-reveal">
           <path data-rw-draw="candidate" pathLength="1" d="M1122 352 Q1183 307 1254 313" className="rw-route" stroke="#c49654" />

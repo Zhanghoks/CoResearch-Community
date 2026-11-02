@@ -124,6 +124,8 @@ Literature Space 不只是回答“有哪些论文”，还要回答：
 
 这些是**知识图谱的目标关系语义**，不代表已有相同名称的数据库边类型或接口。图谱可以逐步构建，不必在第一版把所有关系结构化。
 
+<a id="papercard"></a>
+
 ### 3.3 PaperCard、Evidence 与版本
 
 **PaperCard** 是论文研究内容的结构化知识表示，而非 Canvas 上的小卡片外观。它的内容包括元数据、Problem、Challenge、Method、Evaluation、Results、Limitations 和原文证据等。
@@ -515,4 +517,4 @@ Frontier Exploration 以 [IdeaScientist](https://arxiv.org/abs/2610.04074) 为�
 
 **延伸阅读**：[Explore：研究方向导航](actions/01-explore.md) · [Deep Dive / Deep Research：研究边界与方法创新](actions/02-deep-dive-deep-research.md)
 
-**社区讨论**：[提出关于 Research World、Literature Space 或 Idea Space 的建议](https://github.com/Zhanghoks/CoResearch-Community/issues/new)。
+**社区讨论**：[提出关于 Research World、Literature Space 或 Idea Space 的建议](https://github.com/Zhanghoks/CoResearch-Community/issues/new?template=feature_request.md)。已经发生的故障请用 [Bug 反馈](https://github.com/Zhanghoks/CoResearch-Community/issues/new?template=bug_report.md)。

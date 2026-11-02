@@ -26,6 +26,9 @@ export function Workflow() {
               <span className="mb-1 block text-xs tracking-[0.16em]">{step.index}</span>
               <span className="block text-2xl font-semibold tracking-tight">{step.title}</span>
               <span className="mt-1 block text-sm">{step.summary}</span>
+              {step.status ? (
+                <span className="mt-1 block text-xs font-medium text-[#6d7a3a]">{step.status}</span>
+              ) : null}
             </button>
           );
         })}
@@ -39,6 +42,9 @@ export function Workflow() {
           <h3 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
             {current.title}
           </h3>
+          {current.status ? (
+            <p className="mt-4 text-sm font-medium text-[#6d7a3a]">{current.status}</p>
+          ) : null}
           <p className="mt-6 max-w-xl text-lg leading-8 text-[#3f413c]">{current.body}</p>
         </div>
         <p className="mt-10 text-sm text-[#6b6d66]">
