@@ -1,4 +1,5 @@
 import { FaqList } from "./faq-list";
+import { ProductDemo } from "./product-demo/ProductDemo";
 import { SpaceSwitcher } from "./space-switcher";
 import { Workflow } from "./workflow";
 import { githubUrl, issuesUrl, newIssueUrl, principles, roles, spaceDocUrl } from "../content";
@@ -111,6 +112,8 @@ export function SiteStory() {
           ))}
         </ol>
       </section>
+
+      <ProductDemo />
 
       <section id="community" className="mx-auto max-w-6xl px-5 py-20">
         <h2 className="text-4xl font-semibold tracking-tight md:text-5xl">社区</h2>

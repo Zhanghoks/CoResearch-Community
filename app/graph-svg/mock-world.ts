@@ -45,6 +45,11 @@ const nodes: ResearchNode[] = [...foreground];
 const edges: ResearchEdge[] = [];
 const edgeSet = new Set<string>();
 
+// Math.cos/sin may differ in the last ulp between V8 (Node SSR) and JavaScriptCore (WebKit),
+// which React reports as a hydration attribute mismatch. Quantize to 0.01px so both
+// engines render byte-identical coordinates.
+const q = (v: number) => Math.round(v * 100) / 100;
+
 function link(source: string, target: string, relation: ResearchEdge["relation"] = "related") {
   if (source === target) return;
   const id = [source, target].sort().join("|");
@@ -60,8 +65,8 @@ for (const group of macroCommunities) {
     const r = Math.sqrt(random());
     const entry: ResearchNode = {
       id: `${group.key}-${index}`,
-      x: group.cx + Math.cos(theta) * r * group.rx,
-      y: group.cy + Math.sin(theta) * r * group.ry,
+      x: q(group.cx + Math.cos(theta) * r * group.rx),
+      y: q(group.cy + Math.sin(theta) * r * group.ry),
       radius: random() > 0.94 ? 5 : 2.15 + random() * 1.3,
       kind: random() > 0.86 ? "paper" : "topic",
       domains: [...group.domains],
@@ -75,7 +80,8 @@ for (const group of macroCommunities) {
       .filter((other) => other.id !== node.id)
       .map((other) => ({
         other,
-        distance: Math.hypot(other.x - node.x, other.y - node.y),
+        // Math.hypot is implementation-defined; sqrt(dx²+dy²) is IEEE-rounded and engine-stable.
+        distance: Math.sqrt((other.x - node.x) ** 2 + (other.y - node.y) ** 2),
       }))
       .sort((a, b) => a.distance - b.distance)
       .slice(0, group.key === "central" ? 4 : (index % 4 === 0 ? 3 : 2));

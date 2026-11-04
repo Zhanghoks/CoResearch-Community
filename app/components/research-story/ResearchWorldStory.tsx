@@ -1,21 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
 import { chapters } from "../../graph-svg/story";
 import { createSceneRenderer } from "../../graph-svg/scene";
+import { useViewPreferences } from "../view-preferences";
 import { ResearchWorldSvg } from "./ResearchWorldSvg";
 import { StoryNarration } from "./StoryNarration";
 import "./research-story.css";
-
-function subscribePreferences(onChange: () => void) {
-  const queries = [window.matchMedia("(prefers-reduced-motion: reduce)"), window.matchMedia("(max-height: 560px)")];
-  queries.forEach((query) => query.addEventListener("change", onChange));
-  return () => queries.forEach((query) => query.removeEventListener("change", onChange));
-}
-function preferences() {
-  return `${window.matchMedia("(prefers-reduced-motion: reduce)").matches}:${window.matchMedia("(max-height: 560px)").matches}`;
-}
-const serverPreferences = () => "false:false";
 
 type Controls = { go: (index: number) => void; cancel: () => void };
 
@@ -29,8 +20,7 @@ export function ResearchWorldStory() {
   const [mode, setMode] = useState<"scroll" | "slides">("scroll");
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(false);
-  const preference = useSyncExternalStore(subscribePreferences, preferences, serverPreferences);
-  const [reduce, short] = preference.split(":").map((value) => value === "true");
+  const [reduce, short] = useViewPreferences();
   const manual = mode === "slides" || reduce || short;
 
   useEffect(() => {

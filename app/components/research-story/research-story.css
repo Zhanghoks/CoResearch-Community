@@ -9,19 +9,24 @@
 .rw-canvas { position: relative; min-width: 0; height: 100%; overflow: hidden; }
 .rw-svg { width: 100%; height: 100%; display: block; user-select: none; }
 .rw-reveal { opacity: 0; visibility: hidden; }
-.rw-route { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
-.rw-node-label, .rw-region-label, .rw-world-label { font-family: inherit; font-size: 22px; fill: #4d687e; paint-order: stroke; stroke: #fbfcf8; stroke-width: 5px; stroke-linejoin: round; }
-.rw-region-label { font-size: 25px; font-weight: 600; }
-.rw-world-label { font-size: 22px; letter-spacing: 2px; }
-.rw-small-label { font: 18px sans-serif; fill: #7f8b95; paint-order: stroke; stroke: #fbfcf8; stroke-width: 4px; }
-.rw-narration { border-left: 1px solid #dce5ea; padding-left: 26px; }
+.rw-route { fill: none; stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.rw-node-label, .rw-region-label, .rw-world-label { font-family: inherit; font-size: 22px; fill: #33526b; paint-order: stroke; stroke: #fbfcf8; stroke-width: 5px; stroke-linejoin: round; }
+.rw-region-label { font-size: 25px; font-weight: 600; fill: #3d5a74; }
+.rw-world-label { font-size: 22px; letter-spacing: 2px; fill: #44637e; }
+.rw-small-label { font: 18px sans-serif; fill: #66727e; paint-order: stroke; stroke: #fbfcf8; stroke-width: 4px; }
+/* Focus layers pop in around their own content; the marker ring breathes while active. */
+[data-rw-layer="papers"], [data-rw-layer="gap"], [data-rw-layer="candidate"], [data-rw-layer="idea"] { transform-box: fill-box; transform-origin: center; }
+[data-rw-marker] circle:nth-of-type(2) { transform-box: fill-box; transform-origin: center; animation: rw-breathe 2.6s ease-in-out infinite; }
+@keyframes rw-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+.rw-narration { border-left: 1px solid #dce5ea; padding-left: 26px; animation: rw-narration-in .5s ease both; }
+@keyframes rw-narration-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .rw-eyebrow { font-size: 10px; color: #527f9f; font-weight: 600; letter-spacing: .1em; margin: 0 0 16px; }
 .rw-narration h3 { font-size: clamp(22px, 2vw, 29px); line-height: 1.4; margin: 0 0 18px; font-weight: 600; letter-spacing: -.035em; }
 .rw-body { font-size: 15px; line-height: 1.9; color: #566978; margin: 0 0 22px; }
 .rw-takeaway { border-top: 1px solid #e0e7e9; padding-top: 15px; font-size: 12px; line-height: 1.8; color: #738493; margin: 0; }
-.rw-key { display: flex; flex-wrap: wrap; gap: 12px; font-size: 10px; color: #748594; margin-top: 24px; }
-.rw-key span { display: flex; align-items: center; gap: 5px; }
-.rw-key i { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.rw-key { display: flex; flex-wrap: wrap; gap: 14px; font-size: 11px; color: #64768a; margin-top: 26px; }
+.rw-key span { display: flex; align-items: center; gap: 6px; }
+.rw-key i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
 .rw-key-paper { background: #7b8e9c; } .rw-key-idea { background: #e7b84c; } .rw-key-candidate { border: 1px dashed #9c83b5; }
 .rw-progress-track { height: 2px; background: #e4ebee; overflow: hidden; }
 .rw-progress-track span { display: block; width: 100%; height: 100%; background: #5486ab; transform: scaleX(0); transform-origin: left center; }
@@ -62,4 +67,8 @@
   .rw-demo-note { margin-top: 7px; font-size: 9px; }
   .rw-transcript details > div { grid-template-columns: 1fr; }
 }
-@media(prefers-reduced-motion: reduce) { .rw-story { scroll-behavior: auto; } }
+@media(prefers-reduced-motion: reduce) {
+  .rw-story { scroll-behavior: auto; }
+  [data-rw-marker] circle:nth-of-type(2) { animation: none; }
+  .rw-narration { animation: none; }
+}
