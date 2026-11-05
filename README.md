@@ -244,8 +244,7 @@ If you find CoResearch helpful in your research, please consider citing:
 
 ```bibtex
 @misc{coresearch2026,
-  title  = {CoResearch: From Research Questions
-            to Literature-Grounded Insights},
+  title  = {CoResearch: From Research Questions to Literature-Grounded Insights},
   author = {{CoResearch Team}},
   year   = {2026},
   note   = {Software},
