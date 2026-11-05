@@ -238,6 +238,21 @@ CoResearch 的 Frontier Exploration 与多 Agent 科研构想机制参考了以�
 
 CoResearch 是独立的产品与研究探索项目；引用上述工作不代表作者团队参与或认可本项目。
 
+## Citation
+
+If you find CoResearch helpful in your research, please consider citing:
+
+```bibtex
+@misc{coresearch2026,
+  title  = {CoResearch: From Research Questions
+            to Literature-Grounded Insights},
+  author = {{CoResearch Team}},
+  year   = {2026},
+  note   = {Software},
+  url    = {https://github.com/Zhanghoks/CoResearch}
+}
+```
+
 ---
 
 **CoResearch 的长期愿景：让研究者在前人知识构成的 Research World 中找到自己的位置，看清研究边界，并与 AI 协作探索下一次可能的突破。**
