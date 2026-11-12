@@ -9,6 +9,22 @@ export type ResearchNode = {
   kind: NodeKind;
   label?: string;
   domains: string[];
+  /** Visual depth tier: 1 = community core, 3 = hazy rim. Foreground story nodes sit at tier 1. */
+  tier?: 1 | 2 | 3;
+  /** Baked drawing opacity so depth survives camera zooms without CSS blur. */
+  alpha?: number;
+  /** Community hue anchor; story nodes stay ink-colored and carry no community. */
+  community?: string;
+};
+
+/** Palette metadata for one macro community, consumed by the renderer's glow layer. */
+export type CommunityMeta = {
+  key: string;
+  color: string;
+  cx: number;
+  cy: number;
+  rx: number;
+  ry: number;
 };
 
 export type ResearchEdge = {

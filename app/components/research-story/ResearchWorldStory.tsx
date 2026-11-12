@@ -154,7 +154,15 @@ export function ResearchWorldStory() {
           <div className="rw-canvas"><ResearchWorldSvg /></div>
           <StoryNarration active={active} />
         </div>
-        <div className="rw-progress-track" aria-hidden="true"><span data-rw-progress="" /></div>
+        <div className="rw-progress-row">
+          <div className="rw-progress-track" aria-hidden="true"><span data-rw-progress="" /></div>
+          <nav className="rw-ticks" aria-label="章节进度点">
+            {chapters.map((chapter, i) => (
+              <button key={chapter.id} type="button" onClick={() => go(i)} aria-label={`第 ${i + 1} 章 · ${chapter.title}`} aria-current={i === active ? "step" : undefined}
+                className={`rw-tick${i < active ? " is-passed" : ""}${i === active ? " is-active" : ""}`} />
+            ))}
+          </nav>
+        </div>
         <nav className="rw-controls" aria-label="研究故事章节">
           <div className="rw-mode">
             {reduce ? <span>已启用减少动态效果</span> : short ? <span>小高度屏幕 · 点击翻页</span> : <button type="button" onClick={() => setMode(mode === "scroll" ? "slides" : "scroll")} aria-pressed={mode === "slides"}>{manual ? "切换滚动讲解" : "切换点击演示"}</button>}

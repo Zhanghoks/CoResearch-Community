@@ -12,18 +12,19 @@ ScrollTrigger pins the stage below the measured site header. Scroll is the singl
 
 ## Files
 
-- `app/components/research-story/ResearchWorldStory.tsx`: lifecycle, scoped GSAP context, pinning, controls, motion preference, header measurement and teardown.
-- `ResearchWorldSvg.tsx`: declarative layers, SVG icons, mock nodes and links. Definition IDs use React `useId`.
-- `StoryNarration.tsx`: current chapter copy, separate from the camera.
-- `research-story.css`: responsive layout, low-saturation palette, focus styles, transcript.
-- `app/graph-svg/mock-world.ts`: seeded stable coordinates and explicit semantic paths; no force simulation during scrolling.
+- `app/components/research-story/ResearchWorldStory.tsx`: lifecycle, scoped GSAP context, pinning, controls, chapter tick navigation, motion preference, header measurement and teardown.
+- `ResearchWorldSvg.tsx`: declarative layers, community glow washes, organic region blobs, SVG icons, mock nodes and links. Definition IDs use React `useId`; node entrance delays are engine-stable (`Math.sqrt`, quantized) for hydration.
+- `StoryNarration.tsx`: paired chapter transition (outgoing copy fades up while the incoming copy settles from below), separate from the camera.
+- `research-story.css`: responsive layout, ripple entrance, low-saturation palette, chapter tick rail, focus styles, transcript.
+- `app/graph-svg/mock-world.ts`: seeded stable coordinates, per-community hue anchors, depth tiers with baked alpha and explicit semantic paths; no force simulation during scrolling.
 - `app/graph-svg/story.ts`: chapter targets and pure `sampleStory(progress)` interpolation.
-- `app/graph-svg/scene.ts`: cached DOM handles; applies numeric pose/opacity/dash properties without per-frame React reconciliation.
-- `scripts/test-research-story.mjs`: graph, path, phase visibility, reversibility and renderer-reset assertions; executes automatically before `npm run build`.
+- `app/graph-svg/scene.ts`: cached DOM handles; applies numeric pose/opacity/dash/stagger properties without per-frame React reconciliation. Reveal values normalize to exact `0`/`1` at the settled ends.
+- `scripts/test-research-story.mjs`: graph, palette, tier, path, stagger, phase-visibility, reversibility and renderer-reset assertions; executes automatically before `npm run build`.
+- `scripts/smoke-research-story.mjs`: standalone Playwright smoke (`npm run test:visual`) — steps all 13 chapters at desktop and mobile widths, screenshots to `smoke-artifacts/`, asserts no blank scene, no horizontal overflow and no page errors. Not part of prebuild.
 
 ## Data contract
 
-The map contains 300 mock nodes and 556 mock links. Domain memberships may overlap. The gray base graph excludes the future Gap and Method candidate, which appear only in their narrative phases. Explore follows the explicitly defined direction path. Literature relations are demonstration data, not verified academic lineage. Geometry, node density and location are **not** used as evidence of scientific maturity or novelty.
+The map contains 300 mock nodes and 553 mock links. Domain memberships may overlap. Background nodes carry a depth tier (1–3) with a baked drawing alpha, so zoomed frames stay crisp without CSS blur, plus a community hue anchor from one cool ink palette; gold (idea), amber (gap/candidate), violet (boundary) and teal-green (transfer) remain reserved semantic accents. The base graph excludes the future Gap and Method candidate, which appear only in their narrative phases. Explore follows the explicitly defined direction path. Literature relations are demonstration data, not verified academic lineage. Geometry, node density and location are **not** used as evidence of scientific maturity or novelty.
 
 Core / Frontier / Margin are illustrative local evidence regions. Research World includes both Literature Space and Idea Space. The gold marker is a projection of the current research position, not the whole Idea State. Intent is a suggested direction, not execution permission. An out-of-boundary Method remains a **candidate**, not a claim of an actual breakthrough. The animation never launches a live research task.
 
