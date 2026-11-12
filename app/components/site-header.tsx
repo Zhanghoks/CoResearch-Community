@@ -6,6 +6,7 @@ import { githubUrl } from "../content";
 
 const links = [
   { href: "/", label: "首页" },
+  { href: "/product", label: "产品" },
   { href: "/docs", label: "文档" },
 ];
 

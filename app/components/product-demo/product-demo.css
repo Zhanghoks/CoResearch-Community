@@ -1,55 +1,112 @@
 /*
- * Product demo — dynamic state styles only.
- * All static layout lives in the panels' Tailwind classes; this file covers what the
- * stage applicator drives per frame: panel visibility (pd-on), agent activity,
- * checklist states, and the entrance keyframes.
+ * Product page demo — dynamic state styles + the dark replica shell.
+ * Static layout leans on Tailwind classes in the panels; this file owns the
+ * shell grid, dark tokens, and everything the stage applicator drives per
+ * frame: visibility (pd-on), streaming text, tree growth, badges, checklists.
  */
 
-/* 面板可见性与入场（消息按序错峰，卡片依次弹出）。审查清单卡常驻，只有条目状态变化。 */
+.pd-window {
+  --pd-bg: #171718;
+  --pd-side: #1d1d1f;
+  --pd-panel: #19191a;
+  --pd-raise: #202024;
+  --pd-raise2: #232326;
+  --pd-line: rgba(255, 255, 255, 0.08);
+  --pd-text: #e9e9e6;
+  --pd-text2: #a3a39e;
+  --pd-text3: #8a8a84;
+  --pd-blue: #4f8bf0;
+  --pd-gold: #d9b96a;
+  --pd-green: #7fb08a;
+  --pd-placeholder: "输入你的问题";
+  color: var(--pd-text);
+}
+
+/* 三栏：侧栏 / 对话 / 图谱。窄屏折叠为两栏、再折叠为单栏。 */
+.pd-shell {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr) 372px;
+  height: 648px;
+}
+.pd-nav { display: flex; }
+.pd-graph { display: flex; }
+@media (max-width: 1023px) {
+  .pd-shell { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); height: 600px; }
+  .pd-nav { display: none; }
+}
+@media (max-width: 767px) {
+  .pd-shell { grid-template-columns: minmax(0, 1fr); height: auto; }
+  .pd-chat { height: 380px; }
+  .pd-canvas-box { height: 300px; }
+  .pd-detail { max-height: 320px; }
+}
+
+/* 对话流：固定高度内从底部生长。 */
+.pd-chat { min-height: 0; }
+
+/* 面板可见性与入场（消息按序错峰，卡片依次弹出）。审查卡随清单状态出现。 */
 .pd-msg { display: none; }
-.pd-msg.pd-on { display: flex; animation: pd-in .45s ease both; animation-delay: calc(var(--i, 0) * 60ms); }
-.pd-cards > article:is([data-pd-evidence], [data-pd-card]) { display: none; }
-.pd-cards > article.pd-on { display: flex; animation: pd-pop .55s cubic-bezier(.2, .8, .3, 1.15) both; animation-delay: calc(var(--i, 0) * 110ms); }
-.pd-candidate { display: none; }
-.pd-candidate.pd-on { display: block; animation: pd-pop .55s cubic-bezier(.2, .8, .3, 1.15) both; }
+.pd-msg.pd-on { display: flex; flex-direction: column; animation: pd-in .45s ease both; animation-delay: calc(var(--i, 0) * 70ms); }
+.pd-bubble-user { background: #2e2e33; color: var(--pd-text); }
+.pd-bubble-agent { background: #212124; border: 1px solid var(--pd-line); color: #d6d6d2; }
 
-/* Agent 活动状态（idle 半透明 / working 呼吸点 / 完成 静点） */
-.pd-agent[data-activity="idle"] { opacity: .55; }
-.pd-agent[data-activity="working"] .pd-agent-dot { background: #6d7a3a; animation: pd-pulse 1.6s ease-in-out infinite; }
-.pd-agent[data-activity="done"] .pd-agent-dot { background: #7a9a6d; }
-.pd-agent[data-activity="working"] .pd-agent-action { color: #262626; font-weight: 600; }
-.pd-agent[data-activity="done"] .pd-agent-action { color: #7a9a6d; }
+.pd-processing { display: none; }
+.pd-processing.pd-on { display: flex; animation: pd-in .45s ease both; }
+.pd-spin { animation: pd-spin 1.4s linear infinite; }
 
-/* 审查清单项状态（pending 灰 / pass 绿 / hold 琥珀） */
-.pd-check[data-state="pass"] { color: #4a6e58; }
-.pd-check[data-state="hold"] { color: #a4803c; }
-.pd-check[data-state="pass"] .pd-check-mark { border-color: #7a9a6d; background: #7a9a6d; box-shadow: inset 0 0 0 2.5px #fff; }
-.pd-check[data-state="hold"] .pd-check-mark { border-color: #d9b96a; background: #f4e3bd; }
+.pd-review { display: none; }
+.pd-review.pd-on { display: block; animation: pd-in .5s ease both; }
 
-/* 方向深化树：节点与连线按阶段生长，焦点标记随 focus 移动 */
+/* 审查清单项状态（pending 灰 / pass 绿 / hold 金） */
+.pd-check[data-state="pass"] { color: var(--pd-green); }
+.pd-check[data-state="hold"] { color: var(--pd-gold); }
+.pd-check[data-state="pass"] .pd-check-mark { border-color: var(--pd-green); background: var(--pd-green); box-shadow: inset 0 0 0 2.5px #212124; }
+.pd-check[data-state="hold"] .pd-check-mark { border-color: var(--pd-gold); background: #4a3f24; }
+
+/* 详情卡字段 */
+.pd-field { display: none; }
+.pd-field.pd-on { display: block; animation: pd-pop .5s cubic-bezier(.2, .8, .3, 1.1) both; animation-delay: calc(var(--i, 0) * 90ms); }
+.pd-todo, .pd-mech, .pd-paper, .pd-session, .pd-candidate-chip { display: none; }
+.pd-todo.pd-on, .pd-mech.pd-on, .pd-paper.pd-on, .pd-session.pd-on, .pd-candidate-chip.pd-on { display: block; animation: pd-pop .55s cubic-bezier(.2, .8, .3, 1.1) both; }
+
+/* composer：:empty 时显示占位符（文案在 .pd-window token 里集中声明）；光标只在发起阶段显示。 */
+.pd-typed:empty::before { content: var(--pd-placeholder); color: var(--pd-text3); }
+.pd-caret { display: none; width: 1.5px; height: 1em; margin-left: 1px; vertical-align: -0.15em; background: var(--pd-blue); animation: pd-blink 1.1s steps(2) infinite; }
+[data-pd-stage][data-phase="0"] .pd-caret { display: inline-block; }
+
+/* 研究图谱：节点与连线按阶段生长，焦点标记与「当前」徽标由应用器定位 */
+.pd-canvas-box {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1.2px);
+  background-size: 16px 16px;
+  background-position: center;
+}
 [data-pd-tree] { display: none; }
 [data-pd-tree].pd-on { display: block; }
 .pd-tree { display: block; user-select: none; }
-.pd-edge { fill: none; stroke: #b9bfb2; stroke-width: 1.6; }
-.pd-node rect { fill: #fff; stroke: rgba(38, 38, 38, .14); stroke-width: 1.2; }
-.pd-node text { font-size: 11px; fill: #3f413c; font-family: inherit; }
-.pd-node-root rect { fill: #262626; stroke: #262626; }
-.pd-node-root text { fill: #fff; font-weight: 600; }
-.pd-node-option { opacity: .55; }
-.pd-node-chosen rect { stroke: #262626; stroke-width: 1.6; }
-.pd-node-chosen text { fill: #262626; font-weight: 600; }
-.pd-node-focus rect { fill: #f4f6ee; stroke: #6d7a3a; stroke-width: 1.6; }
-.pd-node-focus text { fill: #3f413c; font-weight: 600; }
-.pd-node-gap rect { fill: #fdf8ec; stroke: #d9b96a; stroke-dasharray: 5 4; stroke-width: 1.4; }
-.pd-node-gap text { fill: #6b5a2c; }
-.pd-node-mech rect { fill: #f4f8ef; stroke: #7a9a6d; }
-.pd-node-mech text { fill: #4c6640; }
-.pd-node-candidate rect { fill: #fdf3d9; stroke: #c9973b; stroke-width: 2; }
-.pd-node-candidate text { fill: #6b5a2c; font-weight: 700; }
-.pd-boundary { stroke: #a3a89b; stroke-width: 1.4; stroke-dasharray: 6 6; }
-.pd-boundary-label { font-size: 10px; fill: #8a8c84; letter-spacing: .1em; }
-.pd-focus-ring { fill: none; stroke: #d9b96a; stroke-width: 2; animation: pd-pulse 2.4s ease-in-out infinite; }
-.pd-focus-core { fill: #d9b96a; }
+.pd-edge { fill: none; stroke: rgba(255, 255, 255, 0.22); stroke-width: 1.4; }
+.pd-node rect { fill: #232327; stroke: rgba(255, 255, 255, 0.16); stroke-width: 1.1; }
+.pd-node text { font-size: 11px; fill: #cfcfcb; font-family: inherit; }
+.pd-node-root rect { fill: #303035; stroke: rgba(255, 255, 255, 0.24); }
+.pd-node-root text { fill: var(--pd-text); font-weight: 600; }
+.pd-node-option { opacity: .45; }
+.pd-node-chosen rect { stroke: rgba(255, 255, 255, 0.4); stroke-width: 1.3; }
+.pd-node-chosen text { fill: var(--pd-text); font-weight: 600; }
+.pd-node-focus rect { fill: #232a38; stroke: var(--pd-blue); stroke-width: 1.5; }
+.pd-node-focus text { fill: #d8e4fa; font-weight: 600; }
+.pd-node-gap rect { fill: #292619; stroke: rgba(217, 185, 106, 0.65); stroke-dasharray: 5 4; stroke-width: 1.3; }
+.pd-node-gap text { fill: #dcc894; }
+.pd-node-mech rect { fill: #20261f; stroke: rgba(127, 176, 138, 0.55); }
+.pd-node-mech text { fill: #a9c7b2; }
+.pd-node-candidate rect { fill: #3a3220; stroke: var(--pd-gold); stroke-width: 1.8; }
+.pd-node-candidate text { fill: #ecd9a0; font-weight: 700; }
+.pd-boundary { stroke: rgba(255, 255, 255, 0.28); stroke-width: 1.2; stroke-dasharray: 6 6; }
+.pd-boundary-label { font-size: 10px; fill: var(--pd-text3); letter-spacing: .1em; }
+.pd-focus-ring { fill: none; stroke: var(--pd-gold); stroke-width: 1.8; animation: pd-pulse 2.4s ease-in-out infinite; }
+.pd-focus-core { fill: var(--pd-gold); }
+[data-pd-current] { opacity: 0; transition: opacity .4s ease; }
+[data-pd-current].pd-on { opacity: 1; }
+.pd-current-badge rect { fill: var(--pd-blue); }
+.pd-current-badge text { font-size: 10px; fill: #fff; font-weight: 600; letter-spacing: .08em; }
 
 /* 阶段说明切换入场 */
 .pd-caption { animation: pd-in .5s ease both; }
@@ -57,8 +114,22 @@
 @keyframes pd-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes pd-pop { from { opacity: 0; transform: scale(.94) translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes pd-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.45); opacity: .55; } }
+@keyframes pd-spin { to { transform: rotate(360deg); } }
+@keyframes pd-blink { 50% { opacity: 0; } }
+
+/* 静态一帧（首页入口卡）：同一 shell 渲染终态，不跑任何动画、不显示光标。 */
+[data-pd-settled] .pd-caret { display: none; }
+[data-pd-settled] *, [data-pd-settled] *::before, [data-pd-settled] *::after { animation: none !important; }
 
 @media (prefers-reduced-motion: reduce) {
-  .pd-msg.pd-on, .pd-cards > article.pd-on, .pd-candidate.pd-on, .pd-caption { animation: none; }
-  .pd-agent[data-activity="working"] .pd-agent-dot, .pd-focus-ring { animation: none; }
+  .pd-msg.pd-on, .pd-processing.pd-on, .pd-review.pd-on, .pd-field.pd-on,
+  .pd-todo.pd-on, .pd-mech.pd-on, .pd-paper.pd-on, .pd-session.pd-on,
+  .pd-candidate-chip.pd-on, .pd-caption { animation: none; }
+  .pd-spin, .pd-focus-ring, .pd-caret { animation: none; }
+  [data-pd-current] { transition: none; }
 }
+
+/* 详情卡滚动条（细、暗） */
+.pd-detail { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.14) transparent; }
+.pd-detail::-webkit-scrollbar { width: 6px; }
+.pd-detail::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.14); border-radius: 3px; }

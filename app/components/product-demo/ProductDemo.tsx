@@ -5,11 +5,10 @@ import { phaseStart, phases, progressAt, sampleScenario, scenarioDuration } from
 import { createDemoRenderer } from "../../product-demo/stage";
 import { useViewPreferences } from "../view-preferences";
 import { DemoWindow } from "./DemoPanels";
-import "./product-demo.css";
 
 type Controls = { go: (index: number) => void; pause: () => void; resume: () => void };
 
-/** 可见时自动循环播放的产品使用演示；悬停暂停、手动步进，reduced-motion 呈现终态。 */
+/** 可见时自动循环播放的产品运行演示；悬停暂停、手动步进，reduced-motion 呈现终态。 */
 export function ProductDemo() {
   const rootRef = useRef<HTMLElement>(null);
   const controlsRef = useRef<Controls | null>(null);
@@ -110,11 +109,17 @@ export function ProductDemo() {
   const caption = phases[active].caption;
 
   return (
-    <section ref={rootRef} id="product-demo" className="mx-auto max-w-6xl px-5 py-20" aria-label="产品使用演示">
-      <h2 className="text-4xl font-semibold tracking-tight md:text-5xl">一次研究是怎么完成的</h2>
-      <p className="mt-5 max-w-2xl text-lg leading-8 text-[#3f413c]">
-        从一句模糊的兴趣，到可验证的候选方法：多 Agent 协作在同一个研究会话里接力推进。
-      </p>
+    <section ref={rootRef} id="product-demo" className="mx-auto max-w-6xl px-5 py-16" aria-label="产品运行演示">
+      <div className="mx-auto mb-10 max-w-3xl text-center">
+        <p className="inline-flex items-center gap-2 text-sm font-medium">
+          <span className="rounded-full bg-[#a9ff63] px-2 py-0.5 text-xs font-semibold">Run Demo</span>
+          界面复刻 · 内容为 mock
+        </p>
+        <h2 className="mt-5 text-4xl font-semibold tracking-tight md:text-5xl">看 CoResearch 跑一次研究</h2>
+        <p className="mt-5 text-lg leading-8 text-[#3f413c]">
+          从一句模糊的兴趣，到可验证的候选方法。下面是产品界面的深色复刻 mock：研究者输入问题，Agent 们在会话与图谱里接力推进。
+        </p>
+      </div>
       <div
         className="mt-10"
         onKeyDown={(event) => {
@@ -173,7 +178,7 @@ export function ProductDemo() {
           </div>
         </nav>
         <p className="mt-6 text-center text-xs leading-6 text-[#8a8c84]">
-          产品理念演示 · 界面与内容为 mock，不代表已上线功能；候选结论均须核验。
+          产品理念演示 · 界面为产品设计稿的复刻，内容均为 mock，不代表已上线功能；候选结论均须核验。
           <br />
           设计文档：<a className="underline decoration-black/20 underline-offset-4 hover:text-[#262626]" href="https://github.com/Zhanghoks/CoResearch-Community/blob/main/docs/actions/01-explore.md">Explore</a> · <a className="underline decoration-black/20 underline-offset-4 hover:text-[#262626]" href="https://github.com/Zhanghoks/CoResearch-Community/blob/main/docs/actions/02-deep-dive-deep-research.md">Deep Dive / Deep Research</a>
         </p>
