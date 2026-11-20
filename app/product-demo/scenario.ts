@@ -1,14 +1,27 @@
 /**
- * Product demo scenario — a pure, deterministic script of a CoResearch run,
- * staged inside a replica of the real product UI (three-column dark shell).
+ * Product-demo shell projection of the shared synthetic fixture.
  *
- * Everything the stage renders is declared here as literals: phases, panel states and
- * mock copy. `sampleScenario(progress)` is a pure function (the same progress always
- * yields the same state, in either direction) and `progressAt(elapsed)` maps loop
- * seconds onto phase units through the declared durations. Integer progress is the
- * phase's settled state; the fraction drives only intra-phase streams (typed text,
- * timers, counters). The render path never uses Math.random or Date.now.
+ * Data state comes from app/demo (absolute-ms stateAt). This module only maps
+ * that world onto the existing three-column replica: typography, tree layout,
+ * and streamed composer text. It does not keep a second copy of papers,
+ * direction hierarchy, or evidence claims.
  */
+import {
+  DEMO_DURATION_MS,
+  INTEREST_PROMPT,
+  OPEN_QUESTION_ID,
+  counterexampleById,
+  coverageById,
+  demoScenes,
+  demoTimeline,
+  evidenceById,
+  openQuestionById,
+  paperById,
+  sceneIndexAt,
+  stateAt,
+  videoIdentityWorld,
+} from "../demo";
+import type { WorldState } from "../demo";
 
 export type Role = "user" | "lead" | "gap" | "innovator" | "reviewer";
 export type CheckState = "pending" | "pass" | "hold";
@@ -17,7 +30,6 @@ export type DetailField = "title" | "intro" | "question" | "work" | "evidence" |
 
 export interface ScenarioCaption { tag: string; title: string; body: string; }
 
-/** Streamed copy is written element-by-element; the applicator owns the writes. */
 export type StreamText = Partial<Record<StreamId, string>>;
 export type DetailState = Record<DetailField, boolean>;
 
@@ -25,101 +37,44 @@ export interface ScenarioState {
   phase: number;
   phaseProgress: number;
   caption: ScenarioCaption;
-  /** 可见消息数（按 conversation 顺序累积）。 */
   messages: number;
-  /** 进行中的流式文本（确定性前缀；settled 后离开映射，元素保留全文）。 */
   streams: StreamText;
-  /** 「已处理」计时器秒数；0 = 处理行未出现。 */
   timer: number;
-  /** 输入框上下文百分比。 */
   context: number;
-  /** 图谱上当前可见的节点与连线 id（累积，只增不减）。 */
   tree: readonly string[];
-  /** 「当前」徽标所在节点 id；空串 = 尚未选中方向。 */
   current: string;
-  /** 金色焦点标记所在节点 id（正在工作的区域）。 */
   focus: string;
-  /** 方向详情卡各字段可见性。 */
   detail: DetailState;
-  /** 文献卡是否已到达。 */
   paper: boolean;
-  /** 侧栏新会话条目是否已出现。 */
   session: boolean;
-  /** 侧栏画布计数。 */
   canvasCount: number;
-  /** 审查清单状态。 */
   checklist: CheckState[];
-  /** 候选方法是否已生成。 */
   candidate: boolean;
+  processingMeta: string;
 }
 
-interface ScenarioPhase {
-  id: string;
-  duration: number;
-  caption: ScenarioCaption;
-  /** settled（整数 progress）状态；streams 是该阶段结束时的流式值快照。 */
-  state: Omit<ScenarioState, "phase" | "phaseProgress" | "caption">;
-}
-
-const pendingChecks: CheckState[] = ["pending", "pending", "pending"];
-
-/**
- * 研究图谱：从模糊兴趣到候选方法的树状生长。坐标为窄画布（viewBox 420×420，
- * 对应产品右侧「对话研究图谱」面板）内的确定值。
- * kind 决定样式：root 兴趣 / option 候选（未选中的淡化） / chosen 选中的分支 /
- * focus 聚焦方向 / leaf 证据叶 / gap 待核实缺口 / mech 跨域机制 / candidate 候选方法。
- */
 export interface TreeNodeSpec { id: string; x: number; y: number; label: string; kind: "root" | "option" | "chosen" | "focus" | "leaf" | "gap" | "mech" | "candidate"; }
-export const treeNodes: readonly TreeNodeSpec[] = [
-  { id: "d-video", x: 50, y: 190, label: "视频生成", kind: "root" },
-  { id: "d-consistency", x: 160, y: 66, label: "生成一致性", kind: "option" },
-  { id: "d-identity", x: 160, y: 190, label: "主体身份", kind: "chosen" },
-  { id: "d-narrative", x: 160, y: 314, label: "跨镜头叙事", kind: "option" },
-  { id: "d-crossshot", x: 278, y: 190, label: "跨镜头身份保持", kind: "focus" },
-  { id: "n-problem", x: 278, y: 74, label: "问题 · 主体漂移", kind: "leaf" },
-  { id: "n-method", x: 278, y: 132, label: "方法 · 身份嵌入", kind: "leaf" },
-  { id: "n-limitation", x: 278, y: 248, label: "局限 · 长序列未验证", kind: "leaf" },
-  { id: "n-gap", x: 278, y: 306, label: "缺口 · 待核实", kind: "gap" },
-  { id: "m-control", x: 110, y: 376, label: "其他领域 · 控制系统", kind: "mech" },
-  { id: "m-estimation", x: 244, y: 376, label: "状态估计机制", kind: "mech" },
-  { id: "n-candidate", x: 378, y: 376, label: "候选方法", kind: "candidate" },
-];
-export const treeEdges: ReadonlyArray<{ id: string; from: string; to: string }> = [
-  { id: "e-video-consistency", from: "d-video", to: "d-consistency" },
-  { id: "e-video-identity", from: "d-video", to: "d-identity" },
-  { id: "e-video-narrative", from: "d-video", to: "d-narrative" },
-  { id: "e-identity-crossshot", from: "d-identity", to: "d-crossshot" },
-  { id: "e-crossshot-problem", from: "d-crossshot", to: "n-problem" },
-  { id: "e-crossshot-method", from: "d-crossshot", to: "n-method" },
-  { id: "e-crossshot-limitation", from: "d-crossshot", to: "n-limitation" },
-  { id: "e-limitation-gap", from: "n-limitation", to: "n-gap" },
-  { id: "e-m-control-estimation", from: "m-control", to: "m-estimation" },
-  { id: "e-m-estimation-gap", from: "m-estimation", to: "n-gap" },
-  { id: "e-gap-candidate", from: "n-gap", to: "n-candidate" },
-];
-/** 节点 id → 坐标（应用器定位焦点标记与「当前」徽标、shell 渲染 SVG 共用）。 */
-export const treeNodeById = new Map(treeNodes.map((node) => [node.id, node]));
 
-const treeBase = ["d-video"];
-const treeExplore = [...treeBase, "d-consistency", "d-identity", "d-narrative", "e-video-consistency", "e-video-identity", "e-video-narrative"];
-const treeDive = [...treeExplore, "d-crossshot", "n-problem", "n-method", "n-limitation", "e-identity-crossshot", "e-crossshot-problem", "e-crossshot-method", "e-crossshot-limitation"];
-const treeGap = [...treeDive, "n-gap", "boundary", "e-limitation-gap"];
-const treeMech = [...treeGap, "m-control", "m-estimation", "e-m-control-estimation", "e-m-estimation-gap"];
-const treeCandidate = [...treeMech, "n-candidate", "e-gap-candidate"];
+const oq = openQuestionById.get(OPEN_QUESTION_ID)!;
+const e01 = evidenceById.get("E01")!;
+const e02 = evidenceById.get("E02")!;
+const e03 = evidenceById.get("E03")!;
+const p01 = paperById.get("P01")!;
+const p06 = paperById.get("P06")!;
+const covShort = coverageById.get("cov-short-visible")!;
+const ce01 = counterexampleById.get("CE01")!;
 
-/** 流式全文案（composer 输入与详情卡字段）；流式值都是它们的确定性前缀。 */
-export const questionText = "我对视频生成感兴趣，但不确定具体该做什么。";
+export const questionText = INTEREST_PROMPT;
 export const detailCopy: Record<DetailField, string> = {
   title: "跨镜头身份保持",
-  intro: "在视频生成中保持主体身份跨镜头一致：梳理现有方法如何约束身份，以及它们停在哪里。",
-  question: "身份约束在长序列中如何失效？失效是累积的还是突变的？",
-  work: "身份嵌入 + 交叉注意力约束的扩散方案（见下方文献）。",
-  evidence: "三篇代表工作覆盖短序列一致性；长序列验证普遍缺失。",
-  todo: "长时序下的身份漂移如何累积，证据不足——最接近的工作只验证了 ≤4 秒片段。",
-  mech: "控制系统的状态估计：用观测渐进修正状态。",
+  intro: "在主体身份下继续看跨镜头身份保持：整理已阅读演示文献的适用条件，而不是把它们写成普遍结论。",
+  question: oq.question,
+  work: "演示文献 P01 / P02 提供短片段与持续可见条件下的示意依据；P06 来自跟踪任务，只作为待验证的候选机制。",
+  evidence: `${e01.claim} ${e02.claim}`,
+  todo: `${e03.claim} ${covShort.statement}`,
+  mech: `${p06.title}：${p06.excerpts[0]?.text ?? ""}`,
 };
 
-/** 每个流式目标的全文案（composer 除外——它的 settled 值是清空后的空串）。 */
 export const streamFullCopy: Record<StreamId, string> = {
   composer: questionText,
   intro: detailCopy.intro,
@@ -127,271 +82,300 @@ export const streamFullCopy: Record<StreamId, string> = {
   work: detailCopy.work,
   evidence: detailCopy.evidence,
 };
-
-/** 流式窗口：声明每个流式目标在哪个阶段、以哪个进度区间打字。 */
-const streamWindows: Record<StreamId, { phase: number; from: number; to: number }> = {
-  composer: { phase: 0, from: 0.08, to: 0.72 },
-  intro: { phase: 1, from: 0.25, to: 0.8 },
-  question: { phase: 2, from: 0.1, to: 0.55 },
-  work: { phase: 2, from: 0.35, to: 0.9 },
-  evidence: { phase: 3, from: 0.15, to: 0.7 },
-};
-export const streamIds: readonly StreamId[] = Object.keys(streamWindows) as StreamId[];
+export const streamIds: readonly StreamId[] = ["composer", "intro", "question", "work", "evidence"];
 export const detailFields: readonly DetailField[] = ["title", "intro", "question", "work", "evidence", "todo", "mech"];
 
-/** 上下文百分比按阶段推进：每阶段声明 [起点, 终点]。 */
-const contextRanges: ReadonlyArray<readonly [number, number]> = [
-  [6, 6], [6, 8], [8, 14], [14, 17], [17, 19], [19, 20], [20, 23],
+export const treeNodes: readonly TreeNodeSpec[] = [
+  { id: "d-video", x: 42, y: 210, label: "视频生成", kind: "root" },
+  { id: "d-consistency", x: 148, y: 84, label: "生成一致性", kind: "chosen" },
+  { id: "d-controllable", x: 148, y: 210, label: "可控生成", kind: "option" },
+  { id: "d-narrative", x: 148, y: 330, label: "叙事结构", kind: "option" },
+  { id: "d-identity", x: 254, y: 84, label: "主体身份", kind: "chosen" },
+  { id: "d-scene", x: 254, y: 20, label: "场景一致性", kind: "option" },
+  { id: "d-motion", x: 254, y: 148, label: "运动一致性", kind: "option" },
+  { id: "d-crossshot", x: 352, y: 84, label: "跨镜头身份保持", kind: "focus" },
+  { id: "d-multi-person", x: 352, y: 20, label: "多人身份区分", kind: "option" },
+  { id: "d-style", x: 352, y: 148, label: "风格变化下身份保持", kind: "option" },
+  { id: "n-evidence", x: 352, y: 220, label: "E01 有条件支持", kind: "leaf" },
+  { id: "n-revision", x: 352, y: 268, label: "覆盖已修订", kind: "leaf" },
+  { id: "n-gap", x: 352, y: 316, label: "待比较的问题", kind: "gap" },
+  { id: "n-candidate", x: 352, y: 368, label: "下一步比较", kind: "candidate" },
 ];
-
-/** 阶段内事件点（按 id 声明，不散落魔法索引）。 */
-const phaseIds = { intent: 0, explore: 1, deepDive: 2, gap: 3, innovator: 4, reviewer: 5, revision: 6 } as const;
-/** 发起阶段内的确定性时间线：打字 → 发送（清空输入框、消息与会话条目出现）。 */
-const sendAt = 0.75;
-/** Deep Dive 阶段的处理计时器走满的秒数。 */
-const timerSeconds = 30;
-/** Reviewer 阶段清单逐项给出的时间点。 */
-const reviewAt = [0.15, 0.45, 0.75] as const;
-
-const noDetail: DetailState = { title: false, intro: false, question: false, work: false, evidence: false, todo: false, mech: false };
-const detail = (...on: DetailField[]): DetailState =>
-  Object.fromEntries(detailFields.map((field) => [field, on.includes(field)])) as DetailState;
-
-const entries: ScenarioPhase[] = [
-  {
-    id: "intent", duration: 5,
-    caption: { tag: "INTENT", title: "发起 · 一句模糊的兴趣", body: "研究者在输入框里逐字写下兴趣；发送之后，会话出现在项目树里，Research Lead 建议先定位方向。" },
-    state: {
-      messages: 2,
-      streams: { composer: "" },
-      timer: 0, context: contextRanges[0][1],
-      tree: treeBase, current: "", focus: "d-video",
-      detail: noDetail, paper: false, session: true, canvasCount: 0,
-      checklist: pendingChecks, candidate: false,
-    },
-  },
-  {
-    id: "explore", duration: 5,
-    caption: { tag: "EXPLORE", title: "定位方向", body: "候选细分方向在右侧图谱里展开；选定后「当前」标记落在你的位置，未选的方向仍留在原处。" },
-    state: {
-      messages: 4,
-      streams: { intro: detailCopy.intro },
-      timer: 0, context: contextRanges[1][1],
-      tree: treeExplore, current: "d-identity", focus: "d-identity",
-      detail: detail("title", "intro"), paper: false, session: true, canvasCount: 0,
-      checklist: pendingChecks, candidate: false,
-    },
-  },
-  {
-    id: "deep-dive", duration: 6,
-    caption: { tag: "DEEP DIVE", title: "重建脉络", body: "文献被逐篇深读：开放式问题、代表性工作与文献卡在方向详情里逐项成形。" },
-    state: {
-      messages: 5,
-      streams: { question: detailCopy.question, work: detailCopy.work },
-      timer: timerSeconds, context: contextRanges[2][1],
-      tree: treeDive, current: "d-crossshot", focus: "d-crossshot",
-      detail: detail("title", "intro", "question", "work"), paper: true, session: true, canvasCount: 3,
-      checklist: pendingChecks, candidate: false,
-    },
-  },
-  {
-    id: "gap", duration: 4.5,
-    caption: { tag: "GAP FINDER", title: "候选缺口", body: "与最接近的工作对比后给出待核实的缺口；「尚待确认」不会被写成结论。" },
-    state: {
-      messages: 6,
-      streams: { evidence: detailCopy.evidence },
-      timer: timerSeconds, context: contextRanges[3][1],
-      tree: treeGap, current: "d-crossshot", focus: "n-gap",
-      detail: detail("title", "intro", "question", "work", "evidence", "todo"), paper: true, session: true, canvasCount: 3,
-      checklist: pendingChecks, candidate: false,
-    },
-  },
-  {
-    id: "innovator", duration: 4.5,
-    caption: { tag: "INNOVATOR", title: "跨领域迁移", body: "从相邻领域带回机制候选，迁移前提逐项核对；连线代表候选，不是结论。" },
-    state: {
-      messages: 7,
-      streams: {},
-      timer: timerSeconds, context: contextRanges[4][1],
-      tree: treeMech, current: "d-crossshot", focus: "m-estimation",
-      detail: detail("title", "intro", "question", "work", "evidence", "todo", "mech"), paper: true, session: true, canvasCount: 4,
-      checklist: pendingChecks, candidate: false,
-    },
-  },
-  {
-    id: "reviewer", duration: 4.5,
-    caption: { tag: "REVIEWER", title: "审查候选", body: "新颖性、可行性与迁移前提逐项审查；待议项不会被悄悄放行。" },
-    state: {
-      messages: 8,
-      streams: {},
-      timer: timerSeconds, context: contextRanges[5][1],
-      tree: treeMech, current: "d-crossshot", focus: "n-gap",
-      detail: detail("title", "intro", "question", "work", "evidence", "todo", "mech"), paper: true, session: true, canvasCount: 4,
-      checklist: ["pass", "pass", "hold"], candidate: false,
-    },
-  },
-  {
-    id: "revision", duration: 6,
-    caption: { tag: "REVISION", title: "演化与确认", body: "候选方法生成，图谱长出边界之外的一步；是否推进，由研究者确认。" },
-    state: {
-      messages: 10,
-      streams: {},
-      timer: timerSeconds, context: contextRanges[6][1],
-      tree: treeCandidate, current: "d-crossshot", focus: "n-candidate",
-      detail: detail("title", "intro", "question", "work", "evidence", "todo", "mech"), paper: true, session: true, canvasCount: 4,
-      checklist: ["pass", "pass", "hold"], candidate: true,
-    },
-  },
+export const treeEdges: ReadonlyArray<{ id: string; from: string; to: string }> = [
+  { id: "e-video-consistency", from: "d-video", to: "d-consistency" },
+  { id: "e-video-controllable", from: "d-video", to: "d-controllable" },
+  { id: "e-video-narrative", from: "d-video", to: "d-narrative" },
+  { id: "e-consistency-identity", from: "d-consistency", to: "d-identity" },
+  { id: "e-consistency-scene", from: "d-consistency", to: "d-scene" },
+  { id: "e-consistency-motion", from: "d-consistency", to: "d-motion" },
+  { id: "e-identity-crossshot", from: "d-identity", to: "d-crossshot" },
+  { id: "e-identity-multi", from: "d-identity", to: "d-multi-person" },
+  { id: "e-identity-style", from: "d-identity", to: "d-style" },
+  { id: "e-crossshot-evidence", from: "d-crossshot", to: "n-evidence" },
+  { id: "e-evidence-revision", from: "n-evidence", to: "n-revision" },
+  { id: "e-revision-gap", from: "n-revision", to: "n-gap" },
+  { id: "e-gap-candidate", from: "n-gap", to: "n-candidate" },
 ];
+export const treeNodeById = new Map(treeNodes.map((node) => [node.id, node]));
 
-export const phases: readonly ScenarioPhase[] = entries;
-export const scenarioDuration = entries.reduce((total, phase) => total + phase.duration, 0);
-/** Loop 扣除：第 index 阶段开始时已流逝的秒数。 */
+const treeBase = ["d-video"] as const;
+const treeG1 = [...treeBase, "d-consistency", "d-controllable", "d-narrative", "e-video-consistency", "e-video-controllable", "e-video-narrative"];
+const treeG2 = [...treeG1, "d-identity", "d-scene", "d-motion", "e-consistency-identity", "e-consistency-scene", "e-consistency-motion"];
+const treeG3 = [...treeG2, "d-crossshot", "d-multi-person", "d-style", "e-identity-crossshot", "e-identity-multi", "e-identity-style"];
+const treeEvidence = [...treeG3, "n-evidence", "e-crossshot-evidence"];
+const treeRevision = [...treeEvidence, "n-revision", "e-evidence-revision"];
+const treeQuestion = [...treeRevision, "n-gap", "e-revision-gap"];
+const treeNext = [...treeQuestion, "n-candidate", "e-gap-candidate"];
+
+export interface ScenarioPhase {
+  id: string;
+  duration: number;
+  caption: ScenarioCaption;
+}
+
+export const phases: readonly ScenarioPhase[] = demoScenes.map((scene, index) => {
+  const next = demoScenes[index + 1];
+  const end = next ? next.startMs : DEMO_DURATION_MS;
+  return {
+    id: scene.sceneId,
+    duration: (end - scene.startMs) / 1000,
+    caption: scene.caption,
+  };
+});
+
+export const scenarioDuration = DEMO_DURATION_MS / 1000;
+
 export function phaseStart(index: number): number {
-  return entries.slice(0, Math.max(0, index)).reduce((total, phase) => total + phase.duration, 0);
+  const scene = demoScenes[Math.max(0, Math.min(demoScenes.length - 1, index))];
+  return scene.startMs / 1000;
 }
 
-/** 把流式窗口内的进度归一化到 [0,1]；窗口之前为 0，之后为 1。 */
-function streamFraction(frac: number, window: { from: number; to: number }): number {
-  return Math.min(1, Math.max(0, (frac - window.from) / (window.to - window.from)));
+/** Readable checkpoint of a scene, in seconds. Seek-to-scene uses this, not phaseStart. */
+export function phaseCheckpoint(index: number): number {
+  const scene = demoScenes[Math.max(0, Math.min(demoScenes.length - 1, index))];
+  return scene.checkpointMs / 1000;
 }
 
-/** 确定性前缀：不四舍五入到超出文案长度的位置。 */
+export function phaseRestart(index: number): number {
+  return phaseStart(index);
+}
+
 function prefixOf(text: string, fraction: number): string {
   return text.slice(0, Math.round(text.length * Math.min(1, Math.max(0, fraction))));
 }
 
-/**
- * Integer progress is the phase's settled state; the fraction is intra-phase progress
- * only (streams, timer, context, checklist progression, the intent-phase send).
- * Both directions of sampling give the same state.
- */
-export function sampleScenario(progress: number): ScenarioState {
-  const p = Number.isFinite(progress) ? Math.min(entries.length - 1, Math.max(0, progress)) : 0;
-  const index = Math.floor(p);
-  const frac = p - index;
-  const phase = entries[index];
-  const base = phase.state;
-  if (frac === 0) return { phase: index, phaseProgress: 0, caption: phase.caption, ...base, streams: { ...base.streams }, detail: { ...base.detail }, checklist: [...base.checklist] };
+function processingMetaOf(state: WorldState): string {
+  return `· 发现 ${state.counts.discovered} 篇 · 浏览摘要 ${state.counts.abstractBrowsed} 篇 · 读取全文 ${state.counts.fullTextRead} 篇 · 演示节奏 / 等待已压缩`;
+}
 
-  // 阶段内：流式文本按窗口取前缀；计时器与上下文按声明区间推进。
-  const streams: StreamText = {};
-  for (const id of streamIds) {
-    const window = streamWindows[id];
-    if (window.phase !== index) continue;
-    streams[id] = prefixOf(streamFullCopy[id], streamFraction(frac, window));
-  }
-  // 发起阶段：打字 → sendAt 发送（输入框清空、消息与会话条目出现）。
-  let messages = base.messages;
-  let session = base.session;
-  if (index === phaseIds.intent) {
-    const sent = frac >= sendAt;
-    if (sent) streams.composer = "";
-    messages = sent ? base.messages : 0;
-    session = sent;
-  }
-  const [from, to] = contextRanges[index];
-  const timer = index === phaseIds.deepDive ? Math.round(timerSeconds * frac) : base.timer;
-  // Reviewer 阶段：清单逐项给出，不整卡铺开。
-  const checklist = index === phaseIds.reviewer
-    ? base.checklist.map((state, i) => (frac >= reviewAt[i] ? state : "pending"))
-    : base.checklist;
+function treeFor(state: WorldState): string[] {
+  if (state.openQuestionStatus === "selected-for-investigation") return [...treeNext];
+  if (state.openQuestionId) return [...treeQuestion];
+  if (state.coverageRevisions.length > 0 || state.evidenceIds.includes("E02")) return [...treeRevision];
+  if (state.evidenceIds.includes("E01") || state.counts.fullTextRead > 0) return [...treeEvidence];
+  if (state.visibleGroupIds.includes("G3")) return [...treeG3];
+  if (state.visibleGroupIds.includes("G2")) return [...treeG2];
+  if (state.visibleGroupIds.includes("G1")) return [...treeG1];
+  return [...treeBase];
+}
+
+function focusFor(state: WorldState): string {
+  if (state.openQuestionStatus === "selected-for-investigation") return "n-candidate";
+  if (state.openQuestionId) return "n-gap";
+  if (state.coverageRevisions.length > 0) return "n-revision";
+  if (state.evidenceIds.includes("E01")) return "n-evidence";
+  if (state.selectedDirectionId && treeNodeById.has(state.selectedDirectionId)) return state.selectedDirectionId;
+  if (state.visibleGroupIds.includes("G3")) return "d-identity";
+  if (state.visibleGroupIds.includes("G2")) return "d-consistency";
+  if (state.visibleGroupIds.includes("G1")) return "d-video";
+  return "d-video";
+}
+
+function currentFor(state: WorldState): string {
+  if (state.selectedDirectionId && treeNodeById.has(state.selectedDirectionId)) return state.selectedDirectionId;
+  return "";
+}
+
+function detailFor(state: WorldState): DetailState {
+  const selected = state.selectedDirectionId === "d-crossshot" || Boolean(state.openQuestionId);
   return {
-    phase: index,
-    phaseProgress: frac,
-    caption: phase.caption,
-    ...base,
-    messages,
-    streams,
-    timer,
-    context: Math.round(from + (to - from) * frac),
-    checklist,
-    session,
+    title: selected || state.selectedDirectionId === "d-identity" || state.visibleGroupIds.includes("G3"),
+    intro: selected || state.selectedDirectionId === "d-identity" || state.visibleGroupIds.includes("G3"),
+    question: Boolean(state.openQuestionId),
+    work: state.counts.discovered >= 2,
+    evidence: state.evidenceIds.includes("E01"),
+    todo: state.coverageRecordIds.includes("cov-short-visible") || state.evidenceIds.includes("E03"),
+    mech: Boolean(state.paperReading.P06?.abstractBrowsed || state.paperReading.P06?.fullTextRead),
   };
 }
 
-/** Loop seconds → phase units, through each phase's declared duration. Holds on the final phase. */
-export function progressAt(elapsed: number): number {
-  if (!Number.isFinite(elapsed) || elapsed <= 0) return 0;
-  let start = 0;
-  for (let i = 0; i < entries.length; i++) {
-    const end = start + entries[i].duration;
-    if (elapsed < end) return i + (elapsed - start) / entries[i].duration;
-    start = end;
+function streamsFor(state: WorldState, t: number): StreamText {
+  const streams: StreamText = {};
+  const intentStart = 400;
+  const intentReady = 3600;
+  if (t < 4200) {
+    if (t < intentReady) {
+      const fraction = (t - intentStart) / (intentReady - intentStart);
+      streams.composer = prefixOf(questionText, fraction);
+    } else {
+      streams.composer = "";
+    }
   }
-  return entries.length - 1;
+  const detail = detailFor(state);
+  if (detail.intro) streams.intro = detailCopy.intro;
+  if (detail.question) streams.question = detailCopy.question;
+  if (detail.work) streams.work = detailCopy.work;
+  if (detail.evidence) streams.evidence = detailCopy.evidence;
+  return streams;
 }
 
-/** Mock copy for the React shell — declared once, rendered statically. */
+function messagesFor(state: WorldState): number {
+  let count = 0;
+  if (state.sentTasks.some((task) => task.id === "task-g1")) count = 2;
+  if (state.visibleGroupIds.includes("G1")) count = 3;
+  if (state.sentTasks.some((task) => task.id === "task-g2") || state.selectedDirectionId === "d-consistency") count = 5;
+  if (state.visibleGroupIds.includes("G2")) count = 6;
+  if (state.visibleGroupIds.includes("G3")) count = 8;
+  if (state.evidenceIds.includes("E01")) count = 9;
+  if (state.coverageRevisions.length > 0) count = 10;
+  if (state.openQuestionId) count = 11;
+  if (state.openQuestionStatus === "selected-for-investigation") count = 12;
+  return count;
+}
+
+function checklistFor(state: WorldState): CheckState[] {
+  return [
+    state.coverageRevisions.some((item) => item.counterexampleId === "CE01") ? "pass" : "pending",
+    state.coverageRevisions.some((item) => item.counterexampleId === "CE02") ? "pass" : "pending",
+    state.evidenceIds.includes("E03") || state.openQuestionId ? "hold" : "pending",
+  ];
+}
+
+function timerFor(state: WorldState, t: number): number {
+  const inflight = state.sentTasks.find((task) => task.completedAt === null);
+  if (!inflight) {
+    if (state.sentTasks.length === 0) return 0;
+    return Math.max(0, Math.round((t - state.sentTasks[state.sentTasks.length - 1]!.sentAt) / 1000));
+  }
+  return Math.max(1, Math.round((t - inflight.sentAt) / 1000));
+}
+
+export function projectShell(state: WorldState): ScenarioState {
+  const t = state.t;
+  const phase = sceneIndexAt(t);
+  const scene = demoScenes[phase];
+  const span = Math.max(1, scene.checkpointMs - scene.startMs);
+  const phaseProgress = Math.min(1, Math.max(0, (t - scene.startMs) / span));
+  const world = state;
+  const paperVisible = world.counts.discovered > 0;
+  return {
+    phase,
+    phaseProgress,
+    caption: scene.caption,
+    messages: messagesFor(world),
+    streams: streamsFor(world, t),
+    timer: timerFor(world, t),
+    context: Math.min(24, 6 + world.counts.discovered * 2 + world.visibleGroupIds.length),
+    tree: treeFor(world),
+    current: currentFor(world),
+    focus: focusFor(world),
+    detail: detailFor(world),
+    paper: paperVisible,
+    session: world.sentTasks.length > 0,
+    canvasCount: world.counts.discovered,
+    checklist: checklistFor(world),
+    candidate: world.openQuestionStatus === "selected-for-investigation",
+    processingMeta: processingMetaOf(world),
+  };
+}
+
+/** Absolute-time sampling used by the clock. t is seconds; internally evaluated in ms. */
+export function sampleAtElapsed(elapsedSeconds: number): ScenarioState {
+  const ms = Number.isFinite(elapsedSeconds) ? Math.max(0, elapsedSeconds * 1000) : 0;
+  return projectShell(stateAt(videoIdentityWorld, demoTimeline, ms));
+}
+
+/**
+ * Integer N is the readable checkpoint of scene N.
+ * This is not a phase-start interpolator: N + ε does not rewind to the start of N.
+ * Use sampleAtElapsed for continuous playback and mid-scene frames.
+ */
+export function sampleScenario(phaseIndex: number): ScenarioState {
+  const index = Number.isFinite(phaseIndex) ? Math.max(0, Math.min(demoScenes.length - 1, Math.round(phaseIndex))) : 0;
+  return sampleAtElapsed(phaseCheckpoint(index));
+}
+
 export const authorNames: Record<Role, string> = {
   user: "研究者",
-  lead: "Research Lead",
-  gap: "Gap Finder",
-  innovator: "Innovator",
-  reviewer: "Reviewer",
+  lead: "Explore",
+  gap: "材料覆盖",
+  innovator: "补查修订",
+  reviewer: "问题成形",
 };
 
 export const conversation: ReadonlyArray<{ role: Role; text: string }> = [
   { role: "user", text: questionText },
-  { role: "lead", text: "好。先用 Explore 在「视频生成」内定位一个细分方向，再决定是否深入。" },
-  { role: "lead", text: "候选方向已列在右侧图谱：生成一致性 / 主体身份 / 跨镜头叙事。哪一个更接近你的关注点？" },
+  { role: "lead", text: "已准备 Explore 任务。当前开放的是 Explore；Deep Dive、Deep Research 仍锁定，不会在本演示里执行。发送后才会开始。" },
+  { role: "lead", text: "G1 已到：生成一致性 / 可控生成 / 叙事结构。这是主题起始的根方向组，没有父方向。" },
+  { role: "user", text: "选择生成一致性，继续细分。" },
+  { role: "lead", text: "已准备在「生成一致性」上继续 Explore，并引用 G1 与该方向的双 revision。请发送。" },
+  { role: "lead", text: "G2 已到：主体身份 / 场景一致性 / 运动一致性。" },
   { role: "user", text: "主体身份，尤其是跨镜头时的身份保持。" },
-  { role: "lead", text: "已定位「跨镜头身份保持」。开始深读文献，重建问题 → 方法 → 局限的脉络。" },
-  { role: "gap", text: "对比最接近的工作：长序列下的身份漂移证据不足。候选缺口已给出，待核实。" },
-  { role: "innovator", text: "从控制系统的状态估计带回候选机制：用观测渐进修正状态。迁移前提待验证。" },
-  { role: "reviewer", text: "审查完成：新颖性通过、可行性通过、迁移前提待议（见审查清单）。" },
-  { role: "lead", text: "候选方法已生成（见图谱）。是否推进研究边界，由你确认并实验。" },
-  { role: "user", text: "好，先按验证计划推进。" },
+  { role: "lead", text: "G3 已到：跨镜头身份保持 / 多人身份区分 / 风格变化下身份保持。未选分支仍保留。" },
+  { role: "lead", text: `已阅读演示文献 P01、P02。${e01.claim} ${covShort.statement}` },
+  { role: "innovator", text: `${ce01.reason} 随后 P03 也修正了「当前材料尚未纳入复杂场景」的覆盖记录。旧判断被保留。` },
+  { role: "reviewer", text: oq.question },
+  { role: "user", text: "将问题标为待调查。下一步在相同预算下比较两种更新策略，并核对这些演示材料中的失败案例。" },
 ];
 
-export const paperRef = { title: "Identity-Preserving Video Diffusion", meta: "Chen et al. · CVPR · 2025", tag: "代表" };
+export const paperRef = {
+  title: p01.title,
+  meta: "CoResearch Demo · 合成教学数据 · 非真实论文",
+  tag: p01.demoTag,
+};
 
 export const mechPremises: ReadonlyArray<{ label: string; state: "pass" | "hold" }> = [
-  { label: "状态可观测", state: "pass" },
-  { label: "误差有界", state: "pass" },
-  { label: "观测噪声假设", state: "hold" },
+  { label: "来源是跟踪任务", state: "pass" },
+  { label: "有外部观测这一设定", state: "pass" },
+  { label: "生成任务是否适用", state: "hold" },
 ];
 
 export const checklistLabels: readonly string[] = [
-  "新颖性：未被邻近工作覆盖",
-  "可行性：可在现有条件下验证",
-  "迁移前提：机制适用条件成立",
+  "P05 修正了“仅掌握短片段证据”的覆盖记录",
+  "P03 修正了“尚未纳入复杂场景”的覆盖记录",
+  "固定预算下的策略比较仍待进行（本轮缺口，非全球缺口）",
 ];
 
-/** 侧栏与顶栏的静态装饰文案（观感一致即可；mock 文案集中声明，改文案不动组件）。 */
 export const sidebarCopy = {
   nav: ["首页", "搜索", "论文雷达", "浏览"],
   newSession: "+ 新建会话",
   projectsLabel: "项目",
   project: "视频生成研究",
-  projectMeta: "会话 8",
+  projectMeta: "演示会话",
   session: "跨镜头身份保持",
   olderSession: "生成一致性初探",
   canvas: "画布",
-  user: "zmj",
+  user: "演示",
 };
 export const topbarCopy = {
   breadcrumb: "CoResearch / 视频生成研究",
   likesLabel: "赞",
-  likes: 21,
-  modelShort: "DeepSeek V4.1 Flash",
+  likes: 0,
+  modelShort: "离线演示",
 };
 export const shellCopy = {
-  modelChip: "DeepSeek V4.1 Flash（炼）",
+  modelChip: "离线演示 · 无真实模型请求",
   autoChip: "Auto ▾",
-  tasksChip: "+ 任务 ▾",
+  tasksChip: "任务 · Explore",
   contextPrefix: "上下文",
-  processingPrefix: "已处理 for",
-  processingMeta: "· 深读 6 篇 · 对比邻近工作",
+  processingPrefix: "演示计时",
+  processingMeta: "· 演示节奏 / 等待已压缩",
   graphTitle: "对话研究图谱",
   graphChips: ["通用", "折叠"],
-  reviewTitle: "REVIEWER · 审查",
+  reviewTitle: "覆盖修订 · 教学记录",
   mentionChip: "@ 细化方向",
-  mentionBody: "本轮的出发点：跨镜头时的主体身份保持",
+  mentionBody: "本轮的出发点：跨镜头时的主体身份保持（合成教学数据）",
 };
-/** 方向提及卡在会话流中的位置（位于第 N 条消息之前）。 */
 export const mentionBefore = 3;
-/** 处理行插在会话流的位置（第 N 条消息之后）。 */
-export const processingAfter = 5;
-/** 审查卡插在会话流的位置（第 N 条消息之后）。 */
-export const reviewAfter = 8;
+export const processingAfter = 7;
+export const reviewAfter = 10;

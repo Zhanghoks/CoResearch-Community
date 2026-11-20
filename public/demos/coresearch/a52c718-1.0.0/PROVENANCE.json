@@ -1,0 +1,271 @@
+{
+  "version": "a52c718-1.0.0",
+  "coreSha": "a52c71845fecb7409e7f3df427650a6be85cebec",
+  "coreSourceCommit": "ab422528d72830e88f325c328a83b6e15b559b05",
+  "sourceTreeClean": true,
+  "builtAt": "2026-11-20T16:22:08.958Z",
+  "source": "LLM-Cube/CoResearch plugins/web-ui demo-viewer; compiled public artifact, not a source mirror",
+  "license": "Core MIT LICENSE + NOTICE; bundled third-party copyrights and licenses in THIRD_PARTY_LICENSES.txt/json",
+  "offline": true,
+  "excluded": [
+    "Host / backend / retrieval",
+    "tokens, secrets, environment files",
+    "Sentry, PostHog, analytics",
+    "source maps",
+    "composer.ts Host-bound lit session",
+    "full PreviewPane Host session chrome",
+    "private repository source"
+  ],
+  "bundledDependencies": [
+    {
+      "name": "@earendil-works/pi-web-ui",
+      "version": "0.75.3",
+      "license": "MIT"
+    },
+    {
+      "name": "@floating-ui/core",
+      "version": "1.8.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@floating-ui/dom",
+      "version": "1.8.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@floating-ui/react-dom",
+      "version": "2.1.9",
+      "license": "MIT"
+    },
+    {
+      "name": "@floating-ui/utils",
+      "version": "0.2.12",
+      "license": "MIT"
+    },
+    {
+      "name": "@mariozechner/mini-lit",
+      "version": "0.2.1",
+      "license": "See license files"
+    },
+    {
+      "name": "@radix-ui/primitive",
+      "version": "1.1.7",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-collection",
+      "version": "1.1.15",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-compose-refs",
+      "version": "1.1.5",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-context",
+      "version": "1.2.2",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-direction",
+      "version": "1.1.4",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-dismissable-layer",
+      "version": "1.1.19",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-dropdown-menu",
+      "version": "2.1.24",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-focus-guards",
+      "version": "1.1.6",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-focus-scope",
+      "version": "1.1.16",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-id",
+      "version": "1.1.4",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-menu",
+      "version": "2.1.24",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-popper",
+      "version": "1.3.7",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-portal",
+      "version": "1.1.17",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-presence",
+      "version": "1.1.10",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-primitive",
+      "version": "2.1.10",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-radio-group",
+      "version": "1.4.7",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-roving-focus",
+      "version": "1.1.19",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-slot",
+      "version": "1.3.3",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-use-callback-ref",
+      "version": "1.1.4",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-use-controllable-state",
+      "version": "1.2.6",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-use-effect-event",
+      "version": "0.0.5",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-use-is-hydrated",
+      "version": "0.1.3",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-use-layout-effect",
+      "version": "1.1.4",
+      "license": "MIT"
+    },
+    {
+      "name": "@radix-ui/react-use-size",
+      "version": "1.1.4",
+      "license": "MIT"
+    },
+    {
+      "name": "aria-hidden",
+      "version": "1.2.6",
+      "license": "MIT"
+    },
+    {
+      "name": "class-variance-authority",
+      "version": "0.7.1",
+      "license": "Apache-2.0"
+    },
+    {
+      "name": "clsx",
+      "version": "2.1.1",
+      "license": "MIT"
+    },
+    {
+      "name": "get-nonce",
+      "version": "1.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "katex",
+      "version": "0.16.47",
+      "license": "MIT"
+    },
+    {
+      "name": "lucide-react",
+      "version": "1.48.0",
+      "license": "ISC"
+    },
+    {
+      "name": "react-dom",
+      "version": "19.3.0",
+      "license": "MIT"
+    },
+    {
+      "name": "react-remove-scroll-bar",
+      "version": "2.3.8",
+      "license": "MIT"
+    },
+    {
+      "name": "react-remove-scroll",
+      "version": "2.7.2",
+      "license": "MIT"
+    },
+    {
+      "name": "react-style-singleton",
+      "version": "2.2.3",
+      "license": "MIT"
+    },
+    {
+      "name": "react",
+      "version": "19.3.0",
+      "license": "MIT"
+    },
+    {
+      "name": "scheduler",
+      "version": "0.28.0",
+      "license": "MIT"
+    },
+    {
+      "name": "tailwind-merge",
+      "version": "3.7.0",
+      "license": "MIT"
+    },
+    {
+      "name": "tailwindcss",
+      "version": "4.3.0",
+      "license": "MIT"
+    },
+    {
+      "name": "tailwindcss",
+      "version": "4.3.3",
+      "license": "MIT"
+    },
+    {
+      "name": "tslib",
+      "version": "2.8.1",
+      "license": "0BSD"
+    },
+    {
+      "name": "use-callback-ref",
+      "version": "1.3.3",
+      "license": "MIT"
+    },
+    {
+      "name": "use-sidecar",
+      "version": "1.1.3",
+      "license": "MIT"
+    }
+  ],
+  "files": {
+    "LICENSE": "586fe8965302b57c7a490a42911f847f0dba54e60d95df53f3ad53ed9eed6b83",
+    "NOTICE": "4e21127a8301e50182df14bc60a80d8d8100645e0a04f4a1a8a699363d6b7ba0",
+    "THIRD_PARTY_LICENSES.json": "98726e1f1b01659a4443ef7037a46218559c18e399ac98cde88a75a471e81d67",
+    "THIRD_PARTY_LICENSES.txt": "1d98be66d3bea20ef1e72891b9ff9218cfbfa8c8f2bb949538e19d4f0ba00af0",
+    "assets/index-CeXFVUlW.css": "722ba53775065b43007035ee1bbf7c488f61b678a83ce2c8fdbaf7409c8b1390",
+    "assets/index-ClJuelNc.js": "5186d492aa76e3677ed7ab9fbe68739c2184c1790f08981266e5f7cb452fffb6",
+    "demo-viewer.html": "66080ea44e4376589037825935d9822ec6156f85b0690d491648ebf57cf43535",
+    "index.html": "66080ea44e4376589037825935d9822ec6156f85b0690d491648ebf57cf43535"
+  }
+}

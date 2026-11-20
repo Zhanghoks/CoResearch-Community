@@ -1,53 +1,33 @@
 # Research World: SVG + GSAP story
 
-This implementation replaces only the rendered `ResearchWorldStory` section. The existing hero, navigation, community content, documentation, and unused PixiJS renderer remain intact. Dependencies are unchanged.
+This implementation replaces only the rendered `ResearchWorldStory` section. The existing hero, navigation, community content, documentation, unused PixiJS renderer, and the #38 product-demo viewer remain intact.
+
+## What changed in #39
+
+The 13-chapter terminology walk (Graph → … → Gap Finder → Innovator → Candidate) is replaced by **eight causal acts** driven by the shared #37 synthetic fixture (`video-identity`). Viewers should be able to name the open question, at least one supporting evidence item, a counterexample that revised a prior coverage record, and the next verification step, without relying on narration alone.
+
+The #35 engine is preserved where required: deterministic SVG world coordinates, no CSS blur, stroke-drawn paths, pure `sampleStory(progress)` / `sampleConcept(progress)` evaluation, reversible seek, manual and scroll modes, and reduced-motion complete keyframes.
+
+## The eight acts
+
+1. Interest: preset prompt「视频生成，我想找一个值得研究的问题」with seed and three comparable directions.
+2. Choose and refine: 生成一致性 → 主体身份 → 跨镜头身份保持. Gold focus follows the chosen path; unselected branches stay dimmed.
+3. Read P01/P02 and form E01 (conditional support under short, continuously visible clips).
+4. Compare conditions and budgets (L01/L02). The solid region is “当前证据覆盖”, not a map of the field.
+5. Record that coverage and start a follow-up search. No green success mark.
+6. P05/P03 revise the **same** coverage record (`cov-short-visible` via CE01/CE02). The previous and revised statements are shown together; seeking back restores the pre-revision state.
+7. Form the complete open question `oq-identity-budget` (scope, grounds, counterexamples, unknown, next step, unverified status). P06 is linked as “候选迁移，待验证”.
+8. The researcher chooses the next comparison. The story stops; replay is explicit. This is a concept vision, not a claim that locked product tasks are available. Explore remains the only open task.
+
+Screen typography: key labels ≥ 14 CSS px, the question body ≥ 16 CSS px, in an HTML overlay that does not shrink with SVG zoom. Desktop: local graph + evidence/question card. Mobile: current action on top, then the graph, then one card.
 
 ## Interaction
 
-The same SVG scene stays mounted through 13 settled chapter states:
-
-Graph → Research World → Literature Space → Core → Frontier → Margin/Boundary → Idea Space → Explore (domain) → Explore (focus) → Deep Dive → Gap Finder → Innovator → Candidate / iteration.
-
-ScrollTrigger pins the stage below the measured site header. Scroll is the single playback source. Previous, next, and chapter selection scroll to the timeline's **settled** label, not the start of a transition. Native wheel, touch, or navigation keys cancel an in-progress programmatic scroll. A separate click-presentation mode pauses scroll-driven playback; changing mode preserves the current chapter. Reduced-motion preferences use immediate slide changes with no pin or camera tween. Very short viewports use presentation mode to avoid trapping page scrolling. A skip button exits the pinned section. The text transcript is always available, including when JavaScript or animation loading fails.
+Autoplay on desktop uses the shared `createDemoPlayer` with a 62s clock, in-view start, content hover/focus pause, control events that do not count as user content pauses, and a final hold. Scroll mode from #35 remains available on desktop. Mobile and short viewports default to manual steps. Reduced motion jumps to complete keyframes. Skip, previous/next, chapter picker, keyboard arrows, and a full transcript cover all eight acts.
 
 ## Files
 
-- `app/components/research-story/ResearchWorldStory.tsx`: lifecycle, scoped GSAP context, pinning, controls, chapter tick navigation, motion preference, header measurement and teardown.
-- `ResearchWorldSvg.tsx`: declarative layers, community glow washes, organic region blobs, SVG icons, mock nodes and links. Definition IDs use React `useId`; node entrance delays are engine-stable (`Math.sqrt`, quantized) for hydration.
-- `StoryNarration.tsx`: paired chapter transition (outgoing copy fades up while the incoming copy settles from below), separate from the camera.
-- `research-story.css`: responsive layout, ripple entrance, low-saturation palette, chapter tick rail, focus styles, transcript.
-- `app/graph-svg/mock-world.ts`: seeded stable coordinates, per-community hue anchors, depth tiers with baked alpha and explicit semantic paths; no force simulation during scrolling.
-- `app/graph-svg/story.ts`: chapter targets and pure `sampleStory(progress)` interpolation.
-- `app/graph-svg/scene.ts`: cached DOM handles; applies numeric pose/opacity/dash/stagger properties without per-frame React reconciliation. Reveal values normalize to exact `0`/`1` at the settled ends.
-- `scripts/test-research-story.mjs`: graph, palette, tier, path, stagger, phase-visibility, reversibility and renderer-reset assertions; executes automatically before `npm run build`.
-- `scripts/smoke-research-story.mjs`: standalone Playwright smoke (`npm run test:visual`) — steps all 13 chapters at desktop and mobile widths, screenshots to `smoke-artifacts/`, asserts no blank scene, no horizontal overflow and no page errors. Not part of prebuild.
-
-## Data contract
-
-The map contains 300 mock nodes and 553 mock links. Domain memberships may overlap. Background nodes carry a depth tier (1–3) with a baked drawing alpha, so zoomed frames stay crisp without CSS blur, plus a community hue anchor from one cool ink palette; gold (idea), amber (gap/candidate), violet (boundary) and teal-green (transfer) remain reserved semantic accents. The base graph excludes the future Gap and Method candidate, which appear only in their narrative phases. Explore follows the explicitly defined direction path. Literature relations are demonstration data, not verified academic lineage. Geometry, node density and location are **not** used as evidence of scientific maturity or novelty.
-
-Core / Frontier / Margin are illustrative local evidence regions. Research World includes both Literature Space and Idea Space. The gold marker is a projection of the current research position, not the whole Idea State. Intent is a suggested direction, not execution permission. An out-of-boundary Method remains a **candidate**, not a claim of an actual breakthrough. The animation never launches a live research task.
-
-## Local development
-
-```sh
-npm ci
-npm run test:story
-npm run dev
-# Verify the project base path too:
-NEXT_PUBLIC_BASE_PATH=/CoResearch-Community npm run build
-```
-
-`package-lock.json` is unchanged because no dependency or version was added; package.json adds scripts only. `prebuild` runs the pure tests in the existing GitHub Pages build without requiring workflow permissions.
-
-## Verification and manual acceptance
-
-The implementation was checked locally with TypeScript syntax/transpilation, strict checking of pure graph/story/scene modules, graph-reference assertions, phase/reset tests, and browser rendering of the actual SVG plus pure scene renderer at desktop/mobile sizes. The local browser fixture does **not** substitute for a full Next.js + GSAP lifecycle test. Network restrictions prevented npm installation/full Next.js build locally; verify the GitHub Pages build separately.
-
-For browser acceptance, check: first-frame layout, all chapter jumps, reverse scrolling, repeated mode changes, wheel/touch interruption, browser resize and header reflow, keyboard controls, reduced motion, a 390px mobile viewport, short landscape viewport, skip/return and client-side navigation away/back. Ensure only one story ScrollTrigger and one SVG remain after re-mounts. No unknown node or scientific candidate should appear before its chapter.
-
-## Technical references
-
-- GSAP ScrollTrigger: https://gsap.com/docs/v3/Plugins/ScrollTrigger/
-- GSAP context and cleanup: https://gsap.com/docs/v3/GSAP/gsap.context()/
-- SVG coordinates: https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/viewBox
+- `app/demo/scenes/concept.ts`: act timings, kernel checkpoints, `factsForAct`.
+- `app/graph-svg/story.ts`, `scene.ts`, `types.ts`, `mock-world.ts`: camera vs facts, eight settled poses, weakened background (not a quality metric).
+- `app/components/research-story/*`: SVG path/coverage/revision layers, HTML overlay, narration (action / change / next), player and mobile layout.
+- `scripts/test-research-story.mjs` asserts eight acts, reversible act-6 revision, and fixture-backed foreground. `scripts/smoke-research-story.mjs` no longer treats node count ≥ 250 as quality.

@@ -4,6 +4,14 @@ export const newIssueUrl = "https://github.com/Zhanghoks/CoResearch-Community/is
 export const spaceDocUrl =
   "https://github.com/Zhanghoks/CoResearch-Community/blob/main/docs/space.md";
 
+export const siteUrl = "https://zhanghoks.github.io/CoResearch-Community";
+export const siteName = "CoResearch";
+export const siteTitle = "CoResearch · 在前人的研究世界里，找到下一步";
+export const siteDescription =
+  "在前人研究构成的知识世界中探索、定位研究方向，并设计有依据、可验证的下一步。";
+export const productDemoHref = "/product";
+export const productDemoCta = "观看运行演示";
+
 export const docs = [
   {
     title: "Research World · Literature Space · Idea Space",

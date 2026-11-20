@@ -1,70 +1,24 @@
 import Link from "next/link";
-import { DemoWindow } from "./product-demo/DemoPanels";
 import { FaqList } from "./faq-list";
 import { SpaceSwitcher } from "./space-switcher";
 import { Workflow } from "./workflow";
-import { githubUrl, issuesUrl, newIssueUrl, principles, roles, spaceDocUrl } from "../content";
+import {
+  githubUrl,
+  issuesUrl,
+  newIssueUrl,
+  principles,
+  productDemoCta,
+  productDemoHref,
+  roles,
+  spaceDocUrl,
+} from "../content";
+
+const focusRing =
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#262626]";
 
 export function SiteStory() {
   return (
     <div>
-      <section id="top" className="mx-auto max-w-6xl px-5 pb-20 pt-12 md:pt-16">
-        <p className="inline-flex items-center gap-2 text-sm font-medium">
-          <span className="rounded-full bg-[#a9ff63] px-2 py-0.5 text-xs font-semibold">
-            Vision
-          </span>
-          Explore the Research World
-        </p>
-        <h2 className="mt-6 max-w-4xl text-5xl font-semibold tracking-tight text-balance md:text-7xl md:leading-[1.05]">
-          在前人的研究世界里，找到下一步
-        </h2>
-        <p className="mt-6 max-w-2xl text-lg leading-8 text-[#3f413c] md:text-xl">
-          从模糊的研究兴趣出发，定位细分方向，看清前人做到了哪里，再在证据之上设计可验证的新方法。
-        </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <a
-            href="#workflow"
-            className="rounded-full bg-[#262626] px-5 py-3 text-sm font-medium text-white"
-          >
-            看研究工作流
-          </a>
-          <a
-            href={spaceDocUrl}
-            className="rounded-full bg-white px-5 py-3 text-sm font-medium ring-1 ring-black/10"
-          >
-            阅读空间设计
-          </a>
-        </div>
-        <p className="mt-6 max-w-2xl text-sm leading-6 text-[#6b6d66]">
-          这是一套持续演进的设计。页面描述愿景和工作流，不代表每个 Agent 角色都已在公开版本中完整实现。
-        </p>
-
-        <div className="mt-14 overflow-hidden rounded-[32px] border border-black/10 bg-white shadow-[0_30px_80px_rgba(38,38,38,0.06)]">
-          <div className="grid md:grid-cols-2">
-            <article className="border-b border-black/8 p-8 md:border-r md:border-b-0 md:p-10">
-              <p className="text-xs font-medium tracking-[0.16em] text-[#6d7a3a]">
-                LITERATURE SPACE
-              </p>
-              <h3 className="mt-3 text-2xl font-semibold">前人研究了什么</h3>
-              <ul className="mt-6 space-y-3 text-sm leading-6 text-[#3f413c]">
-                <li>Domain → Subfield → Direction</li>
-                <li>Paper → Problem → Method</li>
-                <li>Evaluation → Result → Limitation</li>
-              </ul>
-            </article>
-            <article className="bg-[#f7f8f1] p-8 md:p-10">
-              <p className="text-xs font-medium tracking-[0.16em] text-[#6d7a3a]">IDEA SPACE</p>
-              <h3 className="mt-3 text-2xl font-semibold">你正在推进什么</h3>
-              <ul className="mt-6 space-y-3 text-sm leading-6 text-[#3f413c]">
-                <li>Idea State：随证据实时演化的已知与未知</li>
-                <li>Intent：下一步最值得解决的不确定性</li>
-                <li>Revision：证据、理由和用户确认</li>
-              </ul>
-            </article>
-          </div>
-        </div>
-      </section>
-
       <section id="workflow" className="mx-auto max-w-6xl px-5 py-20">
         <h2 className="max-w-3xl text-4xl font-semibold tracking-tight text-balance md:text-5xl">
           四步，从兴趣走到可验证的下一步
@@ -94,7 +48,7 @@ export function SiteStory() {
           多 Agent 协作，服务一次有依据的判断
         </h2>
         <p className="mt-5 max-w-2xl text-lg leading-8 text-[#3f413c]">
-          目标不是把几篇论文的方法拼在一起，而是走完一条推理链：问题、Gap、相似挑战、可迁移机制、候选方法和验证计划。
+          目标不是把几篇论文的方法拼在一起，而是走完一条推理链：问题、Gap、相似挑战、可迁移机制、候选方法和验证计划。这些角色描述的是目标协作机制，不代表公开版本已经完整实现。
         </p>
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
           {roles.map((role) => (
@@ -114,39 +68,10 @@ export function SiteStory() {
         </ol>
       </section>
 
-      <section id="product-demo" className="mx-auto max-w-6xl px-5 py-20" aria-label="产品页入口">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2 className="text-4xl font-semibold tracking-tight md:text-5xl">看 CoResearch 跑一次研究</h2>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-[#3f413c]">
-              产品页里有一段自动播放的运行演示：研究者输入一句模糊兴趣，Agent 们在会话与图谱里接力推进，直到可验证的候选方法。
-            </p>
-          </div>
-          <Link
-            href="/product"
-            className="rounded-full bg-[#262626] px-5 py-3 text-sm font-medium text-white transition hover:bg-black"
-          >
-            观看运行演示 →
-          </Link>
-        </div>
-        <Link
-          href="/product"
-          aria-label="进入产品页观看运行演示"
-          className="mt-10 block overflow-hidden rounded-[32px] bg-[#101011] p-4 ring-1 ring-black/8 transition hover:ring-black/20 md:p-6"
-        >
-          <div className="pointer-events-none mx-auto max-w-4xl">
-            <DemoWindow settled />
-          </div>
-        </Link>
-        <p className="mt-4 text-center text-xs leading-6 text-[#8a8c84]">
-          产品界面复刻 mock · 内容为演示用数据，不代表已上线功能；候选结论均须核验。
-        </p>
-      </section>
-
       <section id="community" className="mx-auto max-w-6xl px-5 py-20">
-        <h2 className="text-4xl font-semibold tracking-tight md:text-5xl">社区</h2>
+        <h2 className="text-4xl font-semibold tracking-tight md:text-5xl">社区与反馈</h2>
         <p className="mt-5 max-w-2xl text-lg leading-8 text-[#3f413c]">
-          这个仓库用来交流体验、提交 Bug 和讨论设计。先搜索是否已有类似问题，再分享你的场景。
+          本页介绍 CoResearch。如需交流体验、提交 Bug 或讨论设计，请使用本仓库的 Issues。先搜索是否已有类似问题，再分享你的场景。
         </p>
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           <CommunityCard
@@ -177,17 +102,46 @@ export function SiteStory() {
         </div>
       </section>
 
+      <section
+        id="get-started"
+        className="mx-auto max-w-6xl px-5 pb-20"
+        aria-label="下一步"
+      >
+        <div className="rounded-[32px] bg-[#262626] px-8 py-10 text-[#fdfff7] md:px-12 md:py-12">
+          <h2 className="max-w-3xl text-3xl font-semibold tracking-tight md:text-4xl">
+            下一步：先看一次产品演示
+          </h2>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-white/80 md:text-lg">
+            运行演示使用当前 CoResearch 展示组件的离线 viewer 和合成教学数据，用来说明研究工作流，不是一次真实模型请求，也不代表已上线功能。如需反馈问题或讨论设计，请到本仓库的 Issues。
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href={productDemoHref}
+              className="rounded-full bg-[#a9ff63] px-5 py-3 text-sm font-medium text-[#262626] transition hover:bg-[#c0ff8a] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a9ff63]"
+            >
+              {productDemoCta} →
+            </Link>
+            <a
+              href={issuesUrl}
+              className="rounded-full bg-white/10 px-5 py-3 text-sm font-medium text-white ring-1 ring-white/20 transition hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            >
+              前往社区与反馈
+            </a>
+          </div>
+        </div>
+      </section>
+
       <footer className="border-t border-black/8">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-10 text-sm text-[#6b6d66] md:flex-row md:items-center md:justify-between">
-          <p>CoResearch Community</p>
-          <div className="flex gap-5">
-            <a href={githubUrl} className="hover:text-[#262626]">
+          <p>CoResearch · 产品介绍页</p>
+          <div className="flex flex-wrap gap-5">
+            <a href={githubUrl} className={`hover:text-[#262626] ${focusRing}`}>
               GitHub
             </a>
-            <a href={issuesUrl} className="hover:text-[#262626]">
+            <a href={issuesUrl} className={`hover:text-[#262626] ${focusRing}`}>
               GitHub Issues
             </a>
-            <a href={spaceDocUrl} className="hover:text-[#262626]">
+            <a href={spaceDocUrl} className={`hover:text-[#262626] ${focusRing}`}>
               Space 文档
             </a>
           </div>
@@ -212,7 +166,7 @@ function CommunityCard({
     <article className="flex flex-col rounded-[24px] bg-white p-7 ring-1 ring-black/8">
       <h3 className="text-xl font-semibold">{title}</h3>
       <p className="mt-3 flex-1 leading-7 text-[#3f413c]">{body}</p>
-      <a href={href} className="mt-6 text-sm font-medium">
+      <a href={href} className={`mt-6 text-sm font-medium ${focusRing}`}>
         {action} →
       </a>
     </article>

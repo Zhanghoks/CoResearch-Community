@@ -1,0 +1,14 @@
+export * from "./domain";
+export * from "./events";
+export * from "./evaluate";
+export * from "./player";
+export * from "./timeline";
+export * from "./network-guard";
+export { videoIdentityWorld, manifest, INTEREST_PROMPT, OPEN_QUESTION_ID, directionById, groupById, paperById, evidenceById, openQuestionById, counterexampleById, coverageById } from "./fixtures/video-identity";
+export { fixtureVariants, metadataOnlyWorld, unavailableWorld } from "./fixtures/variants";
+export type { FixtureVariant, FixtureVariantId } from "./fixtures/variants";
+export { projectProduct, productScenes } from "./scenes/product";
+export { projectConcept, conceptScenes, conceptGraphAliases, fixtureIdToGraphId, graphIdToFixtureId } from "./scenes/concept";
+export { projectGuide, guideScenes } from "./scenes/guides";
+export { createMockPreviewPort, toPreviewRef, isFullTextReadAllowed, DemoResourceError } from "./adapters/coresearch";
+export type { PreviewResourcePort, PreviewResourceRef, ResolvedPreviewResource, MockPortOptions } from "./adapters/coresearch";

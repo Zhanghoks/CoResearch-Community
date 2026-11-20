@@ -1,4 +1,4 @@
-.rw-story { --rw-top: 72px; --rw-ink: #293946; --rw-blue: #3f6f9b; color: var(--rw-ink); background: #fbfcf8; position: relative; scroll-margin-top: var(--rw-top); }
+.rw-story { --rw-top: 72px; --rw-ink: #293946; --rw-blue: #3f6f9b; --rw-label: 14px; --rw-question: 16px; color: var(--rw-ink); background: #fbfcf8; position: relative; scroll-margin-top: var(--rw-top); }
 .rw-stage { height: calc(100svh - var(--rw-top)); width: 100%; max-width: 1800px; margin-inline: auto; padding: 20px clamp(18px, 3.5vw, 64px) 12px; box-sizing: border-box; display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto auto; background: #fbfcf8; overflow: hidden; border-block: 1px solid #e7eceb; }
 .rw-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .rw-kicker { margin: 0 0 7px; color: #718596; font-size: 10px; font-weight: 600; letter-spacing: .16em; }
@@ -6,51 +6,60 @@
 .rw-heading h2 span { color: #81909d; font-size: .65em; font-weight: 400; margin-left: 10px; letter-spacing: -.02em; }
 .rw-skip { font-size: 12px; color: #687e90; white-space: nowrap; cursor: pointer; background: transparent; border: 1px solid transparent; border-radius: 999px; padding: 8px 16px; transition: background .2s, color .2s; }
 .rw-skip:hover { background: #eef3f6; color: #3d5a74; }
-.rw-content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 310px); gap: clamp(16px, 2vw, 34px); align-items: center; min-height: 0; }
-.rw-canvas { position: relative; min-width: 0; height: 100%; overflow: hidden; }
+
+/* Desktop: local graph + evidence/question cards. Narration sits above the card column. */
+.rw-content { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, 400px); grid-template-rows: auto minmax(0, 1fr); gap: clamp(12px, 1.6vw, 28px); align-items: stretch; min-height: 0; }
+.rw-canvas { grid-column: 1; grid-row: 1 / span 2; position: relative; min-width: 0; min-height: 0; height: 100%; overflow: hidden; }
+.rw-narration { grid-column: 2; grid-row: 1; position: relative; border-left: 1px solid #dce5ea; padding-left: 22px; min-height: 0; }
+.rw-overlay { grid-column: 2; grid-row: 2; min-height: 0; overflow: auto; padding-left: 22px; display: flex; flex-direction: column; gap: 10px; }
 .rw-svg { width: 100%; height: 100%; display: block; user-select: none; }
 .rw-reveal { opacity: 0; visibility: hidden; }
 
-/* ——— Scene styling ——— */
 .rw-route { fill: none; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
-.rw-node-label { font-family: inherit; font-size: 19px; font-weight: 500; paint-order: stroke; stroke: #fbfcf8; stroke-width: 4.5px; stroke-linejoin: round; }
-.rw-region-label { font-family: inherit; font-size: 21px; font-weight: 600; letter-spacing: .14em; paint-order: stroke; stroke: #fbfcf8; stroke-width: 4px; stroke-linejoin: round; }
-.rw-world-label { font-family: inherit; font-size: 17px; font-weight: 600; letter-spacing: .32em; fill: #7c8fa1; }
-.rw-small-label { font-family: inherit; font-size: 14px; fill: #6b7a89; paint-order: stroke; stroke: #fbfcf8; stroke-width: 3.5px; stroke-linejoin: round; }
-/* Entrance: the world fades up, edges breathe in, nodes ripple outward from the center. */
 .rw-glow { animation: rw-fade-in 1.4s ease backwards; }
 .rw-svg .rw-edges { animation: rw-fade-in 1s ease .15s backwards; }
 .rw-svg [data-rw-node] { animation: rw-node-in .8s ease backwards; animation-delay: var(--rw-d, 0s); }
 @keyframes rw-fade-in { from { opacity: 0; } }
 @keyframes rw-node-in { from { opacity: 0; } }
-/* Semantic markers: dashed evidence rings turn slowly; the idea marker breathes. */
-.rw-spin { transform-box: fill-box; transform-origin: center; animation: rw-spin 16s linear infinite; }
-@keyframes rw-spin { to { transform: rotate(180deg); } }
-.rw-breathe { transform-box: fill-box; transform-origin: center; animation: rw-breathe 2.6s ease-in-out infinite; }
-@keyframes rw-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.16); } }
-/* Focus layers pop in around their own content. */
-[data-rw-layer="papers"], [data-rw-layer="gap"], [data-rw-layer="candidate"], [data-rw-layer="idea"] { transform-box: fill-box; transform-origin: center; }
+[data-rw-layer="evidence"], [data-rw-layer="revision"], [data-rw-layer="question"], [data-rw-layer="nextStep"] { transform-box: fill-box; transform-origin: center; }
 
-/* ——— Narration with paired transitions ——— */
-.rw-narration { position: relative; border-left: 1px solid #dce5ea; padding-left: 26px; min-height: 0; }
 .rw-narr-body { animation: rw-narr-in .55s cubic-bezier(.22,.8,.36,1) both; }
-.rw-narr-out { position: absolute; inset: 0 0 0 27px; pointer-events: none; animation: rw-narr-out .42s ease both; }
+.rw-narr-out { position: absolute; inset: 0 0 0 22px; pointer-events: none; animation: rw-narr-out .42s ease both; }
 @keyframes rw-narr-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 @keyframes rw-narr-out { to { opacity: 0; transform: translateY(-14px); } }
-.rw-eyebrow { font-size: 10px; color: #527f9f; font-weight: 600; letter-spacing: .12em; margin: 0 0 16px; }
-.rw-narration h3 { font-size: clamp(22px, 2vw, 29px); line-height: 1.4; margin: 0 0 18px; font-weight: 600; letter-spacing: -.035em; }
-.rw-body { font-size: 15px; line-height: 1.9; color: #566978; margin: 0 0 22px; }
-.rw-takeaway { border-top: 1px solid #e0e7e9; padding-top: 14px; font-size: 12.5px; line-height: 1.8; color: #5f7386; margin: 0; }
-.rw-takeaway-mark { display: inline-block; margin-right: 9px; padding: 1px 9px; border-radius: 999px; background: #f0f5e9; color: #5f7038; font-size: 10px; font-weight: 600; letter-spacing: .1em; }
-.rw-key { display: flex; flex-wrap: wrap; gap: 14px; font-size: 11px; color: #64768a; margin-top: 26px; }
-.rw-key span { display: flex; align-items: center; gap: 6px; }
-.rw-key i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
-.rw-key-paper { background: #5c7c9e; }
-.rw-key-idea { background: #e0a63a; }
-.rw-key-candidate { background: transparent; border: 1px dashed #c49654; }
+.rw-eyebrow { font-size: 10px; color: #527f9f; font-weight: 600; letter-spacing: .12em; margin: 0 0 10px; }
+.rw-narration h3 { font-size: clamp(20px, 1.8vw, 26px); line-height: 1.35; margin: 0 0 10px; font-weight: 600; letter-spacing: -.035em; }
+.rw-body { font-size: 15px; line-height: 1.7; color: #566978; margin: 0 0 10px; }
+.rw-action, .rw-change, .rw-takeaway, .rw-next { font-size: var(--rw-label); line-height: 1.65; color: #5f7386; margin: 0 0 8px; }
+.rw-takeaway { border-top: 1px solid #e0e7e9; padding-top: 10px; }
+.rw-takeaway-mark { display: inline-block; margin-right: 8px; padding: 1px 9px; border-radius: 999px; background: #f0f5e9; color: #5f7038; font-size: 10px; font-weight: 600; letter-spacing: .1em; }
 
-/* ——— Progress with chapter ticks ——— */
-.rw-progress-row { position: relative; height: 18px; display: flex; align-items: center; margin-top: 4px; }
+.rw-legend { display: flex; flex-wrap: wrap; gap: 10px 14px; list-style: none; margin: 0; padding: 0; font-size: var(--rw-label); color: #5f7386; }
+.rw-legend i { width: 12px; height: 8px; margin-right: 6px; display: inline-block; vertical-align: middle; border-radius: 1px; }
+.rw-key-path { background: #5b93c4; }
+.rw-key-cover { background: #6d8f5a; }
+.rw-key-dash { background: transparent; border: 1px dashed #9483b0; height: 0; width: 14px; }
+.rw-key-revise { background: #a46a3a; }
+.rw-key-question { background: #3d5a74; border-radius: 50%; width: 8px; height: 8px; }
+.rw-chip, .rw-dir-list, .rw-rel-list, .rw-paper-card, .rw-evidence, .rw-coverage, .rw-next-step, .rw-conditions { font-size: var(--rw-label); line-height: 1.55; color: #3d5a74; }
+.rw-dir-list, .rw-rel-list, .rw-paper-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.rw-dir-list li, .rw-rel-list li, .rw-paper-card, .rw-chip { border: 1px solid #dbe4ea; border-radius: 10px; padding: 6px 10px; background: #fff; }
+.rw-dir-list .is-focus { border-color: #e0a63a; background: #fff8ea; }
+.rw-dir-list .is-dimmed { opacity: .65; }
+.rw-paper-tag { margin: 0 0 2px; font-size: var(--rw-label); color: #6d7a3a; font-weight: 600; }
+.rw-paper-title, .rw-label-strong, .rw-rel-list { font-size: var(--rw-label); font-weight: 600; margin: 0; }
+.rw-evidence, .rw-coverage, .rw-question, .rw-next-step { border: 1px solid #dce5ea; border-radius: 12px; padding: 10px 12px; background: #fff; }
+.rw-coverage .rw-prev { text-decoration: line-through; color: #7a6a5a; }
+.rw-coverage .rw-revised { font-weight: 600; }
+.rw-question .rw-question-body { font-size: var(--rw-question); line-height: 1.55; margin: 0 0 8px; font-weight: 600; color: var(--rw-ink); }
+.rw-question p, .rw-next-step p, .rw-evidence p, .rw-coverage p { margin: 0 0 6px; font-size: var(--rw-label); }
+.rw-question p:last-child, .rw-next-step p:last-child { margin-bottom: 0; }
+.rw-conditions { width: 100%; border-collapse: collapse; }
+.rw-conditions caption, .rw-conditions th, .rw-conditions td { font-size: var(--rw-label); text-align: left; padding: 4px 6px; }
+.rw-conditions caption { font-weight: 600; padding-left: 0; margin-bottom: 4px; }
+.rw-conditions th { width: 3.5em; color: #5f7038; }
+
+.rw-progress-row { position: relative; z-index: 1; height: 18px; display: flex; align-items: center; margin-top: 4px; flex-shrink: 0; background: #fbfcf8; }
 .rw-progress-track { position: absolute; inset-inline: 4px; top: 50%; height: 2px; margin-top: -1px; background: #e4ebee; overflow: hidden; border-radius: 1px; }
 .rw-progress-track span { display: block; width: 100%; height: 100%; background: linear-gradient(90deg, #5486ab, var(--rw-blue)); transform: scaleX(0); transform-origin: left center; }
 .rw-ticks { position: relative; display: flex; justify-content: space-between; width: 100%; }
@@ -59,21 +68,20 @@
 .rw-tick.is-passed { background: #a7bdd0; border-color: #a7bdd0; }
 .rw-tick.is-active { background: var(--rw-blue); border-color: var(--rw-blue); transform: scale(1.4); box-shadow: 0 0 0 3.5px rgba(63, 111, 155, .14); }
 
-/* ——— Controls ——— */
-.rw-controls { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding-top: 12px; }
+.rw-controls { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; padding-top: 12px; flex-shrink: 0; position: relative; z-index: 1; background: #fbfcf8; }
 .rw-mode { font-size: 12px; color: #6f8190; }
 .rw-mode button { cursor: pointer; border: 1px solid transparent; background: transparent; padding: 8px 14px; border-radius: 999px; color: inherit; transition: background .2s, color .2s; }
 .rw-mode button:hover { background: #eef3f6; color: #3d5a74; }
 .rw-chapter-picker select { appearance: none; background: transparent url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2364788e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center; border: 1px solid #dbe4ea; border-radius: 999px; color: #45657e; max-width: 300px; font-size: 12px; padding: 9px 32px 9px 16px; cursor: pointer; transition: border-color .2s, background-color .2s; }
 .rw-chapter-picker select:hover { border-color: #b9cbd9; background-color: #f6f9fb; }
-.rw-buttons { display: flex; gap: 8px; }
+.rw-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
 .rw-buttons button { border: 1px solid #dbe4ea; background: #fff; color: #3d5a74; border-radius: 999px; padding: 10px 20px; font-size: 12.5px; cursor: pointer; min-height: 40px; box-shadow: 0 1px 2px rgba(38, 57, 70, .05); transition: background .2s, border-color .2s; }
 .rw-buttons button:hover:not(:disabled) { background: #f2f6f9; border-color: #c6d5e0; }
 .rw-buttons .rw-next { background: #262626; color: #fff; border-color: #262626; }
 .rw-buttons .rw-next:hover:not(:disabled) { background: #3d3d3d; border-color: #3d3d3d; }
 .rw-buttons button:disabled { opacity: .4; cursor: default; }
 .rw-story button:focus-visible, .rw-story select:focus-visible, .rw-story summary:focus-visible { outline: 2px solid var(--rw-blue); outline-offset: 4px; }
-.rw-demo-note { font-size: 10px; color: #8796a1; text-align: center; margin: 10px 0 0; }
+.rw-demo-note { font-size: 11px; color: #8796a1; text-align: center; margin: 10px 0 0; }
 .rw-transcript { max-width: 1160px; padding: 24px; margin: 0 auto; scroll-margin-top: calc(var(--rw-top) + 20px); }
 .rw-transcript summary { cursor: pointer; font-size: 13px; color: #4c6b82; padding: 10px 0; }
 .rw-transcript details > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; padding-top: 24px; }
@@ -81,36 +89,42 @@
 .rw-transcript article p { font-size: 14px; line-height: 1.8; }
 .rw-transcript > p, .rw-error { font-size: 11px; line-height: 1.7; color: #8796a1; margin-top: 12px; }
 .rw-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-.rw-short .rw-stage { height: auto; min-height: 560px; }
-@media(max-width: 760px) {
-  .rw-stage { padding: 14px 18px 10px; }
+.rw-short .rw-stage { height: auto; min-height: 0; overflow: visible; grid-template-rows: auto auto auto auto auto; }
+
+/* Short / zoomed desktop (e.g. 200% zoom): grow the stage and wrap controls
+   instead of clipping Act 8 into the progress row or overlapping 下一步.
+   Do not shrink --rw-label (14px) or --rw-question (16px). */
+@media (max-height: 720px) and (min-width: 761px) {
+  .rw-stage { height: auto; min-height: 0; overflow: visible; grid-template-rows: auto auto auto auto auto; }
+  .rw-content { grid-template-rows: auto minmax(200px, auto); }
+  .rw-canvas { height: auto; min-height: 200px; max-height: min(36vh, 320px); }
+  .rw-overlay { overflow: visible; }
+}
+
+/* Mobile: current action on top, then one local graph, then the evidence/question card. Do not shrink label or question type below 14/16px. */
+@media (max-width: 760px) {
+  .rw-stage { padding: 14px 18px 10px; height: auto; min-height: 0; overflow: visible; }
   .rw-heading h2 span { display: none; }
-  /* 窄画布上相机途经时世界标签必然出框，移动端直接不画。 */
-  .rw-world-label { display: none; }
-  .rw-content { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(150px, 1fr) auto; gap: 0; }
-  .rw-narration { border-left: 0; padding: 0 2px 16px; }
+  .rw-content { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(180px, 36vh) auto; gap: 10px; }
+  .rw-narration { grid-column: 1; grid-row: 1; border-left: 0; padding: 0 2px 8px; }
+  .rw-canvas { grid-column: 1; grid-row: 2; }
+  .rw-overlay { grid-column: 1; grid-row: 3; padding-left: 0; max-height: none; overflow: visible; }
   .rw-narr-out { inset: 0; padding-left: 0; }
-  .rw-eyebrow { font-size: 9px; margin-bottom: 8px; }
-  .rw-narration h3 { font-size: 21px; margin-bottom: 8px; }
-  .rw-body { font-size: 13px; line-height: 1.65; margin-bottom: 8px; }
-  .rw-takeaway { font-size: 11px; line-height: 1.6; padding-top: 8px; }
-  .rw-key { display: none; }
+  .rw-narration h3 { font-size: 20px; margin-bottom: 8px; }
+  .rw-body { font-size: var(--rw-label); line-height: 1.6; margin-bottom: 8px; }
   .rw-progress-row { height: 14px; margin-top: 2px; }
   .rw-tick { width: 7px; height: 7px; }
   .rw-controls { flex-wrap: wrap; gap: 6px; padding-top: 8px; }
-  .rw-mode { font-size: 10px; }
   .rw-chapter-picker { margin-left: auto; }
   .rw-chapter-picker select { font-size: 10px; max-width: 200px; padding: 6px 28px 6px 12px; }
   .rw-buttons { flex-basis: 100%; justify-content: space-between; }
   .rw-buttons button { padding: 8px 16px; min-height: 38px; }
-  .rw-demo-note { margin-top: 7px; font-size: 9px; }
+  .rw-demo-note { margin-top: 7px; }
   .rw-transcript details > div { grid-template-columns: 1fr; }
 }
-@media(prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
   .rw-story { scroll-behavior: auto; }
   .rw-glow, .rw-svg .rw-edges, .rw-svg [data-rw-node] { animation: none !important; }
-  .rw-spin, .rw-breathe { animation: none !important; }
   .rw-narr-body, .rw-narr-out { animation: none !important; }
-  /* 成对过渡在减少动态下退化为直接替换：旧文案层不显示，避免双影遮叠。 */
   .rw-narr-out { display: none !important; }
 }

@@ -1,6 +1,8 @@
 # Spec | 研究世界图谱区块：视觉层级、景深与章节编排优化
 
-> **状态**：已实现（Issue [#35](https://github.com/Zhanghoks/CoResearch-Community/issues/35)，`ready-for-agent`）
+> **实施状态（#39，2026-11-20，Asia/Shanghai）**：#35 的确定性 SVG、去 blur、描线、手动/滚动模式和可逆求值仍然保留。叙事已从 13 段术语/角色串讲改为 8 段因果故事，前景与覆盖修订取自共享合成 fixture。视觉关键帧测量、200% zoom、录屏和未参与开发者的复述验收尚未完成。
+>
+> **状态**：#35 已实现；#39 代码与单元测试已落地，视觉验收未做
 > **前序 spec**：docs/svg-gsap-story.md（交互架构被完整继承：可逆性、纯函数姿态插值、无逐帧 React 重渲）
 
 ## Problem Statement

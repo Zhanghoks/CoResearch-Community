@@ -37,6 +37,7 @@ export function createDemoRenderer(root: HTMLElement) {
   const canvasCount = root.querySelector<HTMLElement>("[data-pd-canvas-count]");
   const timerEl = root.querySelector<HTMLElement>("[data-pd-timer]");
   const contextEl = root.querySelector<HTMLElement>("[data-pd-context]");
+  const processingMeta = root.querySelector<HTMLElement>("[data-pd-processing-meta]");
   const nodeById = treeNodeById;
 
   /** Streamed elements are state-determined: absent id → settled value (empty composer, full field copy). */
@@ -46,7 +47,7 @@ export function createDemoRenderer(root: HTMLElement) {
   return (state: ScenarioState) => {
     // Everything written here is discrete and paintKey-guarded; entrance staggers
     // run on CSS delays keyed off each element's own index, not per-frame values.
-    const key = JSON.stringify([state.phase, state.messages, state.streams, state.timer, state.context, state.tree, state.current, state.focus, state.detail, state.paper, state.session, state.canvasCount, state.checklist, state.candidate]);
+    const key = JSON.stringify([state.phase, state.messages, state.streams, state.timer, state.context, state.tree, state.current, state.focus, state.detail, state.paper, state.session, state.canvasCount, state.checklist, state.candidate, state.processingMeta]);
     if (key === lastKey) return;
     lastKey = key;
     stage.dataset.phase = String(state.phase);
@@ -59,11 +60,12 @@ export function createDemoRenderer(root: HTMLElement) {
     paper?.classList.toggle("pd-on", state.paper);
     session?.classList.toggle("pd-on", state.session);
     candidate?.classList.toggle("pd-on", state.candidate);
-    processing?.classList.toggle("pd-on", state.timer > 0);
+    processing?.classList.toggle("pd-on", state.session || state.timer > 0);
     review?.classList.toggle("pd-on", state.checklist.some((check) => check !== "pending"));
     mention?.classList.toggle("pd-on", state.messages > 3);
     if (timerEl) timerEl.textContent = String(state.timer);
     if (contextEl) contextEl.textContent = String(state.context);
+    if (processingMeta && processingMeta.textContent !== state.processingMeta) processingMeta.textContent = state.processingMeta;
     if (canvasCount) canvasCount.textContent = String(state.canvasCount);
     for (const element of tree) {
       element.classList.toggle("pd-on", state.tree.includes(element.dataset.pdTree ?? ""));

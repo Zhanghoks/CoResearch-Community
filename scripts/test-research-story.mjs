@@ -3,45 +3,109 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { transpileModuleGraph } from "./transpile-app.mjs";
+
 const require = createRequire(import.meta.url);
 const ts = require("typescript");
 const root = path.resolve(import.meta.dirname, "..");
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "coresearch-story-"));
 try {
-  for (const filename of ["types", "mock-world", "story", "scene"]) {
-    const result = ts.transpileModule(fs.readFileSync(path.join(root, `app/graph-svg/${filename}.ts`), "utf8"), {
-      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
-      reportDiagnostics: true,
-    });
-    assert.equal((result.diagnostics ?? []).filter((d) => d.category === ts.DiagnosticCategory.Error).length, 0, `${filename} syntax`);
-    fs.writeFileSync(path.join(tmp, `${filename}.js`), result.outputText);
+  transpileModuleGraph({
+    ts,
+    root,
+    tmp,
+    entries: ["app/graph-svg/mock-world.ts", "app/graph-svg/story.ts", "app/graph-svg/scene.ts", "app/demo/scenes/concept.ts"],
+  });
+  const { world, nodeAt, communityMeta, sharedForegroundIds, isForegroundNode } = require(path.join(tmp, "app/graph-svg/mock-world.js"));
+  const { chapters, sampleStory, sampleConcept, cameraTransform, LABEL_MIN_PX, QUESTION_MIN_PX, CONCEPT_DURATION_MS, paperCardLabel } = require(path.join(tmp, "app/graph-svg/story.js"));
+  const { createSceneRenderer } = require(path.join(tmp, "app/graph-svg/scene.js"));
+  const { factsForAct, CONCEPT_KERNEL_T, conceptPhaseCheckpointMs, conceptProgressAt, conceptActTimings } = require(path.join(tmp, "app/demo/scenes/concept.js"));
+  const { OPEN_QUESTION_ID, coverageById, counterexamples, openQuestions, INTEREST_PROMPT } = require(path.join(tmp, "app/demo/fixtures/video-identity.js"));
+
+  assert.equal(chapters.length, 8, "the concept story is eight causal acts");
+  assert.equal(new Set(chapters.map((c) => c.id)).size, 8);
+  assert.deepEqual(chapters.map((c) => c.id), ["interest", "choose", "read", "compare", "coverage", "revise", "question", "next-step"]);
+  assert.equal(LABEL_MIN_PX, 14);
+  assert.equal(QUESTION_MIN_PX, 16);
+  assert.ok(CONCEPT_DURATION_MS >= 60000 && CONCEPT_DURATION_MS <= 75000, `duration ${CONCEPT_DURATION_MS} should be 60–75s`);
+  assert.equal(conceptActTimings.length, 8);
+  assert.equal(conceptActTimings[7].holdMs, 12000);
+  assert.equal(conceptPhaseCheckpointMs(7), conceptActTimings[7].checkpointMs);
+
+  for (const chapter of chapters) {
+    assert.ok(chapter.action && chapter.change && chapter.next, `${chapter.id} states action, change, and next`);
+    assert.doesNotMatch(chapter.title + chapter.body + chapter.takeaway, /Gap Finder|候选缺口/);
   }
-  const { world, nodeAt, communityMeta } = require(path.join(tmp, "mock-world.js"));
-  const { chapters, sampleStory, cameraTransform } = require(path.join(tmp, "story.js"));
-  const { createSceneRenderer } = require(path.join(tmp, "scene.js"));
+  assert.match(chapters.map((chapter) => chapter.body + chapter.takeaway).join("\n"), /合成教学|演示文献/);
+  assert.match(chapters[0].body, /合成教学数据/);
+  assert.match(chapters[7].takeaway, /概念演示/);
+
+  const question = openQuestions[0];
+  const atQuestion = sampleConcept(6);
+  const atNext = sampleConcept(7);
+  assert.equal(atQuestion.facts.openQuestionId, OPEN_QUESTION_ID);
+  assert.equal(atNext.facts.openQuestionId, OPEN_QUESTION_ID);
+  assert.equal(atQuestion.facts.statusLabel.includes("未验证"), true);
+  assert.match(question.question, /相同计算预算/);
+  assert.match(chapters[6].body, /相同计算预算/);
+  assert.ok(chapters[6].body.includes(question.question) || chapters[6].body.includes("不确定性"));
+
+  const before = sampleConcept(4);
+  const after = sampleConcept(5);
+  assert.equal(before.active, 4);
+  assert.equal(after.active, 5);
+  assert.equal(before.facts.coverage && before.facts.coverage.revises, false, "act 5 records coverage without revising it");
+  assert.equal(before.facts.coverage.recordId, "cov-short-visible");
+  assert.equal(after.facts.coverage.revises, true, "act 6 revises the same coverage record");
+  assert.equal(after.facts.coverage.recordId, "cov-short-visible");
+  assert.ok(after.facts.coverage.previousStatement);
+  assert.ok(after.facts.coverage.revisedStatement);
+  assert.notEqual(after.facts.coverage.previousStatement, after.facts.coverage.revisedStatement);
+  assert.deepEqual(after.facts.coverage.counterexampleIds, ["CE01", "CE02"]);
+  assert.ok(after.facts.paperIds.includes("P05") && after.facts.paperIds.includes("P03"));
+  assert.ok(after.facts.relations.every((relation) => relation.label.length > 0));
+  assert.deepEqual(sampleConcept(4).facts, before.facts, "seeking back to act 5 restores the pre-revision record");
+  assert.notDeepEqual(before.facts, after.facts);
+  const cov = coverageById.get("cov-short-visible");
+  assert.equal(before.facts.coverage.statement, cov.statement);
+  assert.ok(counterexamples.every((item) => item.revisesRecordId === "cov-short-visible"));
+
+  for (let index = 0; index < 8; index += 1) {
+    const facts = factsForAct(index);
+    assert.ok(facts.foregroundIds.length >= 4 && facts.foregroundIds.length <= 7, `act ${index + 1} foreground ${facts.foregroundIds.length}`);
+    assert.equal(facts.kernelT, CONCEPT_KERNEL_T[index]);
+    assert.equal(facts.interestPrompt, INTEREST_PROMPT);
+  }
+  assert.equal(factsForAct(0).paperIds.length, 0);
+  assert.deepEqual(factsForAct(2).paperIds, ["P01", "P02"]);
+  assert.ok(paperCardLabel("P01").includes("P01"));
+
   const ids = new Set(world.nodes.map((n) => n.id));
   assert.equal(ids.size, world.nodes.length);
   for (const n of world.nodes) assert.ok(Number.isFinite(n.x) && Number.isFinite(n.y) && n.radius > 0);
   for (const e of world.edges) { assert.ok(ids.has(e.source) && ids.has(e.target)); assert.equal(e.verified, false); }
-  // Visual hierarchy contract: depth tiers, baked alpha and per-community hue anchors.
-  assert.equal(communityMeta.length, 7, "seven communities expose palette metadata");
+  assert.equal(communityMeta.length, 7);
   const palette = new Set();
   for (const c of communityMeta) {
-    assert.ok(c.key && /^#[0-9a-f]{6}$/i.test(c.color), `community ${c.key} has a hex color`);
-    assert.ok([c.cx, c.cy, c.rx, c.ry].every((v) => Number.isFinite(v)), `community ${c.key} geometry is finite`);
-    assert.ok(!palette.has(c.key), "community keys are unique");
+    assert.ok(c.key && /^#[0-9a-f]{6}$/i.test(c.color));
+    assert.ok(!palette.has(c.key));
     palette.add(c.key);
   }
-  const storyIds = ["video", "consistency", "subject", "multi-shot", "motion", "paper-early", "paper-compare", "paper-recent", "paper-frontier", "gap", "candidate", "cross-domain"];
-  for (const n of world.nodes) {
-    assert.ok([1, 2, 3].includes(n.tier), `node ${n.id} declares tier 1-3`);
-    assert.ok(n.alpha > 0 && n.alpha <= 1, `node ${n.id} alpha in (0,1]`);
-    if (storyIds.includes(n.id)) assert.equal(n.alpha, 1, `story node ${n.id} reads at full opacity`);
-    else assert.ok(palette.has(n.community), `background node ${n.id} maps to a known community hue`);
+  const mapped = sharedForegroundIds();
+  for (const fixtureId of ["d-video", "d-consistency", "d-identity", "d-crossshot", "P01", "P02", "P05", "P03", "P06", OPEN_QUESTION_ID]) {
+    assert.equal(nodeAt(fixtureId).fixtureId, fixtureId);
+    assert.ok(mapped[fixtureId]);
   }
-  for (const c of communityMeta) assert.ok(!["idea", "gap", "candidate"].includes(c.key), "semantic accents stay out of the community palette");
-  // Reserved semantic accents must stay color-distinct from every community hue
-  // (max channel distance), so the visual grammar never collides.
+  const foreground = world.nodes.filter((node) => isForegroundNode(node));
+  const background = world.nodes.filter((node) => !isForegroundNode(node));
+  assert.ok(foreground.length >= 10);
+  assert.ok(background.length > 0, "weak background context remains, but it is not a quality metric");
+  for (const n of foreground) assert.equal(n.alpha, 1);
+  for (const n of background) {
+    assert.ok(palette.has(n.community));
+    assert.ok(n.alpha < 0.5, `background ${n.id} stays visually weak`);
+  }
+  for (const c of communityMeta) assert.ok(!["idea", "gap", "candidate"].includes(c.key));
   const accents = { idea: "#e0a63a", gap: "#c49654", boundary: "#9483b0", transfer: "#4e8f7f" };
   const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
   const channelGap = (a, b) => Math.max(...rgb(a).map((v, i) => Math.abs(v - rgb(b)[i])));
@@ -50,92 +114,71 @@ try {
       assert.ok(channelGap(c.color, hex) >= 20, `community ${c.color} collides with the ${role} accent ${hex}`);
     }
   }
-  // Route arrivals are real arc-length fractions ending exactly at 1.
-  const { routeArrivals } = require(path.join(tmp, "mock-world.js"));
+
+  const { routeArrivals } = require(path.join(tmp, "app/graph-svg/mock-world.js"));
+  assert.deepEqual(world.routes.explore, ["video", "consistency", "subject", "multi-shot"]);
   for (const route of [world.routes.explore, world.routes.lineage]) {
     const arrivals = routeArrivals(route);
     assert.equal(arrivals.length, route.length);
-    assert.ok(arrivals.every((v, i) => v >= 0 && v <= 1 && (i === 0 || v > arrivals[i - 1])), "arrivals ascend within [0,1]");
-    assert.equal(arrivals.at(-1), 1, "route arrival ends at 1");
-  }
-  for (const route of [world.routes.explore, world.routes.lineage]) {
+    assert.ok(arrivals.every((v, i) => v >= 0 && v <= 1 && (i === 0 || v > arrivals[i - 1])));
+    assert.equal(arrivals.at(-1), 1);
     for (let i = 1; i < route.length; i++) assert.ok(world.edges.some((e) => e.source === route[i - 1] && e.target === route[i]), "semantic path follows defined edges");
   }
-  assert.equal(new Set(chapters.map((c) => c.id)).size, chapters.length);
+
   const samples = new Map();
-  for (let i = 0; i <= 240; i++) {
-    const p = i / 20, state = sampleStory(p);
-    assert.ok(Object.values(state.pose).every(Number.isFinite));
-    assert.ok(state.active >= 0 && state.active < chapters.length);
+  for (let i = 0; i <= 160; i++) {
+    const p = i / 20;
+    const state = sampleConcept(p);
+    assert.ok(Object.values(state.pose).every((value) => Number.isFinite(value)));
+    assert.ok(state.active >= 0 && state.active < 8);
     samples.set(p, JSON.stringify(state));
   }
-  for (const [p, state] of [...samples].reverse()) assert.equal(JSON.stringify(sampleStory(p)), state, "reverse seeking is deterministic");
+  for (const [p, state] of [...samples].reverse()) assert.equal(JSON.stringify(sampleConcept(p)), state, "reverse seeking is deterministic");
   for (let i = 0; i < chapters.length; i++) {
     assert.deepEqual(sampleStory(i).pose, chapters[i].pose);
     assert.equal(sampleStory(i).active, i);
+    assert.equal(sampleConcept(i).facts.kernelT, CONCEPT_KERNEL_T[i]);
   }
   assert.equal(sampleStory(NaN).active, 0);
   assert.equal(sampleStory(-5).active, 0);
-  assert.equal(sampleStory(1000).active, chapters.length - 1);
-  for (let i = 0; i < 10; i++) assert.equal(sampleStory(i).pose.gap, 0, "gap must not pre-exist discovery");
-  for (let i = 0; i < 12; i++) assert.equal(sampleStory(i).pose.candidate, 0, "candidate must not pre-exist synthesis");
-  assert.equal(sampleStory(7).pose.markerX, nodeAt("subject").x);
-  assert.equal(sampleStory(8).pose.markerX, nodeAt("motion").x);
-  assert.ok(cameraTransform(sampleStory(12).pose).startsWith("translate("));
+  assert.equal(sampleStory(1000).active, 7);
+  assert.equal(sampleStory(0).pose.question, 0);
+  assert.equal(sampleStory(4).pose.revision, 0);
+  assert.ok(sampleStory(5).pose.revision > 0);
+  assert.equal(sampleStory(1).pose.markerX, nodeAt("multi-shot").x);
+  assert.ok(cameraTransform(sampleStory(7).pose).startsWith("translate("));
+  assert.equal(conceptProgressAt(conceptPhaseCheckpointMs(5)), 5);
+  assert.ok(conceptProgressAt(conceptActTimings[5].startMs + 10) < 5);
+
   const make = (dataset = {}) => ({ dataset, style: {}, attributes: {}, setAttribute(k, v) { this.attributes[k] = v; } });
   const camera = make(), marker = make(), bar = make();
-  const layers = ["base", "ring", "idea", "gap", "candidate"].map((name) => make({ rwLayer: name }));
-  const draws = ["lineage", "explore", "transfer", "candidate"].map((name) => make({ rwDraw: name }));
-  const stops = Array.from({ length: 5 }, (_, i) => make({ rwStop: String(i) }));
-  const staggered = ["papers:0:4", "papers:1:4", "papers:2:4", "papers:3:4", "lineage:0:4", "lineage:3:4"].map((spec) => make({ rwStagger: spec }));
+  const layers = ["base", "path", "evidence", "coverage", "unverified", "revision", "question", "nextStep"].map((name) => make({ rwLayer: name }));
+  const draws = ["path", "unverified"].map((name) => make({ rwDraw: name }));
+  const stops = Array.from({ length: 4 }, (_, i) => make({ rwStop: String(i) }));
+  const staggered = ["evidence:0:2", "evidence:1:2"].map((spec) => make({ rwStagger: spec }));
   const render = createSceneRenderer({
     querySelector: (q) => q.includes("camera") ? camera : q.includes("marker") ? marker : bar,
-    querySelectorAll: (q) => q.includes("layer") ? layers : q.includes("draw") ? draws : q.includes("stagger") ? staggered : stops,
+    querySelectorAll: (q) => q.includes("layer") ? layers : q.includes("draw") ? draws : q.includes("stagger") ? staggered : q.includes("dim") ? [] : stops,
+    setAttribute() {},
   });
-  render(12, chapters.length);
-  assert.equal(layers.at(-1).style.visibility, "visible");
-  render(0, chapters.length);
-  assert.equal(layers.at(-1).style.visibility, "hidden");
-  assert.equal(layers.find((e) => e.dataset.rwLayer === "idea").style.visibility, "hidden");
-  assert.equal(draws.at(-1).style.strokeDashoffset, "1");
-  assert.equal(bar.style.transform, "scaleX(0)");
-  // Depth comes from baked tier alpha, never from CSS filters that muddy the zoomed frame.
-  const base = layers.find((e) => e.dataset.rwLayer === "base");
-  for (const p of [0, 3, 8, 12]) {
-    render(p, chapters.length);
-    assert.ok(!base.style.filter, `base layer stays filter-free at chapter ${p}`);
-  }
-  // Staggered items reveal in order as their layer value rises, deterministically both ways.
-  render(2, chapters.length);
-  const settled = staggered.map((el) => Number(el.style.opacity));
-  assert.ok(settled.every((v) => v === 1), "a settled reveal layer shows every staggered item");
-  render(3, chapters.length);
-  const partial = staggered.map((el) => Number(el.style.opacity));
-  assert.ok(partial[0] > partial[3], "mid-transition stagger reveals items in order");
-  assert.ok(partial[0] > 0 && partial[3] < 1, "mid-transition stagger is partial");
-  const firstPass = staggered.map((el) => el.style.opacity);
-  render(3, chapters.length);
-  assert.deepEqual(staggered.map((el) => el.style.opacity), firstPass, "stagger output is deterministic");
-  render(2, chapters.length);
-  assert.deepEqual(staggered.map((el) => Number(el.style.opacity)), settled, "reverse seeking restores the settled stagger");
-  // Lineage stops stagger inside their layer: settled chapters show every stop,
-  // faded chapters keep early stops faint and later ones hidden — in order, never popped.
-  render(2, chapters.length);
-  assert.equal(staggered[5].style.opacity, "1", "settled lineage shows its last stop");
-  render(3, chapters.length);
-  const coreFirst = Number(staggered[4].style.opacity), coreLast = Number(staggered[5].style.opacity);
-  assert.ok(coreFirst > 0 && coreFirst < 1, `faded lineage keeps its first stop partial, got ${coreFirst}`);
-  assert.ok(coreLast < coreFirst, "lineage stagger reveals in order");
-  // Explore stops materialize as the drawn line reaches them and persist after exploration — no binary pops.
-  const stopAt = (p, i) => { render(p, chapters.length); return Number(stops[i].style.opacity); };
   render(7, chapters.length);
-  assert.equal(stops[2].style.opacity, "1", "half-explored route shows stops the line has reached");
-  assert.equal(stops[3].style.opacity, "0", "stops beyond the drawn line stay hidden");
-  const midStop = stopAt(7.4, 3);
-  assert.ok(midStop > 0 && midStop < 1, `stop opacity interpolates mid-draw, got ${midStop}`);
-  assert.ok(stopAt(7.8, 3) > midStop, "stop opacity grows with the draw");
-  assert.equal(stopAt(8, 4), 1, "fully explored route shows every stop");
-  assert.equal(stopAt(10, 4), 1, "explored stops persist into later chapters");
-  assert.equal(stopAt(7.4, 3), midStop, "stop reveal is deterministic");
-  console.log(`PASS: ${world.nodes.length} nodes, ${world.edges.length} edges, ${chapters.length} chapters; graph references, semantic paths, finite poses, reverse seeks, phase visibility and DOM resets.`);
+  assert.equal(layers.find((e) => e.dataset.rwLayer === "question").style.visibility, "visible");
+  render(0, chapters.length);
+  assert.equal(layers.find((e) => e.dataset.rwLayer === "question").style.visibility, "hidden");
+  assert.equal(layers.find((e) => e.dataset.rwLayer === "revision").style.visibility, "hidden");
+  const base = layers.find((e) => e.dataset.rwLayer === "base");
+  for (const p of [0, 3, 5, 7]) {
+    render(p, chapters.length);
+    assert.ok(!base.style.filter, `base layer stays filter-free at act ${p}`);
+  }
+  render(5, chapters.length);
+  assert.equal(layers.find((e) => e.dataset.rwLayer === "revision").style.visibility, "visible");
+  render(4, chapters.length);
+  assert.equal(layers.find((e) => e.dataset.rwLayer === "revision").style.visibility, "hidden");
+  const stopAt = (p, i) => { render(p, chapters.length); return Number(stops[i].style.opacity); };
+  assert.equal(stopAt(1, 3), 1, "the chosen path keeps every stop after it settles");
+  assert.equal(stopAt(5, 3), 1, "explored stops persist into later acts");
+  const mid = stopAt(0.4, 2);
+  assert.ok(mid >= 0 && mid <= 1);
+  console.log(`PASS: ${chapters.length} causal acts, fixture-backed foreground, act-6 coverage revision is reversible; ${world.nodes.length} nodes remain context only, not a quality metric.`);
 } finally { fs.rmSync(tmp, { recursive: true, force: true }); }

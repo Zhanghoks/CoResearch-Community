@@ -4,18 +4,25 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/test-research-story.mjs && node scripts/test-product-demo.mjs",
+    "prebuild": "node scripts/test-research-story.mjs && node scripts/test-product-demo.mjs && node scripts/test-demo-kernel.mjs && node scripts/test-demo-viewer.mjs && node scripts/test-viewer-lifecycle.mjs && node scripts/test-evidence-story-regressions.mjs && node scripts/test-docs-guides.mjs && node scripts/test-guide-lifecycle.mjs && node scripts/test-player-component-lifecycle.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test:story": "node scripts/test-research-story.mjs",
     "test:demo": "node scripts/test-product-demo.mjs",
     "precompute-graph": "node scripts/precompute-graph.mjs",
-    "test:visual": "node scripts/smoke-research-story.mjs"
+    "test:visual": "node scripts/smoke-research-story.mjs",
+    "test:kernel": "node scripts/test-demo-kernel.mjs",
+    "test:viewer": "node scripts/test-demo-viewer.mjs",
+    "test:viewer-lifecycle": "node scripts/test-viewer-lifecycle.mjs",
+    "test:evidence-regressions": "node scripts/test-evidence-story-regressions.mjs",
+    "test:guides": "node scripts/test-docs-guides.mjs",
+    "test:guide-lifecycle": "node scripts/test-guide-lifecycle.mjs",
+    "test:player-lifecycle": "node scripts/test-player-component-lifecycle.mjs"
   },
   "dependencies": {
     "gsap": "^3.15.0",
-    "next": "16.4.3",
+    "next": "16.4.5",
     "pixi.js": "^8.22.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"
@@ -27,7 +34,7 @@
     "@types/react-dom": "^19",
     "d3-force": "^3.0.0",
     "eslint": "^9",
-    "eslint-config-next": "16.4.3",
+    "eslint-config-next": "16.4.5",
     "playwright": "^1.65.0",
     "tailwindcss": "^4",
     "typescript": "^5"
