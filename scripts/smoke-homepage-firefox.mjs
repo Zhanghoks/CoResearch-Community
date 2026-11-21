@@ -167,6 +167,14 @@ try {
       await wait(() => atAct(index), `act ${index} at ${width}`);
       assert.equal(await js("const e=document.documentElement;return e.scrollWidth<=e.clientWidth+1;"), true);
       if (index >= 7) assert.ok(await js("return parseFloat(getComputedStyle(document.querySelector('.rw-question-body')).fontSize)>=16;"));
+      if (index === 6 || index === 7) await wait(() => js(`
+        const wrap=document.querySelector('.rw-canvas').getBoundingClientRect();
+        const labels=[...document.querySelectorAll('.rw-map-node-id')].filter(e => ['P01','P02','P05','P03','待验证问题'].includes(e.textContent) && getComputedStyle(e).visibility==='visible');
+        return labels.length >= 4 && labels.every(e => {
+          const r=e.getBoundingClientRect();
+          return r.height >= 14 && r.left >= wrap.left - 1 && r.right <= wrap.right + 1 && r.top >= wrap.top - 1 && r.bottom <= wrap.bottom + 1;
+        });
+      `), `important graph labels stay on-screen at act ${index}, width ${width}`);
     }
     if (width <= 390) {
       await action(".home-core-steps button:nth-child(3)", " ");

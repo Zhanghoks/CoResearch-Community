@@ -140,7 +140,7 @@ const entries: Array<Omit<StoryChapter, "pose"> & { pose: Partial<Pose> }> = [
     moveMs: conceptActTimings[6]!.moveMs,
     kernelT: CONCEPT_KERNEL_T[6],
     focusIds: factsForAct(6).focusIds,
-    pose: { cx: 960, cy: 400, zoom: 1.7, question: 1, revision: 0.4, coverage: 0.35, evidence: 0.45, unverified: 0.7, path: 0.45, markerX: nodeAt(OPEN_QUESTION_ID).x, markerY: nodeAt(OPEN_QUESTION_ID).y },
+    pose: { cx: 865, cy: 400, zoom: 1.7, question: 1, revision: 0.4, coverage: 0.35, evidence: 0.45, unverified: 0.7, path: 0.45, markerX: nodeAt(OPEN_QUESTION_ID).x, markerY: nodeAt(OPEN_QUESTION_ID).y },
   },
   {
     id: "next-step",
