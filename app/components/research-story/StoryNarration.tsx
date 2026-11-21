@@ -14,7 +14,6 @@ function NarrationBody({ index, leaving }: { index: number; leaving?: boolean })
       <p className="rw-action"><span className="rw-takeaway-mark">动作</span>{chapter.action}</p>
       {hasLeadCard ? null : (
         <>
-          <p className="rw-body">{chapter.body}</p>
           <p className="rw-change"><span className="rw-takeaway-mark">看到</span>{chapter.change}</p>
         </>
       )}

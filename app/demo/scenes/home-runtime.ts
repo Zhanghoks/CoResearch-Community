@@ -29,7 +29,12 @@ export function homeFrameSignal(t: number, layout: ViewerSnapshot["layout"]) {
   const scene = homeSceneAt(t);
   const sent = t >= 4200;
   const draft = sent ? "" : letters.slice(0, Math.floor(Math.max(0, t - 430) / 85)).join("");
-  const key = [layout, scene.id, draft, homeTimeline.events.filter((event) => event.t <= t).length].join("\u241f");
+  let eventsSeen = 0;
+  for (const event of homeTimeline.events) {
+    if (event.t > t) break;
+    eventsSeen += 1;
+  }
+  const key = [layout, scene.id, draft, eventsSeen].join("\u241f");
   return { key, scene, draft };
 }
 

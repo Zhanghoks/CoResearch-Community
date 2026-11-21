@@ -87,11 +87,26 @@ body:has(#home-replay) .core-site-header:not([data-over-hero]) { background:#f7f
 .home-core-cue strong { font-size:12px; font-weight:600; animation: home-cue-in .18s ease-out both; }
 @keyframes home-cue-in { from { opacity:0; transform:translateY(2px); } to { opacity:1; transform:none; } }
 @media(min-width:900px) and (max-height:960px) {
-  .home-stage { padding-top:28px; }
-  .home-stage h1 { font-size:clamp(40px,4.38vw,65px); }
-  .home-stage-kicker { margin-bottom:10px; }
-  .home-stage-actions { margin-top:13px; }
-  .home-stage-window { margin-top:20px; }
+  .home-stage { padding-top:25px; }
+  .home-stage h1 { font-size:clamp(40px,4.07vw,58px); }
+  .home-stage-kicker { margin-bottom:8px; padding:5px 10px; }
+  .home-stage-lede { margin-top:9px; }
+  .home-stage-actions { margin-top:11px; }
+  .home-stage-window { margin-top:17px; }
+}
+@media(min-width:900px) and (max-height:760px) {
+  .home-stage { padding-top:18px; }
+  .home-stage h1 { font-size:46px; }
+  .home-stage-lede { font-size:15px; }
+  .home-stage-actions a { min-height:38px; }
+}
+@media(max-height:560px) and (min-width:561px) and (max-width:899px) {
+  .home-stage { padding-top:15px; }
+  .home-stage h1 { font-size:32px; }
+  .home-stage h1 br { display:none; }
+  .home-stage-kicker { margin-bottom:6px; padding:4px 7px; }
+  .home-stage-actions,.home-stage-lede,.home-stage-window { margin-top:9px; }
+  .home-stage-actions a { min-height:34px; padding:0 10px; font-size:13px; }
 }
 @media(max-width:420px) {
   .home-stage { padding-top:19px; }

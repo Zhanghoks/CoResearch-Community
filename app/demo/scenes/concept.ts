@@ -46,7 +46,7 @@ export function graphIdToFixtureId(id: string): string {
 }
 
 export const CONCEPT_MOVE_MS = 500;
-export const CONCEPT_ACT_HOLDS_MS = [4000, 5500, 7000, 7000, 6000, 8000, 9000, 12000] as const;
+export const CONCEPT_ACT_HOLDS_MS = [4000, 5500, 7000, 7000, 6000, 11500, 12000, 12000] as const;
 
 /** Kernel times at which each act's fixture facts are settled. */
 export const CONCEPT_KERNEL_T = [5200, 16800, 20800, 22000, 22000, 28000, 32400, 34500] as const;

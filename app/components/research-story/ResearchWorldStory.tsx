@@ -58,14 +58,14 @@ export function ResearchWorldStory() {
 
   // Remember the first resolved preference, rather than mirroring it in an
   // effect or recomputing the default on resize. React retries this component
-  // before committing, so mobile never installs an autoplay subscription.
+  // before committing, so mobile starts manually until explicitly played.
   if (initialOrChosenMode === null && narrow !== null) {
     setMode(reduce || short || narrow ? "slides" : "autoplay");
   }
   const mode = initialOrChosenMode ?? "slides";
   const modeReady = initialOrChosenMode !== null;
 
-  const manual = mode === "slides" || reduce || short || narrow === true;
+  const manual = mode === "slides" || reduce || short;
 
   useEffect(() => {
     if (!modeReady) return;
@@ -107,21 +107,15 @@ export function ResearchWorldStory() {
           setEnded(meta.pauseReasons.includes("ended") || t >= CONCEPT_DURATION_MS);
         },
       });
-      const onEnter = (event: PointerEvent) => {
-        if (event.pointerType !== "mouse") return;
-        player.notifyContentHover(true);
+      const inEvidence = (target: EventTarget | null) => target instanceof Element && Boolean(target.closest(".rw-overlay"));
+      const onFocus = (event: FocusEvent) => {
+        if (inEvidence(event.target)) player.notifyContentFocus(true);
       };
-      const onLeave = (event: PointerEvent) => {
-        if (event.pointerType !== "mouse") return;
-        player.notifyContentHover(false);
+      const onBlur = (event: FocusEvent) => {
+        if (inEvidence(event.target) && !inEvidence(event.relatedTarget)) player.notifyContentFocus(false);
       };
-      const onFocus = () => player.notifyContentFocus(true);
-      const onBlur = () => player.notifyContentFocus(false);
-      stage.addEventListener("pointerenter", onEnter);
-      stage.addEventListener("pointerleave", onLeave);
-      const narration = root.querySelector<HTMLElement>(".rw-narration, .rw-overlay");
-      narration?.addEventListener("focusin", onFocus);
-      narration?.addEventListener("focusout", onBlur);
+      stage.addEventListener("focusin", onFocus);
+      stage.addEventListener("focusout", onBlur);
       let userPaused = false;
       const observer = new IntersectionObserver(([entry]) => {
         if (entry.isIntersecting) {
@@ -173,10 +167,8 @@ export function ResearchWorldStory() {
         player.dispose();
         observer.disconnect();
         document.removeEventListener("visibilitychange", onVisibility);
-        stage.removeEventListener("pointerenter", onEnter);
-        stage.removeEventListener("pointerleave", onLeave);
-        narration?.removeEventListener("focusin", onFocus);
-        narration?.removeEventListener("focusout", onBlur);
+        stage.removeEventListener("focusin", onFocus);
+        stage.removeEventListener("focusout", onBlur);
         controlsRef.current = null;
       };
     }
@@ -334,7 +326,10 @@ export function ResearchWorldStory() {
         </header>
         <div className="rw-content">
           <StoryNarration active={active} />
-          <div className="rw-canvas"><ResearchWorldSvg /><div className="rw-map-caption" aria-hidden="true"><i />研究路径 / {String(active + 1).padStart(2, "0")}</div></div>
+          <div className="rw-canvas"><ResearchWorldSvg /><div className="rw-map-caption" aria-hidden="true"><i />研究路径 / {String(active + 1).padStart(2, "0")}</div>
+          {active === 5 ? <p className="rw-map-hint">两块是分别覆盖，不等于组合场景已经验证。</p> :
+            active >= 6 ? <p className="rw-map-hint">虚线是下一步调查，不是已证实的结论。</p> : null}
+          </div>
           <ConceptOverlay key={chapters[active]?.id} facts={facts} chapter={chapters[active]!} active={active} />
         </div>
         <div className="rw-journey" aria-hidden="true"><span data-current={active < 3}>01 找方向</span><span data-current={active === 3 || active === 4}>02 查证据</span><span data-current={active === 5}>03 反例改判</span><span data-current={active > 5}>04 定问题</span></div>
@@ -349,7 +344,12 @@ export function ResearchWorldStory() {
         </div>
         <nav className="rw-controls" aria-label="研究故事幕次">
           <div className="rw-mode">
-            {reduce ? <span>已启用减少动态效果 · 显示完整关键帧</span> : short || narrow ? <span>手动模式 · 点击翻页</span> : (
+            {reduce ? <span>减少动态 · 手动翻页</span> : short ? <span>手动模式 · 点击翻页</span> : narrow ? (
+              <button type="button" aria-pressed={mode === "autoplay"}
+                onClick={() => setMode(mode === "autoplay" ? "slides" : "autoplay")}>
+                {mode === "autoplay" ? "切回手动" : "自动讲解"}
+              </button>
+            ) : (
               <button
                 type="button"
                 onClick={() => setMode(mode === "scroll" ? "autoplay" : "scroll")}

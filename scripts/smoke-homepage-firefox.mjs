@@ -16,10 +16,16 @@ const driverPort = Number(process.env.FIREFOX_DRIVER_PORT ?? 4458);
 const driverOrigin = `http://127.0.0.1:${driverPort}`;
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".txt": "text/plain", ".webp": "image/webp", ".woff2": "font/woff2", ".jpg": "image/jpeg" };
 await fs.access(path.join(out, "index.html"));
+let unavailableViewer = false;
+const viewerDocument = "/demos/coresearch/a52c718-1.0.0/index.html";
 const server = http.createServer(async (req, res) => {
   try {
     const raw = decodeURIComponent(new URL(req.url, "http://127.0.0.1").pathname);
     if (projectBase && !raw.startsWith(`${projectBase}/`) && raw !== projectBase) throw new Error("Unknown base path");
+    if (unavailableViewer && raw === projectBase + viewerDocument) {
+      res.writeHead(503, { "Content-Type": "text/plain" }).end("Expected fixture interruption");
+      return;
+    }
     let rel = raw.slice(projectBase.length).replace(/^\/+/, "");
     if (!path.extname(rel)) rel = path.join(rel, "index.html");
     const file = path.resolve(out, rel);
@@ -139,6 +145,8 @@ try {
   await action(".rw-next", " ");
   await wait(() => atAct(7), "graph next by Space");
   assert.match(await js("return document.querySelector('.rw-question-body').innerText;"), /相同计算预算/);
+  assert.match(await js("return getComputedStyle(document.querySelector('[data-rw-unverified-path]')).strokeDasharray;"), /7px/);
+  assert.equal(await js("return document.querySelector('[data-rw-unverified-path]').style.strokeDasharray;"), "");
   await act(8);
   await action(".rw-next", "\uE007");
   await wait(() => atAct(1), "last-act replay returns to start");
@@ -168,6 +176,13 @@ try {
     await wait(() => js("return document.querySelector('#feature-evidence img').naturalWidth > 0;"), "real poster");
     assert.match(await js("return document.querySelector('#feature-evidence img').currentSrc;"), width <= 767 ? /evidence-mobile\.webp$/ : /evidence\.webp$/);
   }
+  await viewport(390, 844);
+  await open("?verify-autoplay=phone#research-world");
+  await move("#research-world");
+  await action(".rw-mode button", " ");
+  await wait(() => atAct(2), "phone opt-in playing");
+  await action(".rw-mode button", "\uE007");
+  assert.match(await js("return document.querySelector('.rw-mode button').innerText;"), /自动讲解/);
   await open("docs/read-evidence/?step=read-level");
   await wait(() => withinCore("Version p02-card-v1", "iframe"), "matching P02 guide deep link");
   const requests = relevant.filter((e) => e.method === "network.beforeRequestSent").map((e) => e.params.request);
@@ -179,6 +194,20 @@ try {
   const failures = relevant.filter((e) => e.method === "network.responseCompleted" && e.params.response.status >= 400);
   assert.deepEqual(failures, [], "no failed page resources");
   console.log(`PASS: continuous real UI, native Space/Enter, timed evidence revision, 5 viewport widths × 8 scenes, P02 guide, ${requests.length} local read-only requests.`);
+
+  // Test a real timed-out/failed boot on the loopback fixture, not production.
+  // The preceding network gate excluded this deliberately induced failure.
+  unavailableViewer = true;
+  await viewport(1440, 1000);
+  await open("?verify=viewer-retry");
+  await wait(() => js("return document.querySelector('.home-core [data-viewer-loading=error]')!==null;"), "simulated viewer failure");
+  await wait(() => js("return document.querySelector('.home-core .home-loading-poster')!==null;"), "stable viewer preview during failure");
+  unavailableViewer = false;
+  await action(".home-core [data-viewer-loading=error] button", "\uE007");
+  await move(".home-stage-window");
+  await wait(() => clipState("ask", true), "pinned viewer handshake recovers");
+  await wait(async () => await clipState("directions", true) && await withinCore("生成一致性"), "recovered playback advances");
+  console.log("PASS: simulated viewer error leaves a stable poster; native Retry reconnects and advances the replay.");
 } finally {
   socket?.close();
   if (session) await api("/session/" + session, undefined, "DELETE").catch(() => {});

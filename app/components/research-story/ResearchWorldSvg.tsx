@@ -29,6 +29,7 @@ const p03 = nodeAt("P03");
 const p06 = nodeAt("P06");
 const oq = nodeAt("oq-identity-budget");
 const next = nodeAt("candidate");
+const proposedPath = `M ${crossshot.x} ${crossshot.y} C 800 300 900 320 ${oq.x} ${oq.y}`;
 
 /** All layers stay mounted. Only the scene controller changes their presentation. Critical text is in the HTML overlay so zoom cannot shrink it below 14/16px. */
 export function ResearchWorldSvg() {
@@ -57,6 +58,9 @@ export function ResearchWorldSvg() {
             <stop offset="1" stopColor={community.color} stopOpacity="0" />
           </radialGradient>
         ))}
+        <mask id={`${prefix}-candidate-reveal`} maskUnits="userSpaceOnUse" x="0" y="0" width="1440" height="850">
+          <path d={proposedPath} data-rw-draw="unverified" pathLength="1" className="rw-route" stroke="white" strokeWidth="12" />
+        </mask>
         <marker id={`${prefix}-arrow-blue`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0 1.2 L9 5 L0 8.8" fill="none" stroke="#5b93c4" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
         </marker>
@@ -107,9 +111,11 @@ export function ResearchWorldSvg() {
         </g>
         <g data-rw-layer="coverage" className="rw-reveal">
           <path d="M430 430 C 480 330 700 310 760 400 C 800 470 720 540 600 545 C 490 550 400 500 430 430 Z" fill={`url(#${prefix}-coverage)`} stroke="#6d8f5a" strokeWidth="2" />
+          <text x="482" y="482" className="rw-map-coverage-label">原覆盖</text>
         </g>
         <g data-rw-layer="unverified" className="rw-reveal">
-          <path data-rw-draw="unverified" pathLength="1" d={`M ${crossshot.x} ${crossshot.y} C 800 300 900 320 ${oq.x} ${oq.y}`} className="rw-route" stroke="#9483b0" strokeWidth="2.4" strokeDasharray="7 7" />
+          <path d={proposedPath} fill="none" data-rw-unverified-path="" mask={`url(#${prefix}-candidate-reveal)`}
+            stroke="#8065a4" strokeWidth="2.6" strokeDasharray="7 7" />
           <path d={`M ${oq.x} ${oq.y} C 1040 300 1080 310 ${next.x} ${next.y}`} fill="none" stroke="#c49654" strokeWidth="2.2" strokeDasharray="6 6" />
         </g>
         <g data-rw-layer="evidence" className="rw-reveal">
@@ -125,6 +131,14 @@ export function ResearchWorldSvg() {
           </g>
         </g>
         <g data-rw-layer="revision" className="rw-reveal">
+          <g data-rw-coverage-patch="P05" aria-hidden="true">
+            <ellipse cx={p05.x} cy={p05.y} rx="55" ry="45" />
+            <text x={p05.x} y={p05.y - 31} textAnchor="middle" className="rw-map-coverage-label">长序列</text>
+          </g>
+          <g data-rw-coverage-patch="P03" aria-hidden="true">
+            <ellipse cx={p03.x} cy={p03.y} rx="58" ry="42" />
+            <text x={p03.x} y={p03.y - 31} textAnchor="middle" className="rw-map-coverage-label">遮挡＋切镜</text>
+          </g>
           <g data-rw-foreground="P05">
             <rect x={p05.x - 14} y={p05.y - 18} width="28" height="36" rx="3" fill="#fff7e6" stroke="#a46a3a" strokeWidth="1.8" />
             <line x1={p05.x} y1={p05.y} x2={consistency.x + 80} y2={consistency.y + 20} stroke="#a46a3a" strokeWidth="1.8" />

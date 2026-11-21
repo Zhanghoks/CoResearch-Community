@@ -32,6 +32,7 @@ export function HomeCoreMotion({ chapter, auto = true }: { chapter?: HomeScene; 
   const [finished, setFinished] = useState(false);
   const [frame, setFrame] = useState(() => homeFrame(start, "desktop", 1));
   const scene = frame.scene;
+  const cue = homeCueAt(frame.snapshot.t);
   const playing = ready && enabled && !reduce && !finished;
 
   useEffect(() => {
@@ -48,6 +49,7 @@ export function HomeCoreMotion({ chapter, auto = true }: { chapter?: HomeScene; 
     const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting && entry.intersectionRatio >= .22), { threshold: .22 });
     const onVisibility = () => setForeground(!document.hidden);
     observer.observe(element);
+    onVisibility();
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
       observer.disconnect();
@@ -100,7 +102,7 @@ export function HomeCoreMotion({ chapter, auto = true }: { chapter?: HomeScene; 
         <span className="home-core-status"><i aria-hidden="true" />实际 Core 界面 <span>· 离线回放</span></span>
       </div>
       <div className="home-core-cue" data-home-cue="">
-        <span>当前动作</span><strong key={homeCueAt(frame.snapshot.t)}>{homeCueAt(frame.snapshot.t)}</strong>
+        <span>当前动作</span><strong key={cue}>{cue}</strong>
       </div>
       <ViewerFrame fixture={fixture} snapshot={frame.snapshot} onIntent={ignoreIntent}
         onStatus={(status) => setReady(status === "ready")} presentation />

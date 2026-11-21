@@ -50,17 +50,19 @@ export function ConceptOverlay({ facts, chapter }: { facts: ConceptFacts; chapte
       {coverage.revises && coverage.previousStatement ? (
         <ol className="rw-causal-steps" aria-label="如何修订判断">
           <li className="rw-causal-old" data-rw-coverage-prev="">
-            <span>01 / 原判断</span><p>{coverage.previousStatement}</p>
+            <span>01 / 原判断</span><p>现有材料主要覆盖短片段、主体持续可见。</p>
           </li>
           <li className="rw-causal-new">
             <span>02 / 两条反例</span>
             {coverage.counterexampleIds.map((id) => {
               const item = ceById.get(id);
-              return item ? <p key={id} data-rw-counterexample={id}><strong>{item.paperId}</strong> {item.reason}</p> : null;
+              return item ? <p key={id} data-rw-counterexample={id}><strong>{item.paperId}</strong> {item.paperId === "P05"
+                ? "长序列有证据，但主体始终可见。"
+                : item.paperId === "P03" ? "遮挡与切镜也有证据，但比较预算还没对齐。" : item.reason}</p> : null;
             })}
           </li>
           <li className="rw-causal-result" data-rw-coverage-next="">
-            <span>03 / 改判后</span><p>{coverage.revisedStatement}</p>
+            <span>03 / 改判后</span><p>两类场景分别有证据。同预算下能否处理组合场景，仍然未知。</p>
           </li>
         </ol>
       ) : (
@@ -122,6 +124,13 @@ export function ConceptOverlay({ facts, chapter }: { facts: ConceptFacts; chapte
       <details className="rw-source-drawer">
         <summary>查看图例{facts.paperIds.length > 0 ? "、来源与条件" : ""}</summary>
         <div className="rw-source-stack">
+          {coverage?.revises && chapter.id === "revise" ? (
+            <article className="rw-evidence">
+              <p><strong>原记录：</strong>{coverage.previousStatement}</p>
+              {coverage.counterexampleIds.map((id) => <p key={id}><strong>{ceById.get(id)?.paperId}：</strong>{ceById.get(id)?.reason}</p>)}
+              <p><strong>完整修订：</strong>{coverage.revisedStatement}</p>
+            </article>
+          ) : null}
       <ol className="rw-legend" aria-label="图例">
         <li><i className="rw-key-path" />已走路径</li>
         <li><i className="rw-key-cover" />当前证据覆盖</li>

@@ -216,3 +216,15 @@
   .rw-chapter-picker select { max-width:142px; }
   .rw-buttons button { min-height:33px; padding:5px 12px; }
 }
+.rw-map-coverage-label { font-size:23px; font-weight:700; fill:#3e5941; paint-order:stroke; stroke:#f8fbf1; stroke-width:5px; stroke-linejoin:round; }
+[data-rw-coverage-patch] ellipse { fill:#dcead4; fill-opacity:.76; stroke:#688858; stroke-width:2px; }
+.rw-stage:is([data-revision-beat="before"],[data-revision-beat="p05"],[data-revision-beat="p03"]) [data-rw-coverage-patch] { visibility:hidden; }
+.rw-map-hint { position:absolute; max-width:calc(100% - 22px); bottom:11px; left:11px; border:1px solid #b7c8bb; border-radius:6px; padding:5px 9px; background:#f8fbf2; color:#2b4439; font-size:14px; line-height:1.35; }
+@media(max-width:760px) {
+ .rw-map-hint { bottom:6px; left:6px; padding:4px 6px; font-size:12px; }
+ .rw-map-coverage-label { font-size:29px; }
+}
+
+.rw-kicker,.rw-mode,.rw-skip { color:#4f666a; }
+
+.rw-svg mask .rw-route { stroke-width:12px; }

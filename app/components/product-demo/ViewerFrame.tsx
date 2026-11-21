@@ -263,7 +263,7 @@ export function ViewerFrame({
       {status !== "ready" ? (
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-[#171718]/90 px-6 text-center text-sm text-white" role={status === "error" ? "alert" : "status"} data-viewer-loading={status}>
           {presentation && <div className="home-loading-poster" aria-hidden="true" style={{ backgroundImage: `url(${basePath}/product/core-explore-preview.webp)` }} />}
-          {status === "booting" ? <p className="relative">正在加载 CoResearch 演示…</p> : <p className="relative">{error}</p>}
+          {status === "booting" ? <p className="relative">正在加载 CoResearch 演示…</p> : <p className="relative">{presentation ? "演示暂时无法加载，可以重试或往下看功能介绍。" : error}</p>}
           {status === "error" ? (
             <button
               type="button"
