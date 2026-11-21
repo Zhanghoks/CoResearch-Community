@@ -20,6 +20,7 @@ try {
   const {
     PRIMARY_GUIDE_IDS,
     GUIDE_PRESET_PROMPT,
+    GUIDE_VERSION_NOTE,
     applyExpectedStep,
     applyGuideIntent,
     goToStep,
@@ -32,6 +33,10 @@ try {
     useExampleContinue: acknowledgeExample,
     worldForVariant,
   } = require(path.join(tmp, "app/demo/guides/index.js"));
+
+  const viewer = JSON.parse(fs.readFileSync(path.join(root, "public/demos/coresearch/a52c718-1.0.0/PROVENANCE.json"), "utf8"));
+  assert.ok(GUIDE_VERSION_NOTE.includes(viewer.coreSourceCommit.slice(0, 12)), "guide displays the actual viewer source");
+  assert.ok(!GUIDE_VERSION_NOTE.includes(viewer.coreSha.slice(0, 12)), "the historical fixture ID is not presented as the compiled source");
 
   assert.deepEqual([...PRIMARY_GUIDE_IDS], ["get-started", "explore-directions", "read-evidence", "research-graph", "continue-research"]);
   for (const id of [...PRIMARY_GUIDE_IDS, "troubleshooting"]) {

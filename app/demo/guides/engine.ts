@@ -339,6 +339,7 @@ export function applyGuideIntent(session: GuideSession, intent: UserIntent): Gui
   }
 
   const result = applyUserIntent(session.snapshot, intent, GUIDE_TIMELINE);
+  if (result.ignored === "unchanged-presentation") return session;
   if (result.ignored === "locked-task" || result.ignored === "not-prepared" || result.ignored === "duplicate-send") {
     return { ...session, ignored: result.ignored, message: result.ignored, snapshot: result.snapshot };
   }

@@ -1,6 +1,7 @@
 import type { DemoTimeline } from "../events";
 import {
   CONFIRMED_CAPABILITY_PROFILE,
+  type GraphPresentation,
   type UserIntent,
   type ViewerSnapshot,
 } from "./protocol";
@@ -36,6 +37,21 @@ export function recordedSendForPreparedTarget(
     if (matches) return event;
   }
   return undefined;
+}
+
+function sameSelection(a: GraphPresentation["selected"], b: GraphPresentation["selected"]) {
+  return a === b || Boolean(a && b && a.artifactId === b.artifactId &&
+    a.revisionId === b.revisionId && a.groupId === b.groupId && a.groupRevisionId === b.groupRevisionId);
+}
+
+/** Graph layout measurement can echo a controlled pan a fraction of a pixel off. */
+function samePresentation(a: GraphPresentation, b: GraphPresentation) {
+  const foldKeys = new Set([...Object.keys(a.folds), ...Object.keys(b.folds)]);
+  return sameSelection(a.selected, b.selected) && a.rootOpen === b.rootOpen && a.stowed === b.stowed &&
+    Math.abs(a.zoom - b.zoom) < 0.0001 &&
+    Math.abs(a.pan.x - b.pan.x) < 0.5 && Math.abs(a.pan.y - b.pan.y) < 0.5 &&
+    Math.abs(a.viewportScroll - b.viewportScroll) < 0.5 &&
+    [...foldKeys].every((key) => a.folds[key] === b.folds[key]);
 }
 
 /**
@@ -151,9 +167,11 @@ export function applyUserIntent(
 
   if (intent.type === "graph_presentation") {
     const selected = intent.presentation.selected;
-    const changed = selected?.artifactId !== snapshot.graph.selected?.artifactId;
+    if (samePresentation(snapshot.graph, intent.presentation)) return { snapshot, ignored: "unchanged-presentation" };
+    const changed = !sameSelection(selected, snapshot.graph.selected);
     return { snapshot: {
-      ...snapshot, generation, graph: intent.presentation,
+      // Camera motion does not invalidate the active paper resource.
+      ...snapshot, generation: changed ? generation : snapshot.generation, graph: intent.presentation,
       ...(changed ? { selectedDirectionId: selected?.artifactId ?? null, preview: selected ? { kind: "direction" as const, id: selected.artifactId } : { kind: "none" as const, id: null } } : {}),
     } };
   }

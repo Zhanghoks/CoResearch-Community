@@ -1,10 +1,11 @@
 import { INTEREST_PROMPT } from "../fixtures/video-identity";
-import { DEMO_CORE_SHA, DEMO_VIEWER_VERSION, CONFIRMED_CAPABILITY_PROFILE } from "../viewer/protocol";
+import { coreSourceCommit } from "../../../public/demos/coresearch/a52c718-1.0.0/PROVENANCE.json";
+import { DEMO_VIEWER_VERSION, CONFIRMED_CAPABILITY_PROFILE } from "../viewer/protocol";
 import type { GuideDefinition } from "./types";
 
 export const GUIDE_PRESET_PROMPT = INTEREST_PROMPT;
 
-export const GUIDE_VERSION_NOTE = `对照组织仓库 LLM-Cube/CoResearch develop@${DEMO_CORE_SHA}（viewer ${DEMO_VIEWER_VERSION}）。当前可操作入口仅为 Explore；Deep Dive、Deep Research、文献综述、蒸馏 Idea、论文解释保持锁定。这是离线合成教学数据，不是一次真实研究请求。`;
+export const GUIDE_VERSION_NOTE = `产品界面构建自 Core 提交 ${coreSourceCommit.slice(0, 12)}（viewer ${DEMO_VIEWER_VERSION}）。当前可操作入口仅为 Explore；Deep Dive、Deep Research、文献综述、蒸馏 Idea、论文解释保持锁定。这是离线合成教学数据，不是一次真实研究请求。`;
 
 const openTasks = CONFIRMED_CAPABILITY_PROFILE.openTasks.join("、");
 

@@ -90,7 +90,7 @@ export function GuideExperience({ guideId }: { guideId: string }) {
 
   const onIntent = useCallback((intent: UserIntent, generation: number) => {
     const current = sessionRef.current;
-    if (!current || (intent.type === "resource_result" && generation !== current.snapshot.generation)) return;
+    if (!current || ((intent.type === "resource_result" || intent.type === "graph_presentation") && generation !== current.snapshot.generation)) return;
     publish(applyGuideIntent(current, intent));
   }, [publish]);
 

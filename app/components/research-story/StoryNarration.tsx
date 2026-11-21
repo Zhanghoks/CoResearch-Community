@@ -6,15 +6,20 @@ import { chapters } from "../../graph-svg/story";
 function NarrationBody({ index, leaving }: { index: number; leaving?: boolean }) {
   const chapter = chapters[index];
   if (!chapter) return null;
+  const hasLeadCard = chapter.id === "revise" || chapter.id === "question" || chapter.id === "next-step";
   return (
     <div className={`rw-narr-body${leaving ? " rw-narr-out" : ""}`} aria-hidden={leaving || undefined}>
       <p className="rw-eyebrow">{chapter.tag}</p>
       <h3>{chapter.title}</h3>
       <p className="rw-action"><span className="rw-takeaway-mark">动作</span>{chapter.action}</p>
-      <p className="rw-body">{chapter.body}</p>
-      <p className="rw-change"><span className="rw-takeaway-mark">变化</span>{chapter.change}</p>
-      <p className="rw-takeaway"><span className="rw-takeaway-mark">要点</span>{chapter.takeaway}</p>
-      <p className="rw-next"><span className="rw-takeaway-mark">下一步</span>{chapter.next}</p>
+      {hasLeadCard ? null : (
+        <>
+          <p className="rw-body">{chapter.body}</p>
+          <p className="rw-change"><span className="rw-takeaway-mark">变化</span>{chapter.change}</p>
+          <p className="rw-takeaway"><span className="rw-takeaway-mark">要点</span>{chapter.takeaway}</p>
+          <p className="rw-next"><span className="rw-takeaway-mark">下一步</span>{chapter.next}</p>
+        </>
+      )}
     </div>
   );
 }

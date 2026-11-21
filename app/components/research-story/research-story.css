@@ -128,3 +128,7 @@
   .rw-narr-body, .rw-narr-out { animation: none !important; }
   .rw-narr-out { display: none !important; }
 }
+
+.rw-story-anchor { display: block; height: 0; scroll-margin-top: var(--rw-top); }
+.rw-overlay > .rw-coverage[data-rw-revises="true"] { border-color: #dfcbb6; background: #fffaf4; }
+.rw-overlay > .rw-question { border-color: #cadcea; background: #eff5fa; }

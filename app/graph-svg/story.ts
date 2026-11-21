@@ -20,6 +20,7 @@ import { nodeAt } from "./mock-world";
 import type { ConceptFrame, Pose, StoryChapter } from "./types";
 import { LABEL_MIN_PX, QUESTION_MIN_PX } from "./types";
 
+export const REVISION_STORY_ANCHOR = "research-world-revise";
 export { LABEL_MIN_PX, QUESTION_MIN_PX, CONCEPT_DURATION_MS };
 
 const question = openQuestions[0]!;

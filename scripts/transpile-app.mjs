@@ -10,6 +10,12 @@ export function transpileModuleGraph({ ts, root, entries, tmp }) {
     if (seen.has(rel)) continue;
     seen.add(rel);
     const src = path.join(root, rel);
+    if (rel.endsWith(".json")) {
+      const out = path.join(tmp, rel);
+      fs.mkdirSync(path.dirname(out), { recursive: true });
+      fs.copyFileSync(src, out);
+      continue;
+    }
     const text = fs.readFileSync(src, "utf8");
     for (const match of text.matchAll(/from\s+["'](\.[^"']+)["']/g)) {
       const resolved = resolveImport(root, path.dirname(rel), match[1]);

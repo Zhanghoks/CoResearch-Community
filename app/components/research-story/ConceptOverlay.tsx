@@ -45,8 +45,42 @@ export function ConceptOverlay({ facts, chapter }: { facts: ConceptFacts; chapte
   const coverage = facts.coverage;
   const reading = stateAt(videoIdentityWorld, demoTimeline, facts.kernelT).paperReading;
 
+  const coverageCard = coverage ? (
+    <article className="rw-coverage" data-rw-coverage={coverage.recordId} data-rw-revises={coverage.revises ? "true" : "false"}>
+      <p className="rw-label-strong">当前证据覆盖</p>
+      {coverage.revises && coverage.previousStatement ? (
+        <>
+          <p className="rw-prev" data-rw-coverage-prev="">修订前：{coverage.previousStatement}</p>
+          {coverage.counterexampleIds.map((id) => {
+            const item = ceById.get(id);
+            return item ? <p key={id} data-rw-counterexample={id}>{item.paperId} 反例：{item.reason}</p> : null;
+          })}
+          <p className="rw-revised" data-rw-coverage-next="">修订后：{coverage.revisedStatement}</p>
+        </>
+      ) : (
+        <p data-rw-coverage-current="">{coverage.statement}</p>
+      )}
+    </article>
+  ) : null;
+
+
   return (
     <div className="rw-overlay" data-rw-overlay="" style={{ ["--rw-label" as string]: `${LABEL_MIN_PX}px`, ["--rw-question" as string]: `${QUESTION_MIN_PX}px` }}>
+      {showQuestion ? (
+        <article className="rw-question" data-rw-question={OPEN_QUESTION_ID}>
+          <p className="rw-label-strong">开放式问题 · 合成教学数据</p>
+          <p className="rw-question-body">{question.question}</p>
+          <p><strong>范围：</strong>{question.scope}</p>
+          <p><strong>为什么值得查：</strong>{question.whyInvestigate}</p>
+          <p><strong>已有依据：</strong>P01/P02 的有条件支持（{question.evidenceIds.join("、")}）。</p>
+          <p><strong>已见反例：</strong>P05/P03，避免把长视频或复杂场景本身当作全新问题（{question.counterexampleIds.join("、")}）。</p>
+          <p><strong>仍然未知：</strong>{question.uncertainty}</p>
+          <p><strong>下一步：</strong>{question.nextAction}</p>
+          <p data-rw-status=""><strong>状态：</strong>{facts.statusLabel}</p>
+        </article>
+      ) : null}
+
+      {coverage?.revises ? coverageCard : null}
       <ol className="rw-legend" aria-label="图例">
         <li><i className="rw-key-path" />已走路径</li>
         <li><i className="rw-key-cover" />当前证据覆盖</li>
@@ -132,37 +166,7 @@ export function ConceptOverlay({ facts, chapter }: { facts: ConceptFacts; chapte
         </table>
       ) : null}
 
-      {coverage ? (
-        <article className="rw-coverage" data-rw-coverage={coverage.recordId} data-rw-revises={coverage.revises ? "true" : "false"}>
-          <p className="rw-label-strong">当前证据覆盖</p>
-          {coverage.revises && coverage.previousStatement ? (
-            <>
-              <p className="rw-prev" data-rw-coverage-prev="">修订前：{coverage.previousStatement}</p>
-              <p className="rw-revised" data-rw-coverage-next="">修订后：{coverage.revisedStatement}</p>
-              {coverage.counterexampleIds.map((id) => {
-                const item = ceById.get(id);
-                return item ? <p key={id} data-rw-counterexample={id}>{item.paperId} 反例：{item.reason}</p> : null;
-              })}
-            </>
-          ) : (
-            <p data-rw-coverage-current="">{coverage.statement}</p>
-          )}
-        </article>
-      ) : null}
-
-      {showQuestion ? (
-        <article className="rw-question" data-rw-question={OPEN_QUESTION_ID}>
-          <p className="rw-label-strong">开放式问题 · 合成教学数据</p>
-          <p className="rw-question-body">{question.question}</p>
-          <p><strong>范围：</strong>{question.scope}</p>
-          <p><strong>为什么值得查：</strong>{question.whyInvestigate}</p>
-          <p><strong>已有依据：</strong>P01/P02 的有条件支持（{question.evidenceIds.join("、")}）。</p>
-          <p><strong>已见反例：</strong>P05/P03，避免把长视频或复杂场景本身当作全新问题（{question.counterexampleIds.join("、")}）。</p>
-          <p><strong>仍然未知：</strong>{question.uncertainty}</p>
-          <p><strong>下一步：</strong>{question.nextAction}</p>
-          <p data-rw-status=""><strong>状态：</strong>{facts.statusLabel}</p>
-        </article>
-      ) : null}
+      {!coverage?.revises ? coverageCard : null}
 
       {chapter.id === "next-step" ? (
         <article className="rw-next-step" data-rw-next-step="">

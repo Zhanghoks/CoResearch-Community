@@ -11,7 +11,7 @@ import {
 } from "../../demo/scenes/concept";
 import { videoIdentityWorld } from "../../demo/fixtures/video-identity";
 import { createSceneRenderer } from "../../graph-svg/scene";
-import { chapters, sampleConcept } from "../../graph-svg/story";
+import { chapters, sampleConcept, REVISION_STORY_ANCHOR } from "../../graph-svg/story";
 import { useViewPreferences } from "../view-preferences";
 import { ConceptOverlay } from "./ConceptOverlay";
 import { ResearchWorldSvg } from "./ResearchWorldSvg";
@@ -263,6 +263,27 @@ export function ResearchWorldStory() {
     return () => { disposed = true; cancelAnimationFrame(refreshFrame); disposeAnimation(); };
   }, [manual, reduce, short, mode, modeReady]);
 
+  useEffect(() => {
+    if (!ready) return;
+    const seekRevision = () => {
+      if (window.location?.hash !== `#${REVISION_STORY_ANCHOR}`) return;
+      const index = chapters.findIndex(({ id }) => id === "revise");
+      if (index >= 0) controlsRef.current?.go(index);
+    };
+    seekRevision();
+    const repeatEntry = (event: MouseEvent) => {
+      const target = event.target;
+      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      if (target instanceof Element && target.closest(`a[href="#${REVISION_STORY_ANCHOR}"]`)) seekRevision();
+    };
+    window.addEventListener("hashchange", seekRevision);
+    window.addEventListener("click", repeatEntry);
+    return () => {
+      window.removeEventListener("hashchange", seekRevision);
+      window.removeEventListener("click", repeatEntry);
+    };
+  }, [ready]);
+
   function go(index: number) { controlsRef.current?.go(index); }
   function skip() {
     controlsRef.current?.cancel();
@@ -272,6 +293,7 @@ export function ResearchWorldStory() {
 
   return (
     <section ref={rootRef} id="research-world" className={`rw-story${manual ? " rw-manual" : ""}${short ? " rw-short" : ""}${narrow ? " rw-narrow" : ""}`} aria-label="研究世界概念演示">
+      <span id={REVISION_STORY_ANCHOR} className="rw-story-anchor" aria-hidden="true" />
       <div
         ref={stageRef}
         className="rw-stage"
@@ -299,7 +321,7 @@ export function ResearchWorldStory() {
         <div className="rw-content">
           <StoryNarration active={active} />
           <div className="rw-canvas"><ResearchWorldSvg /></div>
-          <ConceptOverlay facts={facts} chapter={chapters[active]!} active={active} />
+          <ConceptOverlay key={chapters[active]?.id} facts={facts} chapter={chapters[active]!} active={active} />
         </div>
         <div className="rw-progress-row">
           <div className="rw-progress-track" aria-hidden="true"><span data-rw-progress="" /></div>

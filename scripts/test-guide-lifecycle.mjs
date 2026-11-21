@@ -106,6 +106,14 @@ try {
   const before = paper.frame().props.snapshot;
   paper.intent({ type: "resource_result", paperId: "P02", status: "ready", readingLevel: "full_text" }, before.generation - 1);
   assert.equal(paper.frame().props.snapshot, before, "late resource acknowledgement cannot change a newer snapshot");
+  const graph = before.graph;
+  paper.intent({ type: "graph_presentation", presentation: { ...graph, pan: { ...graph.pan, x: graph.pan.x + 0.00006 } } });
+  assert.equal(paper.frame().props.snapshot, before, "subpixel layout echoes must not trigger a fresh render or paper generation");
+  paper.intent({ type: "graph_presentation", presentation: { ...graph, zoom: graph.zoom + .2 } }, before.generation - 1);
+  assert.equal(paper.frame().props.snapshot, before, "stale graph state must not replace current graph");
+  paper.intent({ type: "graph_presentation", presentation: { ...graph, zoom: graph.zoom + .2 } });
+  assert.equal(paper.frame().props.snapshot.graph.zoom, graph.zoom + .2, "real graph zoom is retained");
+  assert.equal(paper.frame().props.snapshot.generation, before.generation, "camera motion does not invalidate a pending paper result");
   paper.intent({ type: "resource_result", paperId: "P02", status: "ready", readingLevel: "full_text" });
   paper.click("下一步");
   assert.equal(paper.frame().props.snapshot.preview.id, "P02");

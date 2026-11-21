@@ -110,6 +110,14 @@ assert.match(text(table), /未注明 \/ 待核对/); assert.match(text(table), /
 assert.match(text(table), /场景不同不能直接外推/);
 assert.equal(nodes(table).filter((n) => n.type === "th" && n.props.scope === "col").length, 6);
 const act6 = overlay(5);
+const act6Children = act6.props.children.filter(Boolean);
+assert.equal(act6Children[0].props["data-rw-revises"], "true", "revision precedes the legend and detailed sources");
+const act6ReadingOrder = nodes(act6).map((n) => n.props ?? {});
+assert.ok(act6ReadingOrder.findIndex((props) => "data-rw-coverage-prev" in props) <
+  act6ReadingOrder.findIndex((props) => "data-rw-counterexample" in props));
+assert.ok(act6ReadingOrder.findLastIndex((props) => "data-rw-counterexample" in props) <
+  act6ReadingOrder.findIndex((props) => "data-rw-coverage-next" in props));
+
 assert.match(text(nodes(act6).find((n) => n.props?.["data-rw-condition-paper"] === "P03")), /较高计算预算/);
 assert.match(text(nodes(act6).find((n) => n.props?.["data-rw-condition-paper"] === "P05")), /长序列/);
 assert.equal(nodes(act6).some((n) => n.props?.["data-rw-coverage-prev"] !== undefined), true);
@@ -124,6 +132,7 @@ assert.equal(json(paperConditionCells(altered, true).cells[2]), json(["长序列
 // Compute the winning applicable font-size rule for the actual OQ paragraph.
 // This intentionally checks selector specificity and source order, not constants.
 const oqTree = overlay(6);
+assert.ok(oqTree.props.children.filter(Boolean)[0].props["data-rw-question"], "lead with the research question in act 7");
 const paragraph = nodes(oqTree).find((n) => n.props?.className === "rw-question-body");
 assert.ok(paragraph);
 const css = fs.readFileSync("app/components/research-story/research-story.css", "utf8");

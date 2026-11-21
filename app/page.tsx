@@ -14,8 +14,8 @@ export default function Home() {
   return (
     <main id="main">
       <HomeHero />
-      <ProductDemoTeaser />
       <ResearchWorldStory />
+      <ProductDemoTeaser />
       <SiteStory />
     </main>
   );
