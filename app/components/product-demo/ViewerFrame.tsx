@@ -13,6 +13,7 @@ import {
   type ViewerSnapshot,
 } from "../../demo/viewer/protocol";
 import type { DemoFixture } from "../../demo/viewer/fixture-types";
+import { keepOfflineDraftContinuous } from "../../demo/viewer/draft-continuity";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 const HANDSHAKE_TIMEOUT_MS = 10000;
@@ -33,6 +34,7 @@ export function ViewerFrame({
   onReady,
   onStatus,
   presentation = false,
+  practiceDraft = false,
 }: {
   fixture: DemoFixture;
   snapshot: ViewerSnapshot;
@@ -40,6 +42,7 @@ export function ViewerFrame({
   onReady?: (anchors: readonly AnchorBox[], generation: number) => void;
   onStatus?: (status: ViewerHandshake, error?: string) => void;
   presentation?: boolean;
+  practiceDraft?: boolean;
 }) {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [anchors, setAnchors] = useState<readonly AnchorBox[]>([]);
@@ -167,6 +170,11 @@ export function ViewerFrame({
     if (status !== "ready") return;
     post({ type: "applySnapshot", snapshot });
   }, [snapshot, post, status]);
+
+  useEffect(() => {
+    const doc = status === "ready" && practiceDraft ? frameRef.current?.contentDocument : null;
+    return doc ? keepOfflineDraftContinuous(doc) : undefined;
+  }, [practiceDraft, status, reloadKey]);
 
   // Frame the *actual* pinned Core document; avoid re-creating its panels.
   // The desktop exhibit needs a bounded frame and the mobile exhibit follows

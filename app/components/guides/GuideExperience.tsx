@@ -116,6 +116,7 @@ export function GuideExperience({ guideId }: { guideId: string }) {
   const stepIndex = guide.steps.findIndex((item) => item.stepId === session.stepId);
   const viewerFailed = status === "error";
   const showExample = isOffPresetDraft(session.snapshot) && !session.exampleAcknowledged;
+  const offerExample = guideId === "get-started" && step.stepId === "enter-interest" && session.mode === "practice" && !session.snapshot.draft.trim();
 
   const setMode = (mode: GuideMode) => {
     publish({ ...session, mode });
@@ -162,6 +163,10 @@ export function GuideExperience({ guideId }: { guideId: string }) {
         <p><strong>预期反馈：</strong>{step.expectedFeedback}</p>
         <p><strong>完成判据：</strong>{verdict.detail}</p>
         {session.message ? <p className="guide-message" role="status">{session.message}</p> : null}
+        {offerExample ? <div className="guide-example">
+          <p>想直接跟做？可以先填入本教程使用的视频生成示例。</p>
+          <button type="button" onClick={() => publish(applyGuideIntent(session, { type: "edit_draft", text: GUIDE_PRESET_PROMPT }))}>填入预置示例</button>
+        </div> : null}
         {showExample ? (
           <div className="guide-example" role="status">
             <p>{EXAMPLE_HINT}</p>
@@ -186,6 +191,7 @@ export function GuideExperience({ guideId }: { guideId: string }) {
             <ViewerFrame
               key={`${guideId}:${step.variant ?? "default"}`}
               fixture={fixture}
+              practiceDraft={session.mode === "practice"}
               snapshot={session.snapshot}
               onIntent={onIntent}
               onReady={(next) => setAnchors(next)}

@@ -13,6 +13,7 @@ function loadSource(file, require, globals = {}) {
   return loadedModule.exports;
 }
 const protocol = loadSource("app/demo/viewer/protocol.ts", () => { throw Error("Unexpected protocol import"); });
+const draftContinuity = loadSource("app/demo/viewer/draft-continuity.ts", () => { throw Error("Unexpected draft helper import"); });
 const fixture = { groups: [], papers: [], directions: [] };
 const snapshot = (generation) => ({ t: generation * 16, generation, draft: "example", focusIds: [] });
 
@@ -60,6 +61,7 @@ function createHarness() {
     if (id === "react") return react;
     if (id === "react/jsx-runtime") return { jsx, jsxs: jsx };
     if (id === "../../demo/viewer/protocol") return protocol;
+    if (id === "../../demo/viewer/draft-continuity") return draftContinuity;
     throw Error(`Unexpected import ${id}`);
   }, { window, fetch: () => Promise.resolve({ ok: true }) });
   function nodes(value) {

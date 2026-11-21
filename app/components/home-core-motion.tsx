@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { homeCueAt, homeFrame, homeFrameSignal, homeSceneAt, homeScenes, homeTimeline, type HomeScene } from "../demo/scenes/home-runtime";
+import { homeCueAt, homeFrame, homeFrameSignal, homeScenes, homeTimeline, type HomeScene } from "../demo/scenes/home-runtime";
 import { videoIdentityWorld } from "../demo/fixtures/video-identity";
 import { serializeFixture } from "../demo/viewer/fixture";
 import type { ViewerSnapshot } from "../demo/viewer/protocol";
@@ -36,11 +36,13 @@ export function HomeCoreMotion({ chapter, auto = true }: { chapter?: HomeScene; 
   const playing = ready && enabled && !reduce && !finished;
 
   useEffect(() => {
-    const query = window.matchMedia("(max-width: 767px)");
-    const sync = () => setLayout(query.matches ? "mobile" : "desktop");
+    const element = root.current;
+    if (!element) return;
+    const sync = () => setLayout(element.clientWidth < 768 ? "mobile" : "desktop");
     sync();
-    query.addEventListener("change", sync);
-    return () => query.removeEventListener("change", sync);
+    const observer = new ResizeObserver(sync);
+    observer.observe(element);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -77,7 +79,8 @@ export function HomeCoreMotion({ chapter, auto = true }: { chapter?: HomeScene; 
     };
     // React renders the checkpoint directly in reduced motion; no clock runs.
     id = requestAnimationFrame(() => {
-      publish(reduce && !userSeek.current ? target : time.current);
+      if (reduce && !userSeek.current && time.current === start) time.current = target;
+      publish(time.current);
       if (playing && visible && foreground) id = requestAnimationFrame(loop);
     });
     return () => cancelAnimationFrame(id);
@@ -95,11 +98,14 @@ export function HomeCoreMotion({ chapter, auto = true }: { chapter?: HomeScene; 
   }
 
   return (
-    <div ref={root} className="home-core" data-home-core={chapter ?? "hero"} data-home-scene={scene.id} data-home-playing={playing && visible && foreground ? "true" : "false"}>
+    <div ref={root} className="home-core" data-home-core={chapter ?? "hero"} data-home-layout={layout} data-home-scene={scene.id} data-home-playing={playing && visible && foreground ? "true" : "false"}>
       <div className="home-core-chrome">
         <div className="home-core-lights" aria-hidden="true"><i /><i /><i /></div>
         <span>CoResearch <span className="home-core-window-label">/ 研究工作台</span></span>
-        <span className="home-core-status"><i aria-hidden="true" />实际 Core 界面 <span>· 离线回放</span></span>
+        <span className="home-core-status"><i aria-hidden="true" />
+          <span className="home-core-status-wide">实际 Core · 合成数据 · 等待已压缩</span>
+          <span className="home-core-status-compact">合成数据 · 提速回放</span>
+        </span>
       </div>
       <div className="home-core-cue" data-home-cue="">
         <span>当前动作</span><strong key={cue}>{cue}</strong>
@@ -122,7 +128,7 @@ export function HomeCoreMotion({ chapter, auto = true }: { chapter?: HomeScene; 
         <div className="home-core-controls" aria-label="首页回放控制">
           {!reduce && <button type="button" onClick={() => finished ? seek(start, true) : setEnabled((value) => !value)} disabled={!ready}>{finished ? "重新播放" : enabled ? "暂停" : "继续播放"}</button>}
           {!chapter && <button type="button" onClick={() => {
-            const current = homeScenes.indexOf(homeSceneAt(time.current));
+            const current = homeScenes.indexOf(scene);
             seek(homeScenes[(current + 1) % homeScenes.length].result, false);
           }}>下一幕</button>}
         </div>

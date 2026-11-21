@@ -14,7 +14,7 @@ export const homeScenes = [
   { id: "ask", start: 0, result: 3700, title: "输入兴趣，准备 Explore", detail: "说清你感兴趣的领域。准备任务不等于已发送。" },
   { id: "directions", start: 4200, result: 6400, title: "发送，看到候选方向", detail: "先比较候选方向，再选最值得追的一条。" },
   { id: "refine", start: 7800, result: 15700, title: "沿一个方向继续细分", detail: "从生成一致性缩小到跨镜头的身份保持。原方向仍然保留。" },
-  { id: "evidence", start: 16800, result: 21600, title: "打开论文，核对适用条件", detail: "区分切镜前后持续可见与遮挡后重现，别把已有结论用错地方。" },
+  { id: "evidence", start: 16800, result: 21600, title: "选定方向后，核对代表论文", detail: "打开代表论文核对适用条件：持续可见的切镜结果，不能直接外推到遮挡后重现。" },
 ] as const;
 
 export type HomeScene = typeof homeScenes[number]["id"];
@@ -50,7 +50,7 @@ export function homeCueAt(t: number) {
   if (t >= 9000) return "发送第二轮 Explore";
   if (t >= 8400) return "准备细分「生成一致性」";
   if (t >= 7800) return "选中「生成一致性」";
-  if (t >= 5200) return "返回第一组候选方向";
+  if (t >= 5200) return "收到第一组候选方向";
   if (t >= 4200) return "发送第一轮 Explore";
   if (t >= 3600) return "已准备 Explore · 尚未发送";
   return "输入示例研究兴趣";

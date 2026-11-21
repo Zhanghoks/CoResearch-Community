@@ -11,7 +11,7 @@
 ## Reproduce the browser checks
 
 1. Install the lockfile dependencies and run `NEXT_PUBLIC_BASE_PATH=/CoResearch-Community npm run build`.
-2. With Firefox and GeckoDriver installed, run `npm run test:homepage:browser`. Use `FIREFOX_BIN` and `GECKODRIVER` for nonstandard executable locations. It serves only the static export on loopback.
+2. With Firefox and GeckoDriver installed, run `npm run test:homepage:browser`. Use `FIREFOX_BIN` and `GECKODRIVER` for nonstandard executable locations. Also run `CORESEARCH_REDUCED_MOTION=1 npm run test:homepage:browser` for the static-reader flow. It serves only the static export on loopback.
 3. The smoke test checks real timed UI changes and keyboard handling, all eight graph scenes at five widths, current-group visibility in the mobile viewer, the matching P02 guide, and request/console boundaries. A narrow CSS viewport is a responsive layout check, not proof of physical device behavior.
 
 The graph’s revision has four beats: original coverage, P05 (long/continuously visible), P03 (occlusion and cutting with different update budget), and the revised judgment. The two added coverage regions are separate. The dashed onward path explicitly remains unverified. On phones, manual is the initial mode; users who have not requested reduced motion can opt into playback.

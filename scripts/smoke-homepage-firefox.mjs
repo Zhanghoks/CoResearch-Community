@@ -12,6 +12,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 const projectBase = process.env.NEXT_PUBLIC_BASE_PATH ?? "/CoResearch-Community";
 const out = path.resolve("out");
+const reducedMotion = process.env.CORESEARCH_REDUCED_MOTION === "1";
 const driverPort = Number(process.env.FIREFOX_DRIVER_PORT ?? 4458);
 const driverOrigin = `http://127.0.0.1:${driverPort}`;
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".txt": "text/plain", ".webp": "image/webp", ".woff2": "font/woff2", ".jpg": "image/jpeg" };
@@ -68,7 +69,7 @@ try {
       browserName: "firefox", webSocketUrl: true,
       "moz:firefoxOptions": {
         ...(process.env.FIREFOX_BIN ? { binary: process.env.FIREFOX_BIN } : {}),
-        args: ["-headless"], prefs: { "app.update.enabled": false, "ui.prefersReducedMotion": 0 },
+        args: ["-headless"], prefs: { "app.update.enabled": false, "ui.prefersReducedMotion": reducedMotion ? 1 : 0 },
       },
     } },
   });
@@ -121,101 +122,165 @@ try {
   await bidi("session.subscribe", { events: ["network.beforeRequestSent", "network.responseCompleted", "log.entryAdded"] });
   const context = (await bidi("browsingContext.getTree", {})).contexts[0].context;
   const viewport = (width, height) => bidi("browsingContext.setViewport", { context, viewport: { width, height } });
-  await viewport(1440, 1000);
-  await open();
-  assert.deepEqual(await js("return [...document.querySelector('#main').children].map(el=>el.id);"), ["top", "research-world", "product-demo"]);
-  await move(".home-stage-window");
-  for (const [phase, phrase] of [["directions", "生成一致性"], ["refine", "主体身份"], ["evidence", "Version p02-card-v1"]]) {
-    await wait(async () => await clipState(phase, true) && await withinCore(phrase), phase, 24000);
-  }
-  await wait(() => clipState("evidence", false), "replay ends");
-  await action(".home-core-controls button:first-child", " ");
-  await wait(() => clipState("ask", true), "space replay");
-  await action(".home-core-controls button:first-child", "\uE007");
-  await wait(() => clipState("ask", false), "enter pause");
-
-  await move("#research-world");
-  await wait(() => js("return !document.querySelector('.rw-next').disabled;"), "graph controls");
-  await act(5);
-  await js("const b=[...document.querySelectorAll('.rw-buttons button')].find(e=>e.textContent.includes('继续播放'));b.click();");
-  const beat = (value) => js("return document.querySelector('.rw-stage')?.dataset.revisionBeat===arguments[0] && document.querySelector('#research-world')?.dataset.conceptAct==='6';", value);
-  for (const value of ["before", "p05", "p03", "after"]) await wait(() => beat(value), "revision beat " + value, 12000);
-  await act(6);
-  await wait(() => js("return document.querySelector('.rw-stage').dataset.revisionBeat==='all';"), "seek exposes complete revision");
-  await action(".rw-next", " ");
-  await wait(() => atAct(7), "graph next by Space");
-  assert.match(await js("return document.querySelector('.rw-question-body').innerText;"), /相同计算预算/);
-  assert.match(await js("return getComputedStyle(document.querySelector('[data-rw-unverified-path]')).strokeDasharray;"), /7px/);
-  assert.equal(await js("return document.querySelector('[data-rw-unverified-path]').style.strokeDasharray;"), "");
-  await act(8);
-  await action(".rw-next", "\uE007");
-  await wait(() => atAct(1), "last-act replay returns to start");
-  await wait(() => atAct(2), "last-act replay actually runs");
-
-  await action("#feature-evidence button[aria-expanded]", " ");
-  await wait(() => withinCore("Version p02-card-v1", "#feature-evidence iframe"), "feature clip opens P02", 16000);
-  assert.equal(await js("return document.querySelectorAll('iframe').length;"), 2);
-  await action("#feature-evidence button[aria-expanded]", "\uE007");
-  await wait(() => js("return document.querySelectorAll('iframe').length===1;"), "feature closes its viewer");
-
-  for (const [width, height] of [[1440, 900], [1280, 720], [640, 450], [390, 844], [320, 740]]) {
-    await viewport(width, height);
-    await open(`?verify-width=${width}#research-world-revise`);
-    await wait(() => atAct(6), "direct revision link " + width);
-    for (let index = 1; index <= 8; index += 1) {
-      await act(index);
-      await wait(() => atAct(index), `act ${index} at ${width}`);
-      assert.equal(await js("const e=document.documentElement;return e.scrollWidth<=e.clientWidth+1;"), true);
-      if (index >= 7) assert.ok(await js("return parseFloat(getComputedStyle(document.querySelector('.rw-question-body')).fontSize)>=16;"));
-      if (index === 6 || index === 7) await wait(() => js(`
-        const wrap=document.querySelector('.rw-canvas').getBoundingClientRect();
-        const labels=[...document.querySelectorAll('.rw-map-node-id')].filter(e => ['P01','P02','P05','P03','待验证问题'].includes(e.textContent) && getComputedStyle(e).visibility==='visible');
-        return labels.length >= 4 && labels.every(e => {
-          const r=e.getBoundingClientRect();
-          return r.height >= 14 && r.left >= wrap.left - 1 && r.right <= wrap.right + 1 && r.top >= wrap.top - 1 && r.bottom <= wrap.bottom + 1;
-        });
-      `), `important graph labels stay on-screen at act ${index}, width ${width}`);
+  if (reducedMotion) {
+    await viewport(390, 844);
+    await open();
+    await wait(async () => await clipState("directions", false) && await withinCore("生成一致性"), "static G1 opening frame");
+    await action(".home-core-controls button", " ");
+    await wait(async () => await clipState("refine", false) && await withinCore("跨镜头身份保持"), "native Space advances from displayed G1 to G3");
+    await action(".home-core-controls button", "\uE007");
+    await wait(async () => await clipState("evidence", false) && await withinCore("Version p02-card-v1"), "native Enter advances from G3 to P02");
+    await sleep(400);
+    assert.equal(await clipState("evidence", false), true);
+    console.log("PASS: reduced motion native Space/Enter advances on the first key from G1 → latest G3 → P02, with no autoplay.");
+  } else {
+    await viewport(1440, 1000);
+    await open();
+    assert.deepEqual(await js("return [...document.querySelector('#main').children].map(el=>el.id);"), ["top", "research-world", "product-demo"]);
+    await move(".home-stage-window");
+    for (const [phase, phrase] of [["directions", "生成一致性"], ["refine", "主体身份"], ["evidence", "Version p02-card-v1"]]) {
+      await wait(async () => await clipState(phase, true) && await withinCore(phrase), phase, 24000);
     }
-    if (width <= 390) {
-      await action(".home-core-steps button:nth-child(3)", " ");
-      await wait(() => js("const f=document.querySelector('.home-core iframe'),g=f?.contentDocument?.querySelector('[data-demo-anchor=group-G3]');return g&&g.getBoundingClientRect().top>=0&&g.getBoundingClientRect().top<=36;"), "latest refined direction visible at " + width);
-    }
-    await move("#feature-evidence");
-    await wait(() => js("return document.querySelector('#feature-evidence img').naturalWidth > 0;"), "real poster");
-    assert.match(await js("return document.querySelector('#feature-evidence img').currentSrc;"), width <= 767 ? /evidence-mobile\.webp$/ : /evidence\.webp$/);
-  }
-  await viewport(390, 844);
-  await open("?verify-autoplay=phone#research-world");
-  await move("#research-world");
-  await action(".rw-mode button", " ");
-  await wait(() => atAct(2), "phone opt-in playing");
-  await action(".rw-mode button", "\uE007");
-  assert.match(await js("return document.querySelector('.rw-mode button').innerText;"), /自动讲解/);
-  await open("docs/read-evidence/?step=read-level");
-  await wait(() => withinCore("Version p02-card-v1", "iframe"), "matching P02 guide deep link");
-  const requests = relevant.filter((e) => e.method === "network.beforeRequestSent").map((e) => e.params.request);
-  const bad = requests.filter(({ url, method }) => /^https?:/.test(url) && !url.startsWith(root) || !["GET", "HEAD", "OPTIONS"].includes(method));
-  assert.deepEqual(bad, [], "offline replay and guides must not issue external or write requests");
-  assert.ok(requests.length > 20);
-  const outputErrors = relevant.filter((e) => e.method === "log.entryAdded" && e.params.level === "error");
-  assert.deepEqual(outputErrors, [], "no console errors throughout the walkthrough");
-  const failures = relevant.filter((e) => e.method === "network.responseCompleted" && e.params.response.status >= 400);
-  assert.deepEqual(failures, [], "no failed page resources");
-  console.log(`PASS: continuous real UI, native Space/Enter, timed evidence revision, 5 viewport widths × 8 scenes, P02 guide, ${requests.length} local read-only requests.`);
+    await wait(() => clipState("evidence", false), "replay ends");
+    await action(".home-core-controls button:first-child", " ");
+    await wait(() => clipState("ask", true), "space replay");
+    await action(".home-core-controls button:first-child", "\uE007");
+    await wait(() => clipState("ask", false), "enter pause");
 
-  // Test a real timed-out/failed boot on the loopback fixture, not production.
-  // The preceding network gate excluded this deliberately induced failure.
-  unavailableViewer = true;
-  await viewport(1440, 1000);
-  await open("?verify=viewer-retry");
-  await wait(() => js("return document.querySelector('.home-core [data-viewer-loading=error]')!==null;"), "simulated viewer failure");
-  await wait(() => js("return document.querySelector('.home-core .home-loading-poster')!==null;"), "stable viewer preview during failure");
-  unavailableViewer = false;
-  await action(".home-core [data-viewer-loading=error] button", "\uE007");
-  await move(".home-stage-window");
-  await wait(() => clipState("ask", true), "pinned viewer handshake recovers");
-  await wait(async () => await clipState("directions", true) && await withinCore("生成一致性"), "recovered playback advances");
-  console.log("PASS: simulated viewer error leaves a stable poster; native Retry reconnects and advances the replay.");
+    await move("#research-world");
+    await wait(() => js("return !document.querySelector('.rw-next').disabled;"), "graph controls");
+    await act(5);
+    await js("const b=[...document.querySelectorAll('.rw-buttons button')].find(e=>e.textContent.includes('继续播放'));b.click();");
+    const beat = (value) => js("return document.querySelector('.rw-stage')?.dataset.revisionBeat===arguments[0] && document.querySelector('#research-world')?.dataset.conceptAct==='6';", value);
+    for (const value of ["before", "p05", "p03", "after"]) await wait(() => beat(value), "revision beat " + value, 12000);
+    await act(6);
+    await wait(() => js("return document.querySelector('.rw-stage').dataset.revisionBeat==='all';"), "seek exposes complete revision");
+    await action(".rw-next", " ");
+    await wait(() => atAct(7), "graph next by Space");
+    assert.match(await js("return document.querySelector('.rw-question-body').innerText;"), /相同计算预算/);
+    assert.match(await js("return getComputedStyle(document.querySelector('[data-rw-unverified-path]')).strokeDasharray;"), /7px/);
+    assert.equal(await js("return document.querySelector('[data-rw-unverified-path]').style.strokeDasharray;"), "");
+    await act(8);
+    await action(".rw-next", "\uE007");
+    await wait(() => atAct(1), "last-act replay returns to start");
+    await wait(() => atAct(2), "last-act replay actually runs");
+
+    await action("#feature-evidence button[aria-expanded]", " ");
+    await wait(() => withinCore("Version p02-card-v1", "#feature-evidence iframe"), "feature clip opens P02", 16000);
+    assert.equal(await js("return document.querySelectorAll('iframe').length;"), 2);
+    await action("#feature-evidence button[aria-expanded]", "\uE007");
+    await wait(() => js("return document.querySelectorAll('iframe').length===1;"), "feature closes its viewer");
+
+    for (const [width, height] of [[1440, 900], [1280, 720], [640, 450], [390, 844], [320, 740]]) {
+      await viewport(width, height);
+      await open(`?verify-width=${width}#research-world-revise`);
+      await wait(() => atAct(6), "direct revision link " + width);
+      for (let index = 1; index <= 8; index += 1) {
+        await act(index);
+        await wait(() => atAct(index), `act ${index} at ${width}`);
+        assert.equal(await js("const e=document.documentElement;return e.scrollWidth<=e.clientWidth+1;"), true);
+        if (index >= 7) assert.ok(await js("return parseFloat(getComputedStyle(document.querySelector('.rw-question-body')).fontSize)>=16;"));
+        if (index === 6 || index === 7) await wait(() => js(`
+          const wrap=document.querySelector('.rw-canvas').getBoundingClientRect();
+          const labels=[...document.querySelectorAll('.rw-map-node-id')].filter(e => ['P01','P02','P05','P03','待验证问题'].includes(e.textContent) && getComputedStyle(e).visibility==='visible');
+          return labels.length >= 4 && labels.every(e => {
+            const r=e.getBoundingClientRect();
+            return r.height >= 14 && r.left >= wrap.left - 1 && r.right <= wrap.right + 1 && r.top >= wrap.top - 1 && r.bottom <= wrap.bottom + 1;
+          });
+        `), `important graph labels stay on-screen at act ${index}, width ${width}`);
+      }
+      if (width <= 390) {
+        await action(".home-core-steps button:nth-child(3)", " ");
+        await wait(() => js("const f=document.querySelector('.home-core iframe'),g=f?.contentDocument?.querySelector('[data-demo-anchor=group-G3]');return g&&g.getBoundingClientRect().top>=0&&g.getBoundingClientRect().top<=36;"), "latest refined direction visible at " + width);
+      }
+      await move("#feature-evidence");
+      await wait(() => js("return document.querySelector('#feature-evidence img').naturalWidth > 0;"), "real poster");
+      assert.match(await js("return document.querySelector('#feature-evidence img').currentSrc;"), width <= 767 ? /evidence-mobile\.webp$/ : /evidence\.webp$/);
+    }
+    await viewport(820, 900);
+    await open("?verify-embed-width=tablet");
+    await wait(() => js("const box=document.querySelector('.home-core');return box?.clientWidth<768&&box.dataset.homeLayout==='mobile';"), "embedded Core adapts to its own width");
+    await viewport(390, 844);
+    await open("?verify-autoplay=phone#research-world");
+    await move("#research-world");
+    await action(".rw-mode button", " ");
+    await wait(() => atAct(2), "phone opt-in playing");
+    await action(".rw-mode button", "\uE007");
+    assert.match(await js("return document.querySelector('.rw-mode button').innerText;"), /自动讲解/);
+    await open("docs/read-evidence/?step=read-level");
+    await wait(() => withinCore("Version p02-card-v1", "iframe"), "matching P02 guide deep link");
+    const requests = relevant.filter((e) => e.method === "network.beforeRequestSent").map((e) => e.params.request);
+    const bad = requests.filter(({ url, method }) => /^https?:/.test(url) && !url.startsWith(root) || !["GET", "HEAD", "OPTIONS"].includes(method));
+    assert.deepEqual(bad, [], "offline replay and guides must not issue external or write requests");
+    assert.ok(requests.length > 20);
+    const outputErrors = relevant.filter((e) => e.method === "log.entryAdded" && e.params.level === "error");
+    assert.deepEqual(outputErrors, [], "no console errors throughout the walkthrough");
+    const failures = relevant.filter((e) => e.method === "network.responseCompleted" && e.params.response.status >= 400);
+    assert.deepEqual(failures, [], "no failed page resources");
+    console.log(`PASS: continuous real UI, native Space/Enter, timed evidence revision, 5 viewport widths × 8 scenes, P02 guide, ${requests.length} local read-only requests.`);
+
+    // Test a real timed-out/failed boot on the loopback fixture, not production.
+    // The preceding network gate excluded this deliberately induced failure.
+    unavailableViewer = true;
+    await viewport(1440, 1000);
+    await open("?verify=viewer-retry");
+    await wait(() => js("return document.querySelector('.home-core [data-viewer-loading=error]')!==null;"), "simulated viewer failure");
+    await wait(() => js("return document.querySelector('.home-core .home-loading-poster')!==null;"), "stable viewer preview during failure");
+    unavailableViewer = false;
+    await action(".home-core [data-viewer-loading=error] button", "\uE007");
+    await move(".home-stage-window");
+    await wait(() => clipState("ask", true), "pinned viewer handshake recovers");
+    await wait(async () => await clipState("directions", true) && await withinCore("生成一致性"), "recovered playback advances");
+    console.log("PASS: simulated viewer error leaves a stable poster; native Retry reconnects and advances the replay.");
+
+    // Use the native Core field, not the watch-mode script. A fast keyboard burst
+    // must not reduce the visitor's draft to its final character.
+    const elementKey = "element-6066-11e4-a52e-4f735466cecf";
+    async function realClick(expression) {
+      let element;
+      await wait(async () => {
+        element = await js(`return (${expression});`);
+        return element?.[elementKey];
+      }, expression);
+      return op("/element/" + element[elementKey] + "/click", {});
+    }
+    async function scopeViewer() {
+      let element;
+      await wait(async () => {
+        element = await js("const f=document.querySelector('iframe'); return f?.contentDocument?.querySelector('[data-demo-anchor=draft]') ? f : null;");
+        return element?.[elementKey];
+      }, "practice Core input");
+      await op("/frame", { id: element });
+    }
+    async function guideNext(phrase) {
+      await realClick("document.querySelector('.guide-controls button:last-child:not(:disabled)')");
+      await wait(() => js("return document.querySelector('#guide-step-title').innerText.includes(arguments[0]);", phrase), phrase);
+    }
+    await open("docs/get-started/");
+    await scopeViewer();
+    const field = await js("return document.querySelector('[data-demo-anchor=draft]');");
+    const foreignDraft = "一个完全不同的课题";
+    await op("/element/" + field[elementKey] + "/value", { text: foreignDraft });
+    await op("/frame", { id: null });
+    await wait(() => js("return document.querySelector('.guide-example')?.innerText.includes('使用示例继续');"), "off-preset draft blocked without result");
+    assert.equal(await js("return !!document.querySelector('.guide-complete');"), false);
+    await realClick("[...document.querySelectorAll('.guide-example button')].find(e=>e.innerText==='使用示例继续')");
+    await wait(() => js("return document.querySelector('iframe').contentDocument.querySelector('[data-demo-anchor=draft]').value===arguments[0];", foreignDraft), "entire native draft preserved");
+    await guideNext("选择 Explore");
+    await scopeViewer();
+    await realClick("document.querySelector('button[aria-label=添加任务]')");
+    await realClick("[...document.querySelectorAll('[role=menuitemradio]')].find(e=>e.innerText.includes('/explore'))");
+    await op("/frame", { id: null });
+    await wait(() => js("return !!document.querySelector('.guide-complete');"), "prepared task");
+    assert.equal(await js("return !!document.querySelector('iframe').contentDocument.querySelector('[data-demo-anchor=group-G1]');"), false);
+    await guideNext("Task chip");
+    await guideNext("发送");
+    await scopeViewer();
+    await realClick("document.querySelector('[data-demo-anchor=send]:not(:disabled)')");
+    await op("/frame", { id: null });
+    await wait(() => js("return !!document.querySelector('.guide-complete') && !!document.querySelector('iframe').contentDocument.querySelector('[data-demo-anchor=group-G1]');"), "actual Core Send completes guide G1");
+    console.log("PASS: real Core first-Explore practice; rapid draft survives, off-preset is blocked, Prepare has no result, and Send produces G1.");
+  }
 } finally {
   socket?.close();
   if (session) await api("/session/" + session, undefined, "DELETE").catch(() => {});

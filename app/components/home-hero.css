@@ -22,6 +22,7 @@ a.home-stage-secondary { color:#f3f5ee; background:#19222b; }
 .home-core-lights i { border-radius:50%; width:7px; height:7px; background:#b36760; }
 .home-core-lights i:nth-child(2) { background:#c3a56b; }
 .home-core-lights i:nth-child(3) { background:#9bbd75; }
+.home-core-status-compact { display:none; }
 .home-core-status { display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:500; color:#cdd9db; }
 .home-core [data-pd-stage] { border-radius:0; box-shadow:none; }
 .home-core [data-demo-viewer-label] { display:none; }
@@ -114,7 +115,8 @@ body:has(#home-replay) .core-site-header:not([data-over-hero]) { background:#f7f
   .home-stage h1 { font-size:clamp(29px,8vw,35px); }
   .home-stage-window { margin-top:17px; }
   .home-core-chrome { min-height:35px; padding:6px 9px; gap:5px; }
-  .home-core-status span { display:none; }
+  .home-core-status .home-core-status-wide { display:none; }
+  .home-core-status .home-core-status-compact { display:inline; }
   .home-core-cue { padding:6px 9px; }
   .home-core iframe { height:clamp(365px,53svh,465px); }
 }
