@@ -131,14 +131,14 @@ export function DemoWindow({ settled = false }: { settled?: boolean } = {}) {
             <div
               data-pd-processing=""
               style={{ "--i": String(processingAfter) } as CSSProperties}
-              className={`pd-processing items-center gap-2 px-1 text-[11px] text-(--pd-text3)${on(final ? final.timer > 0 : false)}`}
+              className={`pd-processing items-center gap-2 px-1 text-[11px] text-(--pd-text3)${on(final ? (final.timer > 0 || final.session) : false)}`}
             >
               <svg viewBox="0 0 16 16" className="pd-spin size-3.5" aria-hidden="true">
                 <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeOpacity=".25" strokeWidth="2" />
                 <path d="M8 2a6 6 0 0 1 6 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
               {shellCopy.processingPrefix} <span data-pd-timer="">{final ? final.timer : 0}</span>s
-              <span className="text-(--pd-text3)">{shellCopy.processingMeta}</span>
+              <span data-pd-processing-meta="" className="text-(--pd-text3)">{final?.processingMeta ?? shellCopy.processingMeta}</span>
             </div>
             {conversation.slice(processingAfter, reviewAfter).map((message, offset) => renderMessage(message, offset + processingAfter))}
             <div
@@ -264,7 +264,7 @@ export function DemoWindow({ settled = false }: { settled?: boolean } = {}) {
               </div>
             </div>
             <div data-pd-candidate="" className={`pd-candidate-chip rounded-full border border-dashed border-(--pd-gold)/50 bg-[#3a3220] px-3 py-1.5${on(final?.candidate)}`}>
-              <p className="text-[10.5px] font-semibold text-[#ecd9a0]">候选方法 · 待研究者确认</p>
+              <p className="text-[10.5px] font-semibold text-[#ecd9a0]">下一步比较 · 待研究者确认</p>
             </div>
           </div>
         </aside>

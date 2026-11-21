@@ -1,6 +1,8 @@
 # Spec | 产品页：真实 UI 复刻运行演示（Product Page · Real-UI Run Demo）
 
-> **状态**：`ready-for-agent`
+> **实施状态（#38，2026-11-20，Asia/Shanghai）**：产品页 `/product/` 已改为由父时钟驱动、同源 iframe 加载钉死版本 `a52c718-1.0.0` 的 Core 离线 viewer，复用实际 Direction / Graph / 论文展示组件与审查过的静态产物。输入和结果仍是共享合成 fixture，不是真实模型请求。`DemoPanels` 仅在 viewer 不可用时作为明确标注的回退壳，不再作为验收面。下列“手绘三栏 mock、自动循环播放、非交互复刻”等目标已被 issue #38 升级。#38 的视觉关键帧对照、8 镜录屏、桌面/移动/200% zoom/reduced-motion/键盘验收，以及带 basePath 的 Community 生产静态导出，都尚未完成。
+>
+> **状态**：`in-progress`（集成里程碑已落地，视觉验收未做）
 > **来源**：产品页重设计会话——参考 CrommaCode 产品页「真实界面 + 运行动画」的呈现方式，以 CoResearch 产品真实界面截图为复刻蓝本
 > **领域词汇**：遵循 docs/space.md 与 docs/actions/*（Research World、Literature Space、Idea Space、Explore、Deep Dive / Deep Research、Gap Finder、Innovator、Reviewer、Idea State、候选 Method）；产品 UI 词汇遵循产品本体（首页、搜索、论文雷达、浏览、新建会话、项目、会话、画布、对话研究图谱、当前、开放式问题、代表性工作、已有证据、尚待确认）
 > **前序 spec**：docs/specs/product-usage-demo.md（本 spec 取代其页面呈现方式；其场景叙事与架构被继承）

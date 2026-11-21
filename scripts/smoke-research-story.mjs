@@ -1,5 +1,5 @@
 /**
- * Research World visual smoke: steps through all 13 chapters at desktop and mobile
+ * Research World visual smoke: steps through all 8 causal acts at desktop and mobile
  * widths, saves per-chapter screenshots and asserts the scene never renders blank
  * or overflows. Standalone on purpose — not part of prebuild.
  *
@@ -20,7 +20,7 @@ const viewports = [
   { name: "desktop", width: 1600, height: 1000 },
   { name: "mobile", width: 390, height: 844 },
 ];
-const chapters = 13;
+const chapters = 8;
 
 async function waitForServer(url, timeoutMs = 15000) {
   const deadline = Date.now() + timeoutMs;
@@ -102,7 +102,18 @@ try {
         innerWidth: window.innerWidth,
       }));
       try {
-        assert.ok(state.nodes >= 250, `expected the full graph, got ${state.nodes} nodes`);
+        const overlay = await page.evaluate(() => ({
+          question: document.querySelector("[data-rw-question]")?.textContent ?? "",
+          revises: document.querySelector("[data-rw-coverage]")?.getAttribute("data-rw-revises") ?? "",
+          gapFinder: document.body.innerText.includes("Gap Finder"),
+          label: getComputedStyle(document.querySelector(".rw-overlay") ?? document.body).getPropertyValue("--rw-label").trim(),
+          questionSize: getComputedStyle(document.querySelector(".rw-overlay") ?? document.body).getPropertyValue("--rw-question").trim(),
+        }));
+        assert.equal(overlay.gapFinder, false, "Gap Finder must not appear as the result");
+        assert.equal(overlay.label, "14px");
+        assert.equal(overlay.questionSize, "16px");
+        if (index === 5) assert.equal(overlay.revises, "true", "act 6 must show a revised coverage record");
+        if (index >= 6) assert.ok(overlay.question.length > 20, "open question must be on screen in the final acts");
         assert.ok(state.baseOpacity > 0, "base layer must stay visible in every chapter");
         assert.ok(state.camera.includes("scale"), `camera transform missing at chapter ${index + 1}`);
         assert.ok(state.narration.length > 0, `narration title missing at chapter ${index + 1}`);
