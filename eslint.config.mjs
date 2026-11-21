@@ -9,6 +9,11 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    // Isolated Next exports and test-transpiled output are generated, not source.
+    ".next-*/**",
+    "tmp-viewer/**",
+    // Reviewed vendored Core viewer artifacts; lint their TypeScript source in Core.
+    "public/demos/coresearch/**",
     "out/**",
     "build/**",
     "next-env.d.ts",

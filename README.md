@@ -5,7 +5,9 @@
 
 **CoResearch** 是一个面向科研探索与 Idea 发展的多智能体研究协作项目。它希望帮助研究者从模糊的研究兴趣出发，逐渐找到适合自己的细分方向，理解前人已经做到了哪里、仍有哪些限制，并在已有知识的基础上设计下一步研究。
 
-本仓库 **CoResearch-Community** 用于社区交流、功能建议与 Bug 反馈。欢迎通过 [Issues](https://github.com/Zhanghoks/CoResearch-Community/issues) 分享体验和想法。
+本仓库 **CoResearch-Community** 托管 CoResearch 的产品介绍页，并接收功能建议与 Bug 反馈。欢迎通过 [Issues](https://github.com/Zhanghoks/CoResearch-Community/issues) 分享体验和想法。
+
+产品介绍页：[https://zhanghoks.github.io/CoResearch-Community/](https://zhanghoks.github.io/CoResearch-Community/)
 
 > **说明**：下文重点介绍 CoResearch 的产品愿景与研究工作流。它是一套持续演进的设计，不代表所有模块或 Agent 角色都已经在公开版本中完整实现。具体可用能力以实际产品为准。
 
@@ -220,9 +222,9 @@ Agent 可以协助检索、分析、归纳、提出候选方案并记录新认�
 5. **持续演化**：Idea State 随有意义的新证据实时更新，并保留 Research Intent、文献关系、用户反馈和修订历史。执行进度不等于新的 State 版本；核心构想仍由研究者确认。
 6. **人机协作，而非替代研究者**：由 Agent 承担大量信息收集与结构化工作，由研究者决定目标、判断价值并验证科学贡献。
 
-## 4. Community：问题反馈与功能讨论
+## 4. 社区与反馈：问题反馈与功能讨论
 
-本仓库主要用于收集与 CoResearch 相关的问题、Bug 和设计建议：
+除产品介绍外，本仓库也用于收集与 CoResearch 相关的问题、Bug 和设计建议：
 
 - [提交 Bug](https://github.com/Zhanghoks/CoResearch-Community/issues/new)：说明复现步骤、预期行为、实际行为，以及必要的环境信息。
 - [提出功能建议](https://github.com/Zhanghoks/CoResearch-Community/issues/new)：描述真实科研场景、目前遇到的困难，以及希望改善的使用流程。

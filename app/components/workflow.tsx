@@ -1,25 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { steps } from "../content";
 
 export function Workflow() {
   const [active, setActive] = useState(0);
   const current = steps[active];
+  const panelId = "workflow-panel";
+
+  function onTabKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const last = steps.length - 1;
+    let next: number | null = null;
+    if (event.key === "ArrowDown" || event.key === "ArrowRight") next = active === last ? 0 : active + 1;
+    else if (event.key === "ArrowUp" || event.key === "ArrowLeft") next = active === 0 ? last : active - 1;
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = last;
+    if (next === null) return;
+    event.preventDefault();
+    setActive(next);
+    const button = event.currentTarget.querySelector<HTMLButtonElement>(`#workflow-tab-${steps[next].id}`);
+    button?.focus();
+  }
 
   return (
     <div className="grid gap-8 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-16">
-      <div className="flex flex-col" role="tablist" aria-label="研究步骤">
+      <div
+        className="flex flex-col"
+        role="tablist"
+        aria-label="研究步骤"
+        aria-orientation="vertical"
+        onKeyDown={onTabKeyDown}
+      >
         {steps.map((step, index) => {
           const selected = index === active;
           return (
             <button
               key={step.id}
+              id={`workflow-tab-${step.id}`}
               type="button"
               role="tab"
               aria-selected={selected}
+              aria-controls={panelId}
+              tabIndex={selected ? 0 : -1}
               onClick={() => setActive(index)}
-              className={`border-t border-black/10 py-5 text-left transition ${
+              className={`border-t border-black/10 py-5 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#262626] ${
                 selected ? "text-[#262626]" : "text-[#8a8c84] hover:text-[#262626]"
               }`}
             >
@@ -31,7 +55,9 @@ export function Workflow() {
         })}
       </div>
       <div
+        id={panelId}
         role="tabpanel"
+        aria-labelledby={`workflow-tab-${current.id}`}
         className="flex min-h-[320px] flex-col justify-between rounded-[28px] bg-white p-8 shadow-[0_20px_60px_rgba(38,38,38,0.06)] md:p-12"
       >
         <div>

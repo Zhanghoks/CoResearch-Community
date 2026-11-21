@@ -15,6 +15,7 @@
 
 # next.js
 /.next/
+/.next-prod-export/
 /out/
 
 # production
@@ -42,3 +43,5 @@ next-env.d.ts
 
 # visual smoke artifacts
 /smoke-artifacts
+
+/tmp-viewer/

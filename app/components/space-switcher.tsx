@@ -1,25 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { spaces } from "../content";
 
 export function SpaceSwitcher() {
   const [active, setActive] = useState(0);
   const current = spaces[active];
+  const panelId = "space-panel";
+
+  function onTabKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const last = spaces.length - 1;
+    let next: number | null = null;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") next = active === last ? 0 : active + 1;
+    else if (event.key === "ArrowLeft" || event.key === "ArrowUp") next = active === 0 ? last : active - 1;
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = last;
+    if (next === null) return;
+    event.preventDefault();
+    setActive(next);
+    const button = event.currentTarget.querySelector<HTMLButtonElement>(`#space-tab-${spaces[next].id}`);
+    button?.focus();
+  }
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label="研究空间">
+      <div
+        className="flex flex-wrap gap-2"
+        role="tablist"
+        aria-label="研究空间"
+        onKeyDown={onTabKeyDown}
+      >
         {spaces.map((space, index) => {
           const selected = index === active;
           return (
             <button
               key={space.id}
+              id={`space-tab-${space.id}`}
               type="button"
               role="tab"
               aria-selected={selected}
+              aria-controls={panelId}
+              tabIndex={selected ? 0 : -1}
               onClick={() => setActive(index)}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+              className={`rounded-full px-4 py-2 text-sm font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#262626] ${
                 selected
                   ? "bg-[#262626] text-white"
                   : "bg-white text-[#262626] ring-1 ring-black/10 hover:bg-[#f4f6ee]"
@@ -30,7 +53,12 @@ export function SpaceSwitcher() {
           );
         })}
       </div>
-      <div role="tabpanel" className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+      <div
+        id={panelId}
+        role="tabpanel"
+        aria-labelledby={`space-tab-${current.id}`}
+        className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]"
+      >
         <div className="rounded-[28px] bg-[#262626] p-8 text-[#fdfff7] md:p-10">
           <p className="text-sm text-[#a9ff63]">{current.question}</p>
           <h3 className="mt-4 text-3xl font-semibold tracking-tight">{current.title}</h3>
