@@ -82,6 +82,17 @@ export const productRuntimeScenes: readonly SceneScript[] = [
   },
 ];
 
+/** Playback clocks can repaint a progress bar independently of a viewer state change. */
+export function productRuntimeSignal(t: number): string {
+  let lo = 0, hi = productRuntimeEvents.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (productRuntimeEvents[mid]!.t <= t) lo = mid + 1;
+    else hi = mid;
+  }
+  return `${productSceneIndexAt(t)}:${lo}`;
+}
+
 export function productSceneIndexAt(t: number): number {
   const time = Number.isFinite(t) ? Math.max(0, t) : 0;
   for (let i = productRuntimeScenes.length - 1; i >= 0; i -= 1) {

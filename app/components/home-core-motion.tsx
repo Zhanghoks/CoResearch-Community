@@ -105,6 +105,12 @@ export function HomeCoreMotion({ chapter, auto = true }: { chapter?: HomeScene; 
       <ViewerFrame fixture={fixture} snapshot={frame.snapshot} onIntent={ignoreIntent}
         onStatus={(status) => setReady(status === "ready")} presentation />
       <div className="home-core-progress" aria-hidden="true"><span ref={progress} /></div>
+      {!chapter && <div className="home-core-steps" aria-label="跳到回放片段">
+        {homeScenes.map((step, i) => <button type="button" key={step.id} aria-current={step.id === scene.id ? "step" : undefined}
+          aria-label={`第 ${i + 1} 幕 · ${step.title}`} onClick={() => seek(step.result, false)}>
+          {["起点", "找方向", "再细分", "看证据"][i]}
+        </button>)}
+      </div>}
       <div className="home-core-caption">
         <div>
           <span className="home-core-index">{chapter ? "功能片段" : String(homeScenes.indexOf(scene) + 1).padStart(2, "0")} / {chapter ? "Explore" : "04"}</span>

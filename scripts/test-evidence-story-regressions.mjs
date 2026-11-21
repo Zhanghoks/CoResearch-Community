@@ -97,6 +97,14 @@ function text(value) {
 const { sampleConcept, chapters } = load(`${root}/graph-svg/story.ts`);
 const { ConceptOverlay, paperConditionCells } = load(`${root}/components/research-story/ConceptOverlay.tsx`);
 const overlay = (i) => ConceptOverlay({ facts: sampleConcept(i).facts, chapter: chapters[i], active: i });
+const { conceptActTimings, conceptRevisionBeat } = load(`${root}/demo/scenes/concept.ts`);
+const revisionStart = conceptActTimings[5].checkpointMs;
+assert.equal(conceptRevisionBeat(revisionStart - 1), "all");
+assert.equal(conceptRevisionBeat(revisionStart), "before");
+assert.equal(conceptRevisionBeat(revisionStart + 950), "p05");
+assert.equal(conceptRevisionBeat(revisionStart + 2300), "p03");
+assert.equal(conceptRevisionBeat(revisionStart + 3750), "after");
+assert.equal(conceptRevisionBeat(conceptActTimings[5].endMs), "all");
 const act4 = overlay(3);
 const table = nodes(act4).find((n) => n.props?.["data-rw-conditions"] !== undefined);
 assert.ok(table, "actual act-4 JSX includes a comparison table");

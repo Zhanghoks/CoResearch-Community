@@ -13,7 +13,7 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "player-component-"));
 const nodes = (n) => Array.isArray(n) ? n.flatMap(nodes) : n && typeof n === "object" ? [n, ...nodes(n.props?.children)] : [];
 function target() {
   const listeners = new Map();
-  return { listeners, addEventListener(type, fn) { (listeners.get(type) ?? (listeners.set(type, new Set()), listeners.get(type))).add(fn); }, removeEventListener(type, fn) { listeners.get(type)?.delete(fn); }, querySelector() { return null; }, style: { setProperty() {} } };
+  return { listeners, dataset: {}, addEventListener(type, fn) { (listeners.get(type) ?? (listeners.set(type, new Set()), listeners.get(type))).add(fn); }, removeEventListener(type, fn) { listeners.get(type)?.delete(fn); }, querySelector() { return null; }, style: { setProperty() {} } };
 }
 try {
   transpileModuleGraph({ ts, root, tmp, entries: ["app/demo/index.ts", "app/demo/scenes/concept.ts", "app/demo/scenes/product-runtime.ts", "app/demo/viewer/snapshot.ts", "app/demo/viewer/fixture.ts", "app/demo/viewer/intents.ts", "app/graph-svg/story.ts"] });

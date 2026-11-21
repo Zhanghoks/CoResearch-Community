@@ -21,8 +21,8 @@ export function HomeHero() {
         <h1>从一个研究兴趣，<br />找到有依据的方向</h1>
         <p className="home-stage-lede">用 Explore 找方向、核对论文，再沿着选中的方向继续研究。</p>
         <div className="home-stage-actions">
-          <a href="#home-replay" className="home-stage-primary">↓ 看 Explore 演示</a>
-          <Link href="/docs/get-started/" className="home-stage-secondary">跟做第一次 Explore ↗</Link>
+          <a href="#home-replay" className="home-stage-primary">看 Explore 演示 ↓</a>
+          <Link href="/docs/get-started/" className="home-stage-secondary">跟做一次 ↗</Link>
         </div>
       </div>
       <div id="home-replay" className="home-stage-window"><HomeCoreMotion /></div>

@@ -51,6 +51,7 @@ export default function DocsPage() {
         <p className="mt-4 max-w-2xl leading-7 text-[#3f413c]">
           以下是仍在演进的设计说明，不代表每个模块都已在公开版本中完整实现。Deep Dive、Idea State 等未开放能力只在这里介绍。
         </p>
+        <Link href="/vision/" className="mt-4 inline-block font-semibold underline underline-offset-4">看完整产品理念 →</Link>
         <div className="mt-6 grid gap-4">
           {docs.map((doc) => (
             <a

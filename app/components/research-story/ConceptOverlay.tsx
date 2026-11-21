@@ -90,14 +90,6 @@ export function ConceptOverlay({ facts, chapter }: { facts: ConceptFacts; chapte
       ) : null}
 
       {coverage?.revises && !showQuestion ? coverageCard : null}
-      <ol className="rw-legend" aria-label="图例">
-        <li><i className="rw-key-path" />已走路径</li>
-        <li><i className="rw-key-cover" />当前证据覆盖</li>
-        <li><i className="rw-key-dash" />待验证路径</li>
-        <li><i className="rw-key-revise" />反例修订</li>
-        <li><i className="rw-key-question" />当前问题</li>
-      </ol>
-
       {chapter.id === "interest" ? (
         <p className="rw-chip" data-rw-interest="">教学提示：{INTEREST_PROMPT}</p>
       ) : null}
@@ -126,6 +118,17 @@ export function ConceptOverlay({ facts, chapter }: { facts: ConceptFacts; chapte
           ))}
         </ul>
       ) : null}
+
+      <details className="rw-source-drawer">
+        <summary>查看图例{facts.paperIds.length > 0 ? "、来源与条件" : ""}</summary>
+        <div className="rw-source-stack">
+      <ol className="rw-legend" aria-label="图例">
+        <li><i className="rw-key-path" />已走路径</li>
+        <li><i className="rw-key-cover" />当前证据覆盖</li>
+        <li><i className="rw-key-dash" />待验证路径</li>
+        <li><i className="rw-key-revise" />反例修订</li>
+        <li><i className="rw-key-question" />当前问题</li>
+      </ol>
 
       {facts.paperIds.length > 0 ? (
         <ul className="rw-paper-list">
@@ -177,6 +180,9 @@ export function ConceptOverlay({ facts, chapter }: { facts: ConceptFacts; chapte
           </table></div>
         </details>
       ) : null}
+
+        </div>
+      </details>
 
       {!coverage?.revises ? coverageCard : null}
 

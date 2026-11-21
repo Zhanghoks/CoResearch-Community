@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { HomeScene } from "../demo/scenes/home-runtime";
 import { HomeCoreMotion } from "./home-core-motion";
 
@@ -15,6 +15,14 @@ const features = [
 
 export function HomeFeatures() {
   const [selected, setSelected] = useState<HomeScene | null>(null);
+  useEffect(() => {
+    if (!selected) return;
+    const id = requestAnimationFrame(() => {
+      document.querySelector(`#feature-${selected} .home-feature-toolbar`)
+        ?.scrollIntoView({ block: "start", behavior: "instant" });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [selected]);
   return (
     <section id="product-demo" className="home-features" aria-labelledby="features-title">
       <header>
@@ -31,18 +39,25 @@ export function HomeFeatures() {
             <Link href={feature.guide}>跟做这个步骤 ↗</Link>
           </div>
           <div className="home-feature-media">
-            {selected === feature.id ? (
-              <HomeCoreMotion chapter={feature.id} />
-            ) : (
-              <figure>
-                <Image src={`${base}/product/${feature.image}`} alt={feature.alt} width={1040} height={580} unoptimized />
-                <figcaption><span>实际 Core 界面 · 合成示例</span><button type="button" onClick={() => setSelected(feature.id)}>▶ 播放这个片段</button></figcaption>
-              </figure>
-            )}
+            <div className="home-feature-toolbar">
+              <span>实际 Core 界面 · 合成示例</span>
+              <button type="button" aria-expanded={selected === feature.id} aria-controls={`feature-media-${feature.id}`}
+                onClick={() => setSelected((current) => current === feature.id ? null : feature.id)}>
+                {selected === feature.id ? "关闭片段" : "▶ 播放这个片段"}
+              </button>
+            </div>
+            <div id={`feature-media-${feature.id}`} className="home-feature-frame">
+              {selected === feature.id ? <HomeCoreMotion chapter={feature.id} /> : (
+                <picture>
+                  <source media="(max-width: 767px)" srcSet={`${base}/product/${feature.id}-mobile.webp`} />
+                  <Image src={`${base}/product/${feature.image}`} alt={feature.alt} width={1158} height={580} unoptimized />
+                </picture>
+              )}
+            </div>
           </div>
         </article>
       ))}
-      <div className="home-end"><h2>从一次 Explore 开始。</h2><Link href="/docs/get-started/">跟做第一次 Explore →</Link><Link href="/product/#product-demo">看完整回放 ↗</Link></div>
+      <div className="home-end"><h2>从一次 Explore 开始。</h2><Link href="/docs/get-started/">跟做第一次 Explore →</Link><Link href="/product/#product-demo">看完整回放 ↗</Link><Link href="/vision/">读设计理念 ↗</Link></div>
     </section>
   );
 }

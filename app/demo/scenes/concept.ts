@@ -256,6 +256,17 @@ export function conceptPhaseCheckpointMs(index: number): number {
   return act?.checkpointMs ?? 0;
 }
 
+/** The revision is a sequence, not a simultaneous pile of new cards. */
+export function conceptRevisionBeat(t: number): "before" | "p05" | "p03" | "after" | "all" {
+  const act = conceptActTimings[5]!;
+  if (t < act.checkpointMs || t >= act.endMs) return "all";
+  const local = t - act.checkpointMs;
+  if (local < 950) return "before";
+  if (local < 2300) return "p05";
+  if (local < 3750) return "p03";
+  return "after";
+}
+
 /** Continuous 0..7 progress: move windows interpolate, holds stay on the integer act. */
 export function conceptProgressAt(t: number): number {
   const ms = Number.isFinite(t) ? Math.max(0, Math.min(CONCEPT_DURATION_MS, t)) : 0;

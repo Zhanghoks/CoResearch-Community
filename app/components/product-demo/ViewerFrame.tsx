@@ -168,7 +168,76 @@ export function ViewerFrame({
     post({ type: "applySnapshot", snapshot });
   }, [snapshot, post, status]);
 
+  // Frame the *actual* pinned Core document; avoid re-creating its panels.
+  // The desktop exhibit needs a bounded frame and the mobile exhibit follows
+  // new groups in the document, while full interactive guides remain untouched.
+  const mobilePresentation = snapshot.layout === "mobile";
+  const followGroup = presentation && (!mobilePresentation || snapshot.mobilePane === "directions")
+    ? snapshot.visibleGroupIds.at(-1) : null;
+  useEffect(() => {
+    if (!presentation || status !== "ready") return;
+    const doc = frameRef.current?.contentDocument;
+    const frameWindow = doc?.defaultView;
+    if (!doc?.body || !frameWindow) return;
+    doc.documentElement.setAttribute("data-community-presentation", mobilePresentation ? "mobile" : "desktop");
+    const styleId = "community-core-presentation-window";
+    if (!doc.getElementById(styleId)) {
+      const style = doc.createElement("style");
+      style.id = styleId;
+      style.textContent = `
+        html[data-community-presentation=desktop] [data-demo-anchor=shell] {
+          height:100dvh!important; min-height:0!important;
+          grid-template-rows:minmax(0,1fr)!important; overflow:hidden;
+        }
+        html[data-community-presentation=desktop] [data-demo-anchor=shell] > * {
+          min-height:0; max-height:100%;
+        }
+        html[data-community-presentation=desktop] [data-demo-anchor=directions] {
+          min-height:0; overflow-y:auto; overscroll-behavior:contain;
+        }
+      `;
+      doc.head.append(style);
+    }
+    const find = () => Array.from(doc.querySelectorAll<HTMLElement>("[data-demo-anchor]"))
+      .find((element) => element.dataset.demoAnchor === `group-${followGroup}`);
+    const directions = doc.querySelector<HTMLElement>("[data-demo-anchor=directions]");
+    let frameRequest = 0;
+    let observer: MutationObserver | undefined;
+    const position = () => {
+      if (!followGroup || followGroup === "G1") {
+        if (mobilePresentation) frameWindow.scrollTo({ top: 0, behavior: "instant" });
+        else directions?.scrollTo({ top: 0, behavior: "instant" });
+        observer?.disconnect();
+        return;
+      }
+      const group = find();
+      if (!group) return;
+      const bounds = group.getBoundingClientRect();
+      if (mobilePresentation) {
+        frameWindow.scrollTo({ top: Math.max(0, bounds.top + frameWindow.scrollY - 12), behavior: "instant" });
+      } else if (directions) {
+        directions.scrollTo({ top: Math.max(0, bounds.top - directions.getBoundingClientRect().top + directions.scrollTop - 12), behavior: "instant" });
+      }
+      observer?.disconnect();
+    };
+    frameRequest = requestAnimationFrame(position);
+    if (followGroup) {
+      observer = new MutationObserver(() => {
+        cancelAnimationFrame(frameRequest);
+        frameRequest = requestAnimationFrame(position);
+      });
+      observer.observe(doc.body, { childList: true, subtree: true });
+    }
+    return () => {
+      cancelAnimationFrame(frameRequest);
+      observer?.disconnect();
+    };
+  }, [followGroup, mobilePresentation, presentation, snapshot.mobilePane, status]);
+
   const focus = new Set(snapshot.focusIds.map(focusAnchorId));
+  const operation = presentation
+    ? anchors.find((anchor) => anchor.id === snapshot.focusIds[0] && (anchor.id === "draft" || anchor.id === "send"))
+    : undefined;
 
   return (
     <div className="relative overflow-hidden rounded-[22px] ring-1 ring-black/40" data-pd-stage="" data-demo-presentation={presentation || undefined}>
@@ -192,12 +261,13 @@ export function ViewerFrame({
         }}
       />
       {status !== "ready" ? (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-[#171718]/90 px-6 text-center text-sm text-white" role={status === "error" ? "alert" : "status"}>
-          {status === "booting" ? <p>正在加载 CoResearch 演示…</p> : <p>{error}</p>}
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-[#171718]/90 px-6 text-center text-sm text-white" role={status === "error" ? "alert" : "status"} data-viewer-loading={status}>
+          {presentation && <div className="home-loading-poster" aria-hidden="true" style={{ backgroundImage: `url(${basePath}/product/core-explore-preview.webp)` }} />}
+          {status === "booting" ? <p className="relative">正在加载 CoResearch 演示…</p> : <p className="relative">{error}</p>}
           {status === "error" ? (
             <button
               type="button"
-              className="rounded-full bg-[#a9ff63] px-4 py-2 text-sm font-medium text-[#171718]"
+              className="relative rounded-full bg-[#a9ff63] px-4 py-2 text-sm font-medium text-[#171718]"
               onClick={() => {
                 readyGenerationRef.current = null;
                 updateStatus("booting");
@@ -210,6 +280,7 @@ export function ViewerFrame({
         </div>
       ) : null}
       <div className="pointer-events-none absolute inset-0 z-10" style={{ pointerEvents: "none" }} aria-hidden="true" data-demo-anchor-layer="">
+        {operation && <span key={operation.id} data-demo-operation-cue={operation.id} className="home-operation-cue" style={{ left: operation.x + Math.min(operation.width - 5, 26), top: operation.y + Math.min(operation.height - 5, 22) }} />}
         {anchors
           .filter((box) => focus.has(box.id) || focus.has(box.id.replace(/^paper-card-/, "").replace(/^group-/, "")))
           .map((box) => (

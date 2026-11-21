@@ -11,10 +11,10 @@ export const homeTimeline: DemoTimeline = {
 };
 
 export const homeScenes = [
-  { id: "ask", start: 0, result: 3700, title: "输入兴趣，准备 Explore", detail: "说清你感兴趣的领域。准备任务不等于已发送。", focus: ["composer"] },
-  { id: "directions", start: 4200, result: 6400, title: "发送，看到候选方向", detail: "先比较候选方向，再选最值得追的一条。", focus: ["G1"] },
-  { id: "refine", start: 7800, result: 15700, title: "沿一个方向继续细分", detail: "从生成一致性缩小到跨镜头的身份保持。原方向仍然保留。", focus: ["G2", "G3", "graph"] },
-  { id: "evidence", start: 16800, result: 21600, title: "打开论文，核对适用条件", detail: "区分切镜前后持续可见与遮挡后重现，别把已有结论用错地方。", focus: ["preview", "P02"] },
+  { id: "ask", start: 0, result: 3700, title: "输入兴趣，准备 Explore", detail: "说清你感兴趣的领域。准备任务不等于已发送。" },
+  { id: "directions", start: 4200, result: 6400, title: "发送，看到候选方向", detail: "先比较候选方向，再选最值得追的一条。" },
+  { id: "refine", start: 7800, result: 15700, title: "沿一个方向继续细分", detail: "从生成一致性缩小到跨镜头的身份保持。原方向仍然保留。" },
+  { id: "evidence", start: 16800, result: 21600, title: "打开论文，核对适用条件", detail: "区分切镜前后持续可见与遮挡后重现，别把已有结论用错地方。" },
 ] as const;
 
 export type HomeScene = typeof homeScenes[number]["id"];
@@ -54,6 +54,16 @@ export function homeCueAt(t: number) {
 export function homeFrame(t: number, layout: ViewerSnapshot["layout"], generation: number) {
   const { key, scene, draft } = homeFrameSignal(t, layout);
   const state = stateAt(videoIdentityWorld, homeTimeline, t);
+  const focus = t < 3600 ? ["draft"]
+    : t < 5200 ? ["send", "progress"]
+    : t < 7800 ? ["G1"]
+    : t < 10000 ? ["G1", "composer"]
+    : t < 12800 ? ["G2"]
+    : t < 15000 ? ["G2", "composer"]
+    : t < 16800 ? ["G3"]
+    : t < 18400 ? ["G3"]
+    : t < 20000 ? ["preview"]
+    : ["preview", "P02"];
   return {
     key,
     scene,
@@ -61,7 +71,7 @@ export function homeFrame(t: number, layout: ViewerSnapshot["layout"], generatio
       generation,
       layout,
       draft,
-      focusIds: scene.focus,
+      focusIds: focus,
       mobilePane: t >= 18400 ? "preview" : t >= 5200 ? "directions" : "composer",
     }),
   };

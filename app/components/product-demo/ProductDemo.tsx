@@ -5,6 +5,7 @@ import { createDemoPlayer, stateAt, videoIdentityWorld } from "../../demo";
 import {
   productPhaseCheckpointMs,
   productRuntimeScenes,
+  productRuntimeSignal,
   productRuntimeTimeline,
   productSceneIndexAt,
   PRODUCT_RUNTIME_DURATION_MS,
@@ -57,6 +58,7 @@ function clockSnapshot(
 /** 可见时自动播放的产品运行演示；真实 Core viewer 由父时钟驱动。 */
 export function ProductDemo() {
   const rootRef = useRef<HTMLElement>(null);
+  const meterRef = useRef<HTMLSpanElement>(null);
   const controlsRef = useRef<Controls | null>(null);
   const activeRef = useRef(0);
   const overlayRef = useRef<ViewerSnapshot | null>(null);
@@ -118,10 +120,16 @@ export function ProductDemo() {
     const root = rootRef.current;
     if (!root || !viewerReady) return;
 
+    let previousSignal: string | null = null;
     const syncPhase = (t: number, isPlaying: boolean, isEnded: boolean) => {
-      generationRef.current += 1;
       const reason = mergeReasonRef.current ?? "clock";
-      publishSnapshot(clockSnapshot(t, layoutRef.current, overlayRef.current, generationRef.current, { reason, mode: "autoplay" }));
+      const signal = `${layoutRef.current}:${productRuntimeSignal(t)}`;
+      if (reason !== "clock" || signal !== previousSignal) {
+        generationRef.current += 1;
+        publishSnapshot(clockSnapshot(t, layoutRef.current, overlayRef.current, generationRef.current, { reason, mode: "autoplay" }));
+        previousSignal = signal;
+      }
+      meterRef.current?.style.setProperty("--played", String(t / PRODUCT_RUNTIME_DURATION_MS));
       mergeReasonRef.current = "clock";
       const phase = productSceneIndexAt(t);
       if (phase !== activeRef.current) {
@@ -238,7 +246,7 @@ export function ProductDemo() {
   const last = chapters.length - 1;
 
   return (
-    <section ref={rootRef} id="product-demo" className="mx-auto max-w-6xl px-5 py-16" aria-label="产品运行演示">
+    <section ref={rootRef} id="product-demo" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-16" aria-label="产品运行演示">
       <div className="mx-auto mb-10 max-w-3xl text-center">
         <p className="inline-flex items-center gap-2 text-sm font-medium">
           <span className="rounded-full bg-[#a9ff63] px-2 py-0.5 text-xs font-semibold">Run Demo</span>
@@ -271,6 +279,9 @@ export function ProductDemo() {
           onIntent={onIntent}
           onStatus={(status: ViewerHandshake) => setViewerReady(status === "ready")}
         />
+        <div className="mt-3 h-1 overflow-hidden rounded-full bg-[#cbd7d4]" aria-hidden="true">
+          <span ref={meterRef} className="block h-full w-full origin-left bg-[#436e5d]" style={{ transform: "scaleX(var(--played, 0))" }} />
+        </div>
         {caption ? (
           <div className="pd-caption mt-6 grid max-w-2xl gap-1.5" key={`${active}-${caption.tag}`}>
             <p className="text-xs font-semibold tracking-[0.1em] text-[#6d7a3a]">{caption.tag} · {active + 1} / {chapters.length}</p>

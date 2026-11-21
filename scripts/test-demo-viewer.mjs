@@ -38,7 +38,7 @@ const {
   DEMO_VIEWER_PARENT_SOURCE,
   DEMO_VIEWER_SOURCE,
 } = require(path.join(tmp, "demo/viewer/protocol.js"));
-const { productRuntimeTimeline, productRuntimeScenes, productSceneIndexAt, productPhaseCheckpointMs, PRODUCT_RUNTIME_DURATION_MS } = require(path.join(tmp, "demo/scenes/product-runtime.js"));
+const { productRuntimeTimeline, productRuntimeScenes, productRuntimeSignal, productSceneIndexAt, productPhaseCheckpointMs, PRODUCT_RUNTIME_DURATION_MS } = require(path.join(tmp, "demo/scenes/product-runtime.js"));
 
 const fixture = serializeFixture(videoIdentityWorld);
 assert.equal(fixture.papers.every((paper) => paper.synthetic === true && paper.demoTag === "演示文献"), true);
@@ -123,6 +123,9 @@ assert.equal(viewerAssetPath("/CoResearch-Community"), "/CoResearch-Community/de
 
 assert.equal(productRuntimeScenes.length, 8);
 assert.equal(PRODUCT_RUNTIME_DURATION_MS, 72000);
+assert.equal(productRuntimeSignal(120), productRuntimeSignal(240), "progress without an event does not republish the viewer");
+const runtimeSend = productRuntimeTimeline.events.find((e) => e.id === "ev-send-g1");
+assert.notEqual(productRuntimeSignal(runtimeSend.t - 1), productRuntimeSignal(runtimeSend.t), "an actual scripted click must republish");
 assert.equal(productRuntimeTimeline.durationMs, 72000);
 assert.notEqual(productRuntimeTimeline.durationMs, demoTimeline.durationMs);
 assert.equal(demoTimeline.durationMs, 36000);

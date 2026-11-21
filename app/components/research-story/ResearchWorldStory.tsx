@@ -6,6 +6,7 @@ import {
   CONCEPT_DURATION_MS,
   conceptPhaseCheckpointMs,
   conceptProgressAt,
+  conceptRevisionBeat,
   conceptRuntimeScenes,
   conceptRuntimeTimeline,
 } from "../../demo/scenes/concept";
@@ -71,6 +72,7 @@ export function ResearchWorldStory() {
     const root = rootRef.current, stage = stageRef.current;
     if (!root || !stage) return;
     let disposed = false;
+    stage.dataset.revisionBeat = "all";
     let disposeAnimation = () => {};
     let refreshFrame = 0;
     const render = createSceneRenderer(root);
@@ -86,6 +88,7 @@ export function ResearchWorldStory() {
     updateFromProgress(cursor.step);
 
     if (mode === "autoplay" && !manual) {
+      let revealCheckpoint = false;
       const player = createDemoPlayer({
         world: videoIdentityWorld,
         timeline: conceptRuntimeTimeline,
@@ -96,6 +99,10 @@ export function ResearchWorldStory() {
           setReady(true);
           setError(false);
           updateFromProgress(conceptProgressAt(t));
+          const stepBeat = conceptRevisionBeat(t);
+          if (stepBeat === "all") revealCheckpoint = false;
+          const beat = revealCheckpoint ? "all" : stepBeat;
+          if (stage.dataset.revisionBeat !== beat) stage.dataset.revisionBeat = beat;
           setPlaying(meta.playing);
           setEnded(meta.pauseReasons.includes("ended") || t >= CONCEPT_DURATION_MS);
         },
@@ -134,6 +141,7 @@ export function ResearchWorldStory() {
           userPaused = true;
           player.notifyControlOrScript("player-control");
           player.pause("user");
+          revealCheckpoint = target === 5;
           player.seek(conceptPhaseCheckpointMs(target));
           savedIndex.current = target;
           setActive(target);
@@ -153,6 +161,7 @@ export function ResearchWorldStory() {
         restart: () => {
           userPaused = false;
           player.notifyControlOrScript("player-control");
+          revealCheckpoint = false;
           player.restart();
         },
       };
@@ -284,7 +293,12 @@ export function ResearchWorldStory() {
     };
   }, [ready]);
 
-  function go(index: number) { controlsRef.current?.go(index); }
+  function go(index: number) {
+    controlsRef.current?.go(index);
+    if (narrow && rootRef.current && rootRef.current.getBoundingClientRect().top < -100) {
+      rootRef.current.scrollIntoView({ behavior: "instant", block: "start" });
+    }
+  }
   function skip() {
     controlsRef.current?.cancel();
     endRef.current?.scrollIntoView({ behavior: "instant", block: "start" });

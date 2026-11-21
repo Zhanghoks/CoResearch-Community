@@ -7,3 +7,9 @@
 - The real viewer is the previously published offline component bundle with provenance; see its manifest in `public/demos/coresearch/a52c718-1.0.0/PROVENANCE.json`. Feature posters are screenshots of this viewer on local static Pages export with the synthetic fixture, not generated UI. No real query, account, LLM, or data mutation is part of the demonstration.
 - Review flow: Play the homepage through to P02, replay, move to concept Act 6 then Act 7, reveal conditions, open a feature excerpt, then follow the evidence guide deep link. Check real keyboard activation and short/mobile dimensions as well as pointer inputs.
 - Rollback if later deployed: revert the homepage PR's merge commits and allow GitHub Pages to rebuild from main. This draft changes neither deployment settings nor public main. Do not combine it with the overlapping #41 draft.
+
+## Reproduce the browser checks
+
+1. Install the lockfile dependencies and run `NEXT_PUBLIC_BASE_PATH=/CoResearch-Community npm run build`.
+2. With Firefox and GeckoDriver installed, run `npm run test:homepage:browser`. Use `FIREFOX_BIN` and `GECKODRIVER` for nonstandard executable locations. It serves only the static export on loopback.
+3. The smoke test checks real timed UI changes and keyboard handling, all eight graph scenes at five widths, current-group visibility in the mobile viewer, the matching P02 guide, and request/console boundaries. A narrow CSS viewport is a responsive layout check, not proof of physical device behavior.
