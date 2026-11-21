@@ -11,14 +11,14 @@ export function HomeHero() {
   return (
     <section data-home-hero className="home-research-hero">
       <div className="home-research-intro">
-        <p className="home-research-kicker">CORESEARCH / RESEARCH WORLD</p>
-        <h1>从已有证据，找到<br className="home-research-break" />下一个研究问题</h1>
+        <p className="home-research-kicker">CORESEARCH / 研究工作台</p>
+        <h1>从一个研究兴趣，<br className="home-research-break" />找到有依据的方向</h1>
         <p className="home-research-lede">
-          从一个研究兴趣出发，沿图谱找到相关文献。用反例修正判断，再把仍未知的部分写成可检验的问题。
+          在对话里用 Explore 找到候选方向，打开代表论文查看依据，再沿着你选中的方向继续细分。
         </p>
         <div className="home-research-actions">
-          <a href={`#${REVISION_STORY_ANCHOR}`} className="home-research-primary">看反例如何改变判断 ↓</a>
-          <Link href={productDemoHref} className="home-research-secondary">体验产品演示 →</Link>
+          <Link href={productDemoHref} className="home-research-primary">看真实 Explore 界面 →</Link>
+          <a href={`#${REVISION_STORY_ANCHOR}`} className="home-research-secondary">看反例如何改变判断 ↓</a>
         </div>
         <p className="home-research-note">图谱使用合成教学数据；问题的新颖性和有效性尚未验证。</p>
       </div>

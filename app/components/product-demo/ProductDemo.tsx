@@ -246,7 +246,7 @@ export function ProductDemo() {
         </p>
         <h2 className="mt-5 text-4xl font-semibold tracking-tight md:text-5xl">看 CoResearch 跑一次研究</h2>
         <p className="mt-5 text-lg leading-8 text-[#3f413c]">
-          画面使用当前 CoResearch 展示组件的离线 viewer。开放任务仅为 Explore。输入和结果来自固定教学 fixture，不是一次真实模型请求。
+          画面使用实际 Core 界面。这段回放只演示 Explore，输入和结果来自固定教学数据，不会调用模型。
         </p>
       </div>
       <div
@@ -324,7 +324,7 @@ export function ProductDemo() {
           </div>
         </nav>
         <p className="mt-6 max-w-2xl text-sm leading-6 text-[#6b6d66]">
-          文献、证据与问题均为标识为「演示文献」的合成教学数据，不是真实研究成果。当前开放任务仅为 Explore；Deep Dive、Deep Research、文献综述、蒸馏 Idea、论文解释在本演示中保持锁定。跳章落到可阅读 checkpoint，继续播放不会回到阶段起点；最后一幕停住，需要显式重新观看。
+          文献、证据与问题均为标识为「演示文献」的合成教学数据，不是真实研究成果。其它任务不在本回放范围内。跳章落到可阅读 checkpoint，继续播放不会回到阶段起点；最后一幕停住，需要显式重新观看。
         </p>
         <p className="sr-only">{CONFIRMED_CAPABILITY_PROFILE.openTasks.join(" ")}</p>
       </div>

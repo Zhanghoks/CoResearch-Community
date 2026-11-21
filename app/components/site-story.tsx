@@ -21,10 +21,10 @@ export function SiteStory() {
     <div>
       <section id="workflow" className="mx-auto max-w-6xl px-5 py-20">
         <h2 className="max-w-3xl text-4xl font-semibold tracking-tight text-balance md:text-5xl">
-          四步，从兴趣走到可验证的下一步
+          研究理念：从兴趣走到可验证的下一步
         </h2>
         <p className="mt-5 max-w-2xl text-lg leading-8 text-[#3f413c]">
-          研究者不必先写好完整计划。CoResearch 希望把探索、深读、边界判断和修订连成一条可以回头的路径。
+          下面解释 CoResearch 的设计方向，不是当前可用功能列表。研究者可以先从 Explore 入手，再用证据缩小问题范围。
         </p>
         <div className="mt-12">
           <Workflow />
@@ -112,7 +112,7 @@ export function SiteStory() {
             下一步：先看一次产品演示
           </h2>
           <p className="mt-5 max-w-2xl text-base leading-7 text-white/80 md:text-lg">
-            运行演示使用当前 CoResearch 展示组件的离线 viewer 和合成教学数据，用来说明研究工作流，不是一次真实模型请求，也不代表已上线功能。如需反馈问题或讨论设计，请到本仓库的 Issues。
+            运行演示用实际 Core 界面和合成教学数据。你可以先看流程，也可以按指南自己走一遍。
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
@@ -121,12 +121,12 @@ export function SiteStory() {
             >
               {productDemoCta} →
             </Link>
-            <a
-              href={issuesUrl}
+            <Link
+              href="/docs/get-started/"
               className="rounded-full bg-white/10 px-5 py-3 text-sm font-medium text-white ring-1 ring-white/20 transition hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
-              前往社区与反馈
-            </a>
+              跟做第一次 Explore
+            </Link>
           </div>
         </div>
       </section>

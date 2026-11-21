@@ -5,7 +5,7 @@ import type { GuideDefinition } from "./types";
 
 export const GUIDE_PRESET_PROMPT = INTEREST_PROMPT;
 
-export const GUIDE_VERSION_NOTE = `产品界面构建自 Core 提交 ${coreSourceCommit.slice(0, 12)}（viewer ${DEMO_VIEWER_VERSION}）。当前可操作入口仅为 Explore；Deep Dive、Deep Research、文献综述、蒸馏 Idea、论文解释保持锁定。这是离线合成教学数据，不是一次真实研究请求。`;
+export const GUIDE_VERSION_NOTE = `产品界面构建自 Core 提交 ${coreSourceCommit.slice(0, 12)}（viewer ${DEMO_VIEWER_VERSION}）。此教程的可操作任务只有 Explore，不代表 Core 的完整任务列表。这是离线合成教学数据，不是一次真实研究请求。`;
 
 const openTasks = CONFIRMED_CAPABILITY_PROFILE.openTasks.join("、");
 
@@ -44,7 +44,7 @@ export const guides: readonly GuideDefinition[] = [
         targetAnchor: "composer",
         title: "选择 Explore 并准备任务",
         instruction: "在真实输入区选择 Explore，准备任务。不要把这一步当成已经执行成功。",
-        why: "Explore 是当前唯一开放任务；准备与发送是两个动作。",
+        why: "Explore 是本练习唯一开放的任务；准备与发送是两个动作。",
         expectedFeedback: "出现 Explore 任务芯片，界面仍停留在发送前。",
         success: "explore-prepared",
       },

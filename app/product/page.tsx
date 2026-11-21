@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ExploreProof } from "../components/demo-proof/ExploreProof";
 import { ProductDemo } from "../components/product-demo/ProductDemo";
 import { docs, siteUrl } from "../content";
@@ -6,7 +7,7 @@ import { docs, siteUrl } from "../content";
 export const metadata: Metadata = {
   title: "产品 · CoResearch",
   description:
-    "看 CoResearch 跑一次研究：由当前产品展示组件驱动的离线演示，从一句模糊兴趣到可验证的候选方法。",
+    "看 CoResearch 跑一次研究：用 Core 的实际界面离线演示 Explore、方向续探与论文证据查看。",
   alternates: { canonical: `${siteUrl}/product/` },
   openGraph: { url: `${siteUrl}/product/` },
 };
@@ -22,10 +23,10 @@ export default function ProductPage() {
           Explore the Research World
         </p>
         <h1 className="mt-6 max-w-4xl text-5xl font-semibold tracking-tight text-balance md:text-6xl">
-          在一个会话里，走完一次有依据的研究
+          在一个会话里找方向、看论文、继续探索
         </h1>
         <p className="mt-6 max-w-2xl text-lg leading-8 text-[#3f413c] md:text-xl">
-          CoResearch 把 Explore、Deep Dive、边界判断和修订连成一条可以回头的路径：研究者说出兴趣，多 Agent 协作补全证据链，关键决策始终由人确认。
+          从一句兴趣开始：发送 Explore 获得一组候选方向；选中一条，打开相关论文核对依据，再决定是否继续细分。
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <a
@@ -34,12 +35,12 @@ export default function ProductPage() {
           >
             观看运行演示
           </a>
-          <a href="#explore-proof" className="rounded-full border border-black/10 px-5 py-3 text-sm font-medium text-[#262626]">
-            验证 Explore 回放切片
-          </a>
+          <Link href="/docs/get-started/" className="rounded-full border border-black/10 px-5 py-3 text-sm font-medium text-[#262626]">
+            跟做第一次 Explore
+          </Link>
         </div>
         <p className="mt-6 max-w-2xl text-sm leading-6 text-[#6b6d66]">
-          下方演示使用当前 CoResearch 展示组件的离线 viewer，输入与结果来自固定合成教学数据，不是一次真实模型或检索请求，也不代表已上线功能。页面描述愿景和工作流，不代表每个 Agent 角色都已在公开版本中完整实现。
+          下方是实际 Core 界面的离线回放，只演示 Explore。论文、证据和结果为固定教学数据，不会调用真实模型或搜索。开发分支的论文检索与单篇论文讲解不在这段演示里，不代表已上线。
         </p>
       </section>
       <ProductDemo />
