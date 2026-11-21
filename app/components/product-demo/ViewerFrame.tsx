@@ -32,12 +32,14 @@ export function ViewerFrame({
   onIntent,
   onReady,
   onStatus,
+  presentation = false,
 }: {
   fixture: DemoFixture;
   snapshot: ViewerSnapshot;
   onIntent: (intent: UserIntent, generation: number) => void;
   onReady?: (anchors: readonly AnchorBox[], generation: number) => void;
   onStatus?: (status: ViewerHandshake, error?: string) => void;
+  presentation?: boolean;
 }) {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [anchors, setAnchors] = useState<readonly AnchorBox[]>([]);
@@ -169,7 +171,7 @@ export function ViewerFrame({
   const focus = new Set(snapshot.focusIds.map(focusAnchorId));
 
   return (
-    <div className="relative overflow-hidden rounded-[22px] ring-1 ring-black/40" data-pd-stage="">
+    <div className="relative overflow-hidden rounded-[22px] ring-1 ring-black/40" data-pd-stage="" data-demo-presentation={presentation || undefined}>
       <p className="m-0 bg-black/70 px-3 py-1.5 text-[11px] text-white" data-demo-viewer-label="">
         产品 UI · 示例数据 / 预录结果
       </p>
@@ -178,6 +180,7 @@ export function ViewerFrame({
         key={reloadKey}
         ref={frameRef}
         title="CoResearch 产品演示"
+        tabIndex={presentation ? -1 : undefined}
         src={src}
         className="block h-[min(78vh,820px)] w-full border-0 bg-[#171718]"
         sandbox="allow-scripts allow-same-origin"
@@ -190,7 +193,7 @@ export function ViewerFrame({
       />
       {status !== "ready" ? (
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-[#171718]/90 px-6 text-center text-sm text-white" role={status === "error" ? "alert" : "status"}>
-          {status === "booting" ? <p>正在连接离线演示 viewer，父时钟等待确认后再播放…</p> : <p>{error}</p>}
+          {status === "booting" ? <p>正在加载 CoResearch 演示…</p> : <p>{error}</p>}
           {status === "error" ? (
             <button
               type="button"

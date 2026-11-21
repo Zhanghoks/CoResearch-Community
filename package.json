@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/test-research-story.mjs && node scripts/test-product-demo.mjs && node scripts/test-demo-kernel.mjs && node scripts/test-demo-viewer.mjs && node scripts/test-viewer-lifecycle.mjs && node scripts/test-evidence-story-regressions.mjs && node scripts/test-docs-guides.mjs && node scripts/test-guide-lifecycle.mjs && node scripts/test-player-component-lifecycle.mjs",
+    "prebuild": "node scripts/test-research-story.mjs && node scripts/test-product-demo.mjs && node scripts/test-demo-kernel.mjs && node scripts/test-demo-viewer.mjs && node scripts/test-viewer-lifecycle.mjs && node scripts/test-evidence-story-regressions.mjs && node scripts/test-docs-guides.mjs && node scripts/test-guide-lifecycle.mjs && node scripts/test-player-component-lifecycle.mjs && npm run test:homepage",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -18,7 +18,8 @@
     "test:evidence-regressions": "node scripts/test-evidence-story-regressions.mjs",
     "test:guides": "node scripts/test-docs-guides.mjs",
     "test:guide-lifecycle": "node scripts/test-guide-lifecycle.mjs",
-    "test:player-lifecycle": "node scripts/test-player-component-lifecycle.mjs"
+    "test:player-lifecycle": "node scripts/test-player-component-lifecycle.mjs",
+    "test:homepage": "node scripts/test-home-runtime.mjs"
   },
   "dependencies": {
     "gsap": "^3.15.0",

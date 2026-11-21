@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ExploreProof } from "../components/demo-proof/ExploreProof";
 import { ProductDemo } from "../components/product-demo/ProductDemo";
 import { docs, siteUrl } from "../content";
 
@@ -44,7 +43,13 @@ export default function ProductPage() {
         </p>
       </section>
       <ProductDemo />
-      <ExploreProof />
+      <section className="mx-auto max-w-6xl px-5 pb-16">
+        <div className="rounded-2xl border border-[#dce4de] bg-[#edf2e7] px-6 py-7">
+          <h2 className="text-xl font-semibold">现在换你试一次。</h2>
+          <p className="my-3 max-w-2xl text-[#3f413c]">在同一套 Core 界面里，自己准备、发送 Explore，看到第一组方向。只要一个示例，不需要账号。</p>
+          <Link href="/docs/get-started/" className="font-semibold underline underline-offset-4">开始跟做 →</Link>
+        </div>
+      </section>
       <section className="mx-auto max-w-6xl px-5 pb-24 pt-4">
         <h2 className="text-2xl font-semibold tracking-tight">设计文档</h2>
         <div className="mt-6 grid gap-4 md:grid-cols-3">

@@ -16,6 +16,7 @@ const focusRing =
 export function SiteHeader() {
   const ref = useRef<HTMLElement>(null);
   const [glass, setGlass] = useState(false);
+  const [overHero, setOverHero] = useState(false);
 
   useEffect(() => {
     const update = () => {
@@ -23,6 +24,7 @@ export function SiteHeader() {
       if (!header) return;
       const line = header.getBoundingClientRect().bottom;
       const hero = document.querySelector("[data-home-hero]");
+      setOverHero(Boolean(hero && hero.getBoundingClientRect().bottom > line + 8));
       if (hero) {
         setGlass(hero.getBoundingClientRect().top < line - 1);
         return;
@@ -42,7 +44,8 @@ export function SiteHeader() {
   return (
     <header
       ref={ref}
-      className={`sticky top-0 z-20 border-b transition-[background-color,border-color,backdrop-filter] duration-200 ${
+      data-over-hero={overHero || undefined}
+      className={`core-site-header sticky top-0 z-20 border-b transition-[background-color,border-color,backdrop-filter] duration-200 ${
         glass
           ? "border-white/40 bg-[#fdfff7]/40 backdrop-blur-md"
           : "border-transparent bg-transparent"

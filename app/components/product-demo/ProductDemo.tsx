@@ -252,7 +252,7 @@ export function ProductDemo() {
       <div
         className="mt-10"
         onKeyDown={(event) => {
-          if (event.target instanceof HTMLElement && ["INPUT", "SELECT", "TEXTAREA"].includes(event.target.tagName)) return;
+          if (event.target instanceof HTMLElement && event.target.closest("button, input, select, textarea, a, summary, [contenteditable=true]")) return;
           if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
             event.preventDefault();
             goTo(active + (event.key === "ArrowRight" ? 1 : -1));

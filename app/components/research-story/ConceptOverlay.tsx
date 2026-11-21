@@ -47,18 +47,24 @@ export function ConceptOverlay({ facts, chapter }: { facts: ConceptFacts; chapte
 
   const coverageCard = coverage ? (
     <article className="rw-coverage" data-rw-coverage={coverage.recordId} data-rw-revises={coverage.revises ? "true" : "false"}>
-      <p className="rw-label-strong">当前证据覆盖</p>
       {coverage.revises && coverage.previousStatement ? (
-        <>
-          <p className="rw-prev" data-rw-coverage-prev="">修订前：{coverage.previousStatement}</p>
-          {coverage.counterexampleIds.map((id) => {
-            const item = ceById.get(id);
-            return item ? <p key={id} data-rw-counterexample={id}>{item.paperId} 反例：{item.reason}</p> : null;
-          })}
-          <p className="rw-revised" data-rw-coverage-next="">修订后：{coverage.revisedStatement}</p>
-        </>
+        <ol className="rw-causal-steps" aria-label="如何修订判断">
+          <li className="rw-causal-old" data-rw-coverage-prev="">
+            <span>01 / 原判断</span><p>{coverage.previousStatement}</p>
+          </li>
+          <li className="rw-causal-new">
+            <span>02 / 两条反例</span>
+            {coverage.counterexampleIds.map((id) => {
+              const item = ceById.get(id);
+              return item ? <p key={id} data-rw-counterexample={id}><strong>{item.paperId}</strong> {item.reason}</p> : null;
+            })}
+          </li>
+          <li className="rw-causal-result" data-rw-coverage-next="">
+            <span>03 / 改判后</span><p>{coverage.revisedStatement}</p>
+          </li>
+        </ol>
       ) : (
-        <p data-rw-coverage-current="">{coverage.statement}</p>
+        <><p className="rw-label-strong">当前证据覆盖</p><p data-rw-coverage-current="">{coverage.statement}</p></>
       )}
     </article>
   ) : null;
@@ -70,17 +76,20 @@ export function ConceptOverlay({ facts, chapter }: { facts: ConceptFacts; chapte
         <article className="rw-question" data-rw-question={OPEN_QUESTION_ID}>
           <p className="rw-label-strong">开放式问题 · 合成教学数据</p>
           <p className="rw-question-body">{question.question}</p>
-          <p><strong>范围：</strong>{question.scope}</p>
-          <p><strong>为什么值得查：</strong>{question.whyInvestigate}</p>
-          <p><strong>已有依据：</strong>P01/P02 的有条件支持（{question.evidenceIds.join("、")}）。</p>
-          <p><strong>已见反例：</strong>P05/P03，避免把长视频或复杂场景本身当作全新问题（{question.counterexampleIds.join("、")}）。</p>
-          <p><strong>仍然未知：</strong>{question.uncertainty}</p>
-          <p><strong>下一步：</strong>{question.nextAction}</p>
+          <p className="rw-question-next"><strong>下一步：</strong>{question.nextAction}</p>
+          <details className="rw-question-trace">
+            <summary>展开范围、已有依据与未知</summary>
+            <p><strong>范围：</strong>{question.scope}</p>
+            <p><strong>为什么值得查：</strong>{question.whyInvestigate}</p>
+            <p><strong>已有依据：</strong>P01/P02 的有条件支持（{question.evidenceIds.join("、")}）。</p>
+            <p><strong>已见反例：</strong>P05/P03，避免把长视频或复杂场景本身当作全新问题（{question.counterexampleIds.join("、")}）。</p>
+            <p><strong>仍然未知：</strong>{question.uncertainty}</p>
+          </details>
           <p data-rw-status=""><strong>状态：</strong>{facts.statusLabel}</p>
         </article>
       ) : null}
 
-      {coverage?.revises ? coverageCard : null}
+      {coverage?.revises && !showQuestion ? coverageCard : null}
       <ol className="rw-legend" aria-label="图例">
         <li><i className="rw-key-path" />已走路径</li>
         <li><i className="rw-key-cover" />当前证据覆盖</li>
@@ -140,7 +149,9 @@ export function ConceptOverlay({ facts, chapter }: { facts: ConceptFacts; chapte
       ))}
 
       {limits.length > 0 ? (
-        <table className="rw-conditions" data-rw-conditions="">
+        <details className="rw-conditions-expander">
+          <summary>对照论文的适用条件与预算</summary>
+          <div className="rw-conditions-scroll"><table className="rw-conditions" data-rw-conditions="">
           <caption>已读演示文献的条件与预算比较（未注明不等于相同）</caption>
           <thead>
             <tr>{["来源 / 阅读层级", "遮挡 / 可见性", "切镜 / 机位", "时长", "更新 / 预算", "可比性"].map((label) => <th key={label} scope="col">{label}</th>)}</tr>
@@ -163,7 +174,8 @@ export function ConceptOverlay({ facts, chapter }: { facts: ConceptFacts; chapte
           <tfoot>
             {limits.map((item) => <tr key={item.id}><th scope="row">{item.id}</th><td colSpan={5}>{item.statement}</td></tr>)}
           </tfoot>
-        </table>
+          </table></div>
+        </details>
       ) : null}
 
       {!coverage?.revises ? coverageCard : null}

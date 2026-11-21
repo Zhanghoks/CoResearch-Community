@@ -292,13 +292,13 @@ export function ResearchWorldStory() {
   }
 
   return (
-    <section ref={rootRef} id="research-world" className={`rw-story${manual ? " rw-manual" : ""}${short ? " rw-short" : ""}${narrow ? " rw-narrow" : ""}`} aria-label="研究世界概念演示">
+    <section ref={rootRef} id="research-world" className={`rw-story${manual ? " rw-manual" : ""}${short ? " rw-short" : ""}${narrow ? " rw-narrow" : ""}`} aria-label="研究世界概念演示" data-concept-act={active + 1}>
       <span id={REVISION_STORY_ANCHOR} className="rw-story-anchor" aria-hidden="true" />
       <div
         ref={stageRef}
         className="rw-stage"
         onKeyDown={(event) => {
-          if (event.target instanceof HTMLElement && ["INPUT", "SELECT", "TEXTAREA"].includes(event.target.tagName)) return;
+          if (event.target instanceof HTMLElement && event.target.closest("button, input, select, textarea, a, summary, [contenteditable=true]")) return;
           if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
             event.preventDefault();
             go(active + (event.key === "ArrowRight" ? 1 : -1));
@@ -313,16 +313,17 @@ export function ResearchWorldStory() {
       >
         <header className="rw-heading">
           <div>
-            <p className="rw-kicker">CORESEARCH / A CONCEPT STORY</p>
-            <h2>研究世界 <span>Research World</span></h2>
+            <p className="rw-kicker">02 / RESEARCH WORLD</p>
+            <h2>研究问题是怎么形成的？ <span>研究世界</span></h2>
           </div>
           <button type="button" onClick={skip} className="rw-skip">跳过动画 ↓</button>
         </header>
         <div className="rw-content">
           <StoryNarration active={active} />
-          <div className="rw-canvas"><ResearchWorldSvg /></div>
+          <div className="rw-canvas"><ResearchWorldSvg /><div className="rw-map-caption" aria-hidden="true"><i />研究路径 / {String(active + 1).padStart(2, "0")}</div></div>
           <ConceptOverlay key={chapters[active]?.id} facts={facts} chapter={chapters[active]!} active={active} />
         </div>
+        <div className="rw-journey" aria-hidden="true"><span data-current={active < 3}>01 找方向</span><span data-current={active === 3 || active === 4}>02 查证据</span><span data-current={active === 5}>03 反例改判</span><span data-current={active > 5}>04 定问题</span></div>
         <div className="rw-progress-row">
           <div className="rw-progress-track" aria-hidden="true"><span data-rw-progress="" /></div>
           <nav className="rw-ticks" aria-label="幕次进度点">
@@ -360,7 +361,11 @@ export function ResearchWorldStory() {
               </button>
             )}
             <button type="button" onClick={() => go(active - 1)} disabled={!ready || active === 0} aria-label="上一幕">← 上一步</button>
-            <button type="button" className="rw-next" onClick={() => (active === chapters.length - 1 ? (controlsRef.current?.restart?.() ?? go(0)) : go(active + 1))} disabled={!ready}>
+            <button type="button" className="rw-next" onClick={() => {
+              if (active !== chapters.length - 1) go(active + 1);
+              else if (controlsRef.current?.restart) controlsRef.current.restart();
+              else go(0);
+            }} disabled={!ready}>
               {active === chapters.length - 1 ? "重新观看 ↺" : "下一步 →"}
             </button>
           </div>

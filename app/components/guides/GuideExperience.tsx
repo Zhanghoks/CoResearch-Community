@@ -224,13 +224,13 @@ export function GuideExperience({ guideId }: { guideId: string }) {
           <Link href={guideById.get(guide.nextGuideId)?.path ?? "/docs/"}>继续：{guideById.get(guide.nextGuideId)?.title}</Link>
         ) : null}
         {" "}
-        <Link href="/product/">继续使用产品说明页上的运行演示</Link>
+        <Link href="/product/#product-demo">继续使用产品说明页上的运行演示</Link>
         {" · "}
         <Link href="/docs/">全部指南</Link>
         {guideId === "troubleshooting" ? (
           <>
             {" · "}
-            <Link href="/">概念故事中的覆盖修订（仍待确认）</Link>
+            <Link href="/#research-world-revise">概念故事中的覆盖修订（仍待确认）</Link>
           </>
         ) : null}
       </p>

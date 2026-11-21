@@ -116,25 +116,29 @@ export function ResearchWorldSvg() {
           <g data-rw-stagger="evidence:0:2" data-rw-foreground="P01">
             <rect x={p01.x - 14} y={p01.y - 18} width="28" height="36" rx="3" fill="#fff" stroke="#3f6f9b" strokeWidth="1.6" />
             <line x1={p01.x} y1={p01.y - 18} x2={crossshot.x} y2={crossshot.y} stroke="#3f6f9b" strokeWidth="1.6" />
+            <text x={p01.x} y={p01.y + 43} className="rw-map-node-id" textAnchor="middle">P01</text>
           </g>
           <g data-rw-stagger="evidence:1:2" data-rw-foreground="P02">
             <rect x={p02.x - 14} y={p02.y - 18} width="28" height="36" rx="3" fill="#fff" stroke="#3f6f9b" strokeWidth="1.6" />
             <line x1={p02.x} y1={p02.y - 18} x2={crossshot.x} y2={crossshot.y} stroke="#3f6f9b" strokeWidth="1.6" />
+            <text x={p02.x} y={p02.y + 43} className="rw-map-node-id" textAnchor="middle">P02</text>
           </g>
         </g>
         <g data-rw-layer="revision" className="rw-reveal">
           <g data-rw-foreground="P05">
             <rect x={p05.x - 14} y={p05.y - 18} width="28" height="36" rx="3" fill="#fff7e6" stroke="#a46a3a" strokeWidth="1.8" />
             <line x1={p05.x} y1={p05.y} x2={consistency.x + 80} y2={consistency.y + 20} stroke="#a46a3a" strokeWidth="1.8" />
+            <text x={p05.x} y={p05.y + 43} className="rw-map-node-id" textAnchor="middle">P05</text>
           </g>
           <g data-rw-foreground="P03">
             <rect x={p03.x - 14} y={p03.y - 18} width="28" height="36" rx="3" fill="#fff7e6" stroke="#a46a3a" strokeWidth="1.8" />
             <line x1={p03.x} y1={p03.y} x2={consistency.x + 80} y2={consistency.y + 20} stroke="#a46a3a" strokeWidth="1.8" />
+            <text x={p03.x} y={p03.y + 43} className="rw-map-node-id" textAnchor="middle">P03</text>
           </g>
         </g>
         <g data-rw-layer="question" className="rw-reveal">
           <circle cx={oq.x} cy={oq.y} r="16" fill="#fff" stroke="#3d5a74" strokeWidth="2.2" data-rw-foreground="oq-identity-budget" />
-          <circle cx={oq.x} cy={oq.y} r="6" fill="#3d5a74" />
+          <circle cx={oq.x} cy={oq.y} r="6" fill="#3d5a74" /><text x={oq.x} y={oq.y - 26} className="rw-map-node-id" textAnchor="middle">待验证问题</text>
           <line x1={p06.x} y1={p06.y} x2={oq.x} y2={oq.y} stroke="#4e8f7f" strokeWidth="2" strokeDasharray="6 5" />
           <rect x={p06.x - 12} y={p06.y - 16} width="24" height="32" rx="3" fill="#eff7f3" stroke="#4e8f7f" strokeWidth="1.6" data-rw-foreground="P06" />
         </g>

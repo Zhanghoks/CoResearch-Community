@@ -15,9 +15,7 @@ function NarrationBody({ index, leaving }: { index: number; leaving?: boolean })
       {hasLeadCard ? null : (
         <>
           <p className="rw-body">{chapter.body}</p>
-          <p className="rw-change"><span className="rw-takeaway-mark">变化</span>{chapter.change}</p>
-          <p className="rw-takeaway"><span className="rw-takeaway-mark">要点</span>{chapter.takeaway}</p>
-          <p className="rw-next"><span className="rw-takeaway-mark">下一步</span>{chapter.next}</p>
+          <p className="rw-change"><span className="rw-takeaway-mark">看到</span>{chapter.change}</p>
         </>
       )}
     </div>
