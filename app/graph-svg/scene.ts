@@ -4,9 +4,8 @@ import type { Pose } from "./types";
 
 /** Width of each item's reveal window inside its layer's 0→1 sweep. */
 const STAGGER_WINDOW = .38;
-/** The explored route stays fully drawn from its settled chapter onward. */
-const exploreSettled = (progress: number) => progress >= 8;
-/** Real arc-length fractions of the explore route; segments are rarely equal. */
+/** The chosen route stays fully drawn from its settled chapter onward. */
+const pathSettled = (progress: number) => progress >= 1;
 const exploreArrivals = routeArrivals(world.routes.explore);
 
 /** Normalize a 0–1 reveal value so settled states write exactly "1"/"0" (float-safe). */
@@ -26,43 +25,45 @@ export function createSceneRenderer(root: HTMLElement) {
     const [layer, index, count] = (element.dataset.rwStagger ?? "").split(":");
     return { element, layer: layer as keyof Pose, index: Number(index) || 0, count: Number(count) || 1 };
   });
+  const dimmed = [...root.querySelectorAll<SVGGraphicsElement>("[data-rw-dim]")];
   const progressBar = root.querySelector<HTMLElement>("[data-rw-progress]");
-  // Focus layers settle with a pop; depth in the base graph comes from baked tier alpha,
-  // never from CSS filters, so zoomed frames stay crisp in both directions.
-  const popLayers = new Set(["papers", "gap", "candidate", "idea"]);
+  const popLayers = new Set(["evidence", "revision", "question", "nextStep"]);
   return (progress: number, count: number) => {
     const { pose, active } = sampleStory(progress);
     camera.setAttribute("transform", cameraTransform(pose));
     marker.setAttribute("transform", `translate(${pose.markerX} ${pose.markerY})`);
+    root.setAttribute("data-rw-act", String(active));
     for (const element of layers) {
       const key = element.dataset.rwLayer as keyof Pose;
-      const value = Math.max(0, Math.min(1, pose[key]));
+      const value = Math.max(0, Math.min(1, Number(pose[key] ?? 0)));
       element.style.opacity = String(value);
       element.style.visibility = value < .001 ? "hidden" : "visible";
-      if (popLayers.has(key)) element.style.transform = `scale(${(0.86 + 0.14 * value).toFixed(3)})`;
+      if (popLayers.has(key)) element.style.transform = `scale(${(0.92 + 0.08 * value).toFixed(3)})`;
     }
     for (const item of staggers) {
-      const value = Math.max(0, Math.min(1, pose[item.layer] ?? 0));
+      const value = Math.max(0, Math.min(1, Number(pose[item.layer] ?? 0)));
       const step = item.count > 1 ? (1 - STAGGER_WINDOW) / (item.count - 1) : 0;
       const local = Math.max(0, Math.min(1, (value - item.index * step) / STAGGER_WINDOW));
       item.element.style.opacity = reveal(local);
     }
+    for (const element of dimmed) {
+      const appearAt = Number(element.dataset.rwDim ?? 1);
+      element.style.opacity = active >= appearAt ? "0.35" : active === appearAt - 1 ? "0.7" : "0";
+    }
     for (const element of draws) {
       const key = element.dataset.rwDraw as keyof Pose;
       element.style.strokeDasharray = "1";
-      const draw = key === "explore" && exploreSettled(progress) ? 1 : key === "lineage" && progress >= 2 ? 1 : pose[key];
+      const draw = key === "path" && pathSettled(progress) ? 1 : Number(pose[key] ?? 0);
       element.style.strokeDashoffset = String(1 - Math.min(1, Math.max(0, draw)));
     }
-    // Explore stops materialize as the drawn line reaches their arc fraction and
-    // persist once explored; never a binary pop.
-    const drawExplore = exploreSettled(progress) ? 1 : Math.max(0, Math.min(1, pose.explore));
+    const drawPath = pathSettled(progress) ? 1 : Math.max(0, Math.min(1, pose.path));
     for (const element of stops) {
       const index = Number(element.dataset.rwStop);
       const arrival = exploreArrivals[index] ?? 1;
-      const local = index === 0 ? 1 : Math.max(0, Math.min(1, (drawExplore - (arrival - .12)) / .12));
+      const local = index === 0 ? 1 : Math.max(0, Math.min(1, (drawPath - (arrival - .12)) / .12));
       element.style.opacity = reveal(local);
     }
-    if (progressBar) progressBar.style.transform = `scaleX(${Math.max(0, Math.min(1, progress / (count - 1)))})`;
+    if (progressBar) progressBar.style.transform = `scaleX(${Math.max(0, Math.min(1, progress / Math.max(1, count - 1)))})`;
     return active;
   };
 }

@@ -4,6 +4,20 @@ export const newIssueUrl = "https://github.com/Zhanghoks/CoResearch-Community/is
 export const spaceDocUrl =
   "https://github.com/Zhanghoks/CoResearch-Community/blob/main/docs/space.md";
 
+export const siteUrl = "https://zhanghoks.github.io/CoResearch-Community";
+export const siteName = "CoResearch";
+export const siteTitle = "CoResearch · 从研究兴趣到有依据的方向";
+export const siteDescription =
+  "用 Explore 探索研究兴趣、比较方向、查看 PaperCard，并沿选定方向继续细分。";
+export const productDemoHref = "/product";
+export const productDemoCta = "看 Explore 演示";
+
+export const productWorkflow = [
+  { title: "准备并发送 Explore", description: "输入研究兴趣，选中 Explore 后还需要点击发送，才会开始探索。" },
+  { title: "对照方向与论文", description: "比较 Direction Group 的候选方向，从方向卡或图谱打开论文预览，辨认摘要和全文状态。" },
+  { title: "选一个方向继续", description: "选择「细分方向」会准备下一轮任务；再次发送后，子方向挂在原方向下。" },
+] as const;
+
 export const docs = [
   {
     title: "Research World · Literature Space · Idea Space",
@@ -105,11 +119,11 @@ export const principles = [
 export const faqs = [
   {
     q: "CoResearch 是什么？",
-    a: "它是一个面向科研探索和 Idea 发展的多智能体研究协作设想。目标是帮助研究者从模糊兴趣出发，定位细分方向，理解前人做到了哪里，再设计有依据、可验证的下一步。",
+    a: "它是一个研究工作台。你可以从一个兴趣开始，用 Explore 找方向，查看相关 PaperCard，再沿着选中的方向继续探索。",
   },
   {
     q: "页面上的能力现在都能用吗？",
-    a: "不能直接这么理解。这里介绍的是持续演进的产品愿景和工作流。涉及 Gap Finder、Innovator 等角色的内容是目标机制，不代表公开版本已经完整实现。",
+    a: "本页演示的是 Explore、方向续探和证据查看，使用合成数据，不调用真实搜索或模型。图谱故事用于解释研究思路；Gap Finder、Innovator 等是设计中的角色。",
   },
   {
     q: "Research World 是一个完整的论文库吗？",

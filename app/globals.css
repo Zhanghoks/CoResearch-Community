@@ -1,1 +1,20 @@
 @import "tailwindcss";
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -5rem;
+  z-index: 50;
+  border-radius: 9999px;
+  background: #262626;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+.skip-link:focus {
+  top: 1rem;
+  outline: 2px solid #262626;
+  outline-offset: 2px;
+}
