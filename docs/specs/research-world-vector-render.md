@@ -1,0 +1,5 @@
+# Vector Research World renderer
+
+The original GIF contains 218 frames of a 1,327-node, 3,306-edge synthetic graph. This iteration uses the original graph and episode data, rather than enlarging the raster. Every source frame maps to an SVG state, with colored states sampled from the source GIF, restricted to the source sequence's known node IDs. The boundary is redrawn from the highlighted node geometry. Strokes, nodes, leader lines and research-boundary outlines are vectors; chapter text and callouts remain HTML. This is a geometric remake of the range and marker styling, not a claim of pixel-identical GIF playback. The section remains transparent.
+
+Run `python scripts/export-idea-vector.py GRAPH.json SEQUENCE.json SOURCE.gif` to regenerate the compact runtime asset (Pillow, NumPy, SciPy and contourpy). Homepage production uses one lazily loaded vector asset; the older raster atlases are no longer requested by the player. The poster is only a fallback before loading. The optional tour, one-gesture-per-step, skip and resume are retained.

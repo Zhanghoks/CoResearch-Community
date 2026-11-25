@@ -1,172 +1,230 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { asset, chapters, displayAt, ending, last, makePlayer } from "../../graph-svg/idea-player";
+import { asset, chapters, displayAt, ending, last } from "../../graph-svg/idea-player";
+import { IdeaVectorGraph, loadIdeaVector, type IdeaVectorData } from "./IdeaVectorGraph";
 import { useViewPreferences } from "../view-preferences";
 import "./idea-story.css";
 
+const WHEEL_THRESHOLD = 24;
+const TOUCH_THRESHOLD = 38;
+const GESTURE_GAP_MS = 165;
 const clamp = (step: number) => Math.max(0, Math.min(last, step));
 
 export function ResearchWorldStory() {
   const root = useRef<HTMLElement>(null);
   const sticky = useRef<HTMLDivElement>(null);
-  const canvas = useRef<HTMLCanvasElement>(null);
+  const [vector, setVector] = useState<IdeaVectorData | null>(null);
   const jump = useRef<(step: number) => void>(() => {});
-  const [shown, setShown] = useState({step:0,mask:0});
+  const shift = useRef<(delta: number) => boolean>(() => false);
+  const exit = useRef<HTMLDivElement>(null);
+  const engaged = useRef(false);
+  const resume = useRef<() => void>(() => {});
+  const pause = useRef<() => void>(() => {});
+  const [activeMode, setActiveMode] = useState(false);
+  const [visited, setVisited] = useState(false);
+  const [shown, setShown] = useState({step:0,mask:0,frame:-1});
   const [failed, setFailed] = useState(false);
   const [reduce, short] = useViewPreferences();
   const manual = reduce || short;
 
   useEffect(() => {
-    const section=root.current, stage=sticky.current, surface=canvas.current;
-    if (!section || !stage || !surface) return;
-    const player=makePlayer(surface);
+    const section=root.current, stage=sticky.current;
+    if (!section || !stage) return;
+    let currentFrame=-1;
     const header=document.querySelector("body > header");
-    let top=0, selected=0, version=0, frameReq=0, wheelTimer=0, blocked=false, deltaSum=0;
-    let touchY:number|null=null, usedTouch=false;
+    let selected=0, version=0, wheelTimer=0, blocked=false, deltaSum=0;
+    let touch:{x:number;y:number;axis:"x"|"y"|null;used:boolean;visual:boolean}|null=null;
+    const feedback=(distance:number, threshold:number)=>{
+      stage.style.setProperty("--idea-gesture", String(Math.min(1,Math.abs(distance)/threshold)));
+      stage.dataset.direction=distance<0?"back":distance>0?"forward":"none";
+    };
     const resize=()=>{
-      top=Math.ceil(header?.getBoundingClientRect().height ?? 0);
-      section.style.setProperty("--idea-top",`${top}px`);
+      section.style.setProperty("--idea-top",`${Math.ceil(header?.getBoundingClientRect().height ?? 0)}px`);
     };
     resize();
     const observer=new ResizeObserver(resize);
-    if (header) observer.observe(header);
-    const geometry=()=>{
-      const y=scrollY, start=section.getBoundingClientRect().top+y-top;
-      const length=Math.max(1,section.offsetHeight-stage.offsetHeight);
-      return {y,start,length,end:start+length,index:clamp(Math.round((y-start)/length*last))};
-    };
+    if(header)observer.observe(header);
     const select=async (index:number, animate:boolean)=>{
       const stamp=++version;
-      player.cancel();
       selected=index;
       setFailed(false);
       const target=ending(index);
-      const start=animate&&player.frame>=0 ? player.frame : target;
+      const start=animate&&currentFrame>=0 ? currentFrame : target;
       const dir=Math.sign(target-start);
+      stage.dataset.moving=String(dir!==0);
+      const interval=Math.max(24, Math.min(42, 630/Math.max(1,Math.abs(target-start))));
       try {
-        for(let n=start;;n+=dir){
-          if(stamp!==version || !await player.draw(n) || stamp!==version) break;
-          const state=displayAt(n);
-          setShown(old=>old.step===state.step&&old.mask===state.mask?old:state);
+        const vectorData=await loadIdeaVector();
+        if(stamp!==version)return;
+        setVector(vectorData);
+        for(let n=start+dir;;n+=dir){
+          if(stamp!==version)break;
+          currentFrame=n;
+          setShown({...displayAt(n),frame:n});
           if(n===target) break;
-          if(n%6===0)player.warm(n);
-          await new Promise(resolve=>window.setTimeout(resolve,65));
+          await new Promise(resolve=>window.setTimeout(resolve,interval));
         }
-        if(stamp===version)player.warm(target);
       } catch { if(stamp===version)setFailed(true); }
+      finally {
+        if(stamp===version){stage.dataset.moving="false";feedback(0,1);}
+      }
     };
     const go=(input:number)=>{
       const next=clamp(input);
-      if(!manual){ const {start,length}=geometry(); scrollTo({top:Math.round(start+length*next/last),behavior:"instant"}); }
-      if(next!==selected || player.frame<0) void select(next,!manual&&Math.abs(next-selected)===1);
+      if(next!==selected || currentFrame!==ending(next)) void select(next,!manual&&Math.abs(next-selected)===1);
+    };
+    resume.current=()=>{if(currentFrame!==ending(selected))void select(selected,!manual&&currentFrame>=0);};
+    pause.current=()=>{
+      version++;clearTimeout(wheelTimer);
+      blocked=false;deltaSum=0;touch=null;
+      stage.dataset.moving="false";
+      feedback(0,1);
     };
     jump.current=go;
-    const consume=(delta:number)=>{
-      const {y,start,end,index}=geometry();
-      if(y<start-2&&delta>0&&y+delta>=start){go(0);return true;}
-      if(y>end+2&&delta<0&&y+delta<=end){go(last);return true;}
-      if(y<start-2||y>end+2)return false;
-      const next=clamp(index+Math.sign(delta));
-      if(next===index)return false;
+    shift.current=(delta)=>{
+      if(!engaged.current)return false;
+      const next=clamp(selected+delta);
+      if(next===selected)return false;
       go(next);return true;
     };
+    const release=()=>{
+      pause.current();engaged.current=false;setActiveMode(false);
+    };
+
     const wheel=(ev:WheelEvent)=>{
-      if(ev.ctrlKey||!ev.deltaY||Math.abs(ev.deltaX)>Math.abs(ev.deltaY))return;
+      if(!engaged.current||ev.ctrlKey||!ev.deltaY||Math.abs(ev.deltaX)>Math.abs(ev.deltaY))return;
       clearTimeout(wheelTimer);
-      wheelTimer=window.setTimeout(()=>{ blocked=false;deltaSum=0; },170);
+      wheelTimer=window.setTimeout(()=>{
+        if(stage.dataset.moving!=="true")feedback(0,1);
+        blocked=false;deltaSum=0;
+      },GESTURE_GAP_MS);
+      if(blocked){ev.preventDefault();return;}
       const d=ev.deltaY*(ev.deltaMode===1?16:ev.deltaMode===2?innerHeight:1);
-      const {y,start,end,index}=geometry();
-      if(y>=start-2&&y<=end+2){
-        if(blocked){ev.preventDefault();return;}
-        if((index===0&&d<0)||(index===last&&d>0))return;
-        deltaSum+=d;
-        if(Math.abs(deltaSum)<24){ev.preventDefault();return;}
-      }
-      if(consume(deltaSum||d)){blocked=true;ev.preventDefault();}
+      if((selected===0&&d<0)||(selected===last&&d>0)){release();return;}
+      ev.preventDefault();
+      if(deltaSum&&(deltaSum>0)!==(d>0))deltaSum=0;
+      deltaSum+=d;
+      feedback(deltaSum,WHEEL_THRESHOLD);
+      if(Math.abs(deltaSum)>=WHEEL_THRESHOLD&&shift.current(Math.sign(deltaSum)))blocked=true;
     };
     const touchstart=(ev:TouchEvent)=>{
-      if(ev.touches.length!==1||(ev.target instanceof Element&&ev.target.closest("button")))return;
-      touchY=ev.touches[0].clientY;usedTouch=false;
+      if(!engaged.current||ev.touches.length!==1||(ev.target instanceof Element&&ev.target.closest("button")))return;
+      const {clientX:x,clientY:y}=ev.touches[0];
+      touch={x,y,axis:null,used:false,visual:ev.target instanceof Element&&Boolean(ev.target.closest(".idea-visual"))};
     };
     const touchmove=(ev:TouchEvent)=>{
-      if(touchY===null||ev.touches.length!==1||!ev.cancelable)return;
-      if(usedTouch){ev.preventDefault();return;}
-      const {y,start,end,index}=geometry();
-      if(y<start-2||y>end+2)return;
-      const d=touchY-ev.touches[0].clientY;
-      if((index===0&&d<0)||(index===last&&d>0))return;
-      if(Math.abs(d)<28){if(Math.abs(d)>6)ev.preventDefault();return;}
-      if(consume(d)){usedTouch=true;ev.preventDefault();}
+      if(!engaged.current||!touch||ev.touches.length!==1||(!touch.visual&&!ev.cancelable))return;
+      if(touch.used){if(ev.cancelable)ev.preventDefault();return;}
+      const {clientX,clientY}=ev.touches[0];
+      const d=touch.y-clientY, dx=touch.x-clientX;
+      if(!touch.axis&&Math.max(Math.abs(d),Math.abs(dx))>6)touch.axis=Math.abs(dx)>Math.abs(d)?"x":"y";
+      if(touch.axis!=="y")return;
+      if((selected===0&&d<0)||(selected===last&&d>0)){
+        if(!touch.visual){release();return;}
+        if(Math.abs(d)<TOUCH_THRESHOLD)return;
+        if(ev.cancelable)ev.preventDefault();
+        release();
+        if(d>0)exit.current?.scrollIntoView({block:"start",behavior:"smooth"});
+        else scrollBy({top:-Math.max(170,innerHeight*.55),behavior:"smooth"});
+        return;
+      }
+      if(ev.cancelable)ev.preventDefault();
+      feedback(d,TOUCH_THRESHOLD);
+      if(Math.abs(d)>=TOUCH_THRESHOLD&&shift.current(Math.sign(d)))touch.used=true;
     };
-    const touchend=()=>{touchY=null;usedTouch=false;};
-    const sync=()=>{
-      if(frameReq)return;
-      frameReq=requestAnimationFrame(()=>{
-        frameReq=0;
-        const {y,start,end,index}=geometry();
-        if(index!==selected&&y>=start-innerHeight&&y<=end+innerHeight) void select(index,Math.abs(index-selected)===1);
-      });
+    const touchend=()=>{
+      if(!touch?.used)feedback(0,1);
+      touch=null;
     };
     const preload=new IntersectionObserver(([entry])=>{
       if(!entry.isIntersecting)return;
       preload.disconnect();
-      if(player.frame<0)void select(manual?0:geometry().index,false);
+      if(currentFrame<0)void select(selected,false);
     },{rootMargin:"350px"});
     preload.observe(stage);
+    const visibility=new IntersectionObserver(([entry])=>{
+      if(!entry.isIntersecting&&engaged.current)release();
+    });
+    visibility.observe(stage);
     if(!manual){
-      window.addEventListener("wheel",wheel,{passive:false});
-      window.addEventListener("scroll",sync,{passive:true});
+      stage.addEventListener("wheel",wheel,{passive:false});
       stage.addEventListener("touchstart",touchstart,{passive:true});
       stage.addEventListener("touchmove",touchmove,{passive:false});
       stage.addEventListener("touchend",touchend);
       stage.addEventListener("touchcancel",touchend);
     }
     return ()=>{
-      version++;player.cancel();preload.disconnect();observer.disconnect();cancelAnimationFrame(frameReq);clearTimeout(wheelTimer);
-      window.removeEventListener("wheel",wheel);window.removeEventListener("scroll",sync);
+      shift.current=()=>false;resume.current=()=>{};pause.current=()=>{};
+      delete stage.dataset.moving;feedback(0,1);
+      version++;preload.disconnect();visibility.disconnect();observer.disconnect();clearTimeout(wheelTimer);
+      stage.removeEventListener("wheel",wheel);
       stage.removeEventListener("touchstart",touchstart);stage.removeEventListener("touchmove",touchmove);
       stage.removeEventListener("touchend",touchend);stage.removeEventListener("touchcancel",touchend);
     };
   },[manual]);
 
-  const {step,mask}=shown;
+  function startStory(next?:number){
+    engaged.current=true;
+    setActiveMode(true);
+    setVisited(true);
+    if(next===undefined)resume.current();
+    else jump.current(next);
+    sticky.current?.focus({preventScroll:true});
+  }
+  function skipStory(){
+    engaged.current=false;
+    setActiveMode(false);
+    pause.current();
+    exit.current?.scrollIntoView({block:"start",behavior:"instant"});
+    exit.current?.focus({preventScroll:true});
+  }
+  const {step,mask,frame}=shown;
   const [,name,title,body,items]=chapters[step];
   const badges=items.filter((_,index)=>mask&(1<<index));
   return (
-    <section ref={root} id="research-world" className="idea-story" data-manual={manual} aria-label="Research World 图谱讲解">
+    <>
+    <section ref={root} id="research-world" className="idea-story" data-manual={manual} data-engaged={activeMode} aria-label="Research World 图谱讲解">
       <div ref={sticky} className="idea-stage" tabIndex={0} onKeyDown={event=>{
-        if(!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(event.key))return;
-        const next=clamp(step+(["ArrowRight","ArrowDown"].includes(event.key)?1:-1));
-        if(next!==step){event.preventDefault();jump.current(next);}
+        if(!engaged.current)return;
+        if(event.key==="Escape"){event.preventDefault();skipStory();return;}
+        if(!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","PageUp","PageDown"].includes(event.key))return;
+        const delta=["ArrowRight","ArrowDown","PageDown"].includes(event.key)?1:-1;
+        if(shift.current(delta))event.preventDefault();
       }}>
         <header className="idea-heading">
           <div>
             <h2>{step===0?"Research World":"Idea Space"}</h2>
-            {step>0&&<ul className="idea-key"><li>已理解</li><li>正在探索</li><li>未探索</li></ul>}
+            <ul className="idea-key" data-show={step>0} aria-hidden={step===0}><li>已理解</li><li>正在探索</li><li>未探索</li></ul>
           </div>
           <div className="idea-progress">
             <p>{step===0?"概览":`${String(step).padStart(2,"0")} / 10`} <b>·</b> {name}</p>
-            <nav aria-label="章节进度">{chapters.slice(1).map((chapter,index)=><button key={chapter[0]} type="button" aria-label={`第 ${index+1} 步：${chapter[1]}`} aria-current={step===index+1?"step":undefined} data-passed={step>=index+1} onClick={()=>jump.current(index+1)}><span /></button>)}</nav>
+            <nav aria-label="章节进度">{chapters.slice(1).map((chapter,index)=><button key={chapter[0]} type="button" aria-label={`第 ${index+1} 步：${chapter[1]}`} aria-current={step===index+1?"step":undefined} data-passed={step>=index+1} onClick={()=>startStory(index+1)}><span /></button>)}</nav>
           </div>
         </header>
         <div className="idea-visual">
           <div className="idea-art">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img className="idea-poster" src={`${asset}/poster.webp`} alt="" width={1280} height={576}/>
-            <canvas ref={canvas} width={1280} height={576} role="img" aria-label={`研究图谱：${name}`}/>
+            {vector&&frame>=0&&<IdeaVectorGraph data={vector} frame={frame} step={step} badges={badges} name={name}/>}
             {badges.map(([x,y,X,Y,head,detail,tone])=><div key={head} className="idea-badge" data-tone={tone} style={{left:`${(x+X)/12.8}%`,top:`${(y+Y-76)/5.76}%`,width:`${(X-x)/6.4}%`}}><strong>{head}</strong><small>{detail}</small></div>)}
           </div>
         </div>
-        {badges.length>0&&<ul className="idea-mobile-labels">{badges.map(([, , , , head,detail,tone])=><li key={head} data-tone={tone}><strong>{head}</strong><span>{detail}</span></li>)}</ul>}
+        <ul className="idea-mobile-labels">{badges.map(([, , , , head,detail,tone])=><li key={head} data-tone={tone}><strong>{head}</strong><span>{detail}</span></li>)}</ul>
         <div className="idea-caption"><h3>{title}</h3><p>{body}</p></div>
         <footer className="idea-controls">
-          <button type="button" aria-label="上一段" disabled={step===0} onClick={()=>jump.current(step-1)}>←</button>
-          <span>{manual?"切换章节":step===last?"继续下滑查看正文":"下滑一步，展开下一段"}</span>
-          <button type="button" aria-label="下一段" disabled={step===last} onClick={()=>jump.current(step+1)}>→</button>
+          {activeMode ? <div className="idea-step-controls">
+            <button type="button" data-dir="back" aria-label="上一段" disabled={step===0} onClick={()=>shift.current(-1)}>←</button>
+            <span className="idea-gesture-track" aria-hidden="true"><i /></span>
+            <span>{manual?"切换章节":step===last?"已读完，可以继续下滑":"一滑一步 · 上滑回看"}</span>
+            <button type="button" data-dir="forward" aria-label="下一段" disabled={step===last} onClick={()=>shift.current(1)}>→</button>
+          </div> : <button type="button" className="idea-start" onClick={()=>startStory()}>{visited?"继续讲解":"开始讲解"} <span aria-hidden="true">→</span></button>}
+          <button type="button" className="idea-skip" onClick={skipStory}>{activeMode?"跳过讲解":"直接去正文"} <span aria-hidden="true">↓</span></button>
         </footer>
         {failed&&<p className="idea-status" role="status">画面暂未加载，请再试一次。</p>}
       </div>
     </section>
+    <div id="research-world-end" ref={exit} tabIndex={-1} className="idea-exit" />
+    </>
   );
 }

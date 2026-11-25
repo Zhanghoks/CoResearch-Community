@@ -7,7 +7,7 @@ const executablePath=process.env.RW_CHROMIUM_PATH;
 const b=await chromium.launch(executablePath?{executablePath,args:["--no-sandbox","--disable-dev-shm-usage"]}:{});
 fs.mkdirSync(out,{recursive:true});
 const ends=[0,18,37,56,79,100,125,144,170,189,217];
-const wait=(p,n)=>p.locator(`#research-world canvas[data-frame="${n}"]`).waitFor({timeout:11000});
+const wait=(p,n)=>p.locator(`#research-world .idea-vector[data-frame="${n}"]`).waitFor({timeout:11000});
 async function setup(p) {
   await p.goto(url,{waitUntil:"networkidle"});
   await p.locator("#research-world").evaluate(el=>scrollTo({top:el.getBoundingClientRect().top+scrollY-Math.ceil(document.querySelector("body > header").getBoundingClientRect().height),behavior:"instant"}));
@@ -18,9 +18,34 @@ try {
   const errors=[];p.on("pageerror",e=>errors.push(e.message));
   await setup(p);
   await p.mouse.move(650,400);
+  const stage = p.locator(".idea-stage");
+  const root=p.locator("#research-world");
+  const start=await p.evaluate(()=>scrollY);
+  await p.evaluate(y=>scrollTo({top:y-25,behavior:"instant"}),start);
+  await p.mouse.wheel(0,92);
+  await p.waitForFunction(y=>Math.abs(scrollY-(y+67))<=2,start);
+  assert.equal(await root.getAttribute("data-engaged"),"false");
+  assert.equal(await p.locator("#research-world .idea-vector").getAttribute("data-frame"),"0");
+  await p.evaluate(y=>scrollTo({top:y,behavior:"instant"}),start);
+  await p.screenshot({path:`${out}/Community-自然进入.png`});
+  await p.mouse.wheel(0,1000);
+  await p.waitForFunction(()=>document.querySelector("#research-world").getBoundingClientRect().bottom<0);
+  await p.evaluate(y=>scrollTo({top:y,behavior:"instant"}),start);
+  await p.getByRole("button",{name:"开始讲解"}).click();
+  assert.equal(await root.getAttribute("data-engaged"),"true");
+  assert.equal(await p.evaluate(()=>scrollY),start);
+  const graphTop=(await p.locator(".idea-art").boundingBox()).y;
+  await p.mouse.wheel(0,12);
+  await p.waitForFunction(()=>document.querySelector(".idea-stage").style.getPropertyValue("--idea-gesture")==="0.5");
+  assert.equal(await p.locator("#research-world .idea-vector").getAttribute("data-frame"),"0");
+  await p.waitForFunction(()=>document.querySelector(".idea-stage").dataset.direction==="none");
   await p.mouse.wheel(0,480);await p.mouse.wheel(0,210);await p.mouse.wheel(0,80);
   await wait(p,18);
   assert.match(await p.locator(".idea-progress p").textContent(),/01 \/ 10/);
+  assert.equal(await p.evaluate(()=>scrollY),start);
+  assert(Math.abs((await p.locator(".idea-art").boundingBox()).y-graphTop)<=2,"graph should not jump entering the first chapter");
+  assert((await p.locator(".idea-vector path[data-region=blue]").getAttribute("d")).length>50);
+  await p.screenshot({path:`${out}/Community-Idea矢量.png`});
   for(let i=2;i<=10;i++){
     await p.mouse.wheel(0,280);await wait(p,ends[i]);
     if(i===4) await p.screenshot({path:`${out}/Community-Explore-01.png`});
@@ -28,28 +53,47 @@ try {
   assert.match(await p.locator(".idea-caption h3").textContent(),/Open Question/);
   assert.equal(await p.locator("#research-world a[download]").count(),0);
   assert.equal(await p.locator(".idea-badge strong").last().textContent(),"Open Question");
-  const transparency = ()=>p.locator("#research-world canvas").evaluate(canvas=>{
-    const data=canvas.getContext("2d").getImageData(0,0,canvas.width,canvas.height).data;
-    let clear=0;
-    for(let i=3;i<data.length;i+=4)if(data[i]===0)clear++;
-    return {corner:data[3],fraction:clear/(canvas.width*canvas.height)};
+  const graph = p.locator(".idea-vector");
+  const vectorProof = async () => ({
+    nodes: await graph.getAttribute("data-nodes"),
+    edges: await graph.getAttribute("data-edges"),
+    region: await graph.locator("path[data-region=blue]").getAttribute("d"),
   });
-  const a=await transparency();
-  assert(a.corner===0&&a.fraction>.55);
+  const proof=await vectorProof();
+  assert.equal(proof.nodes,"1327");
+  assert.equal(proof.edges,"3306");
+  assert(proof.region.length>50);
+  assert.equal(await graph.locator("image,rect").count(),0);
   await p.screenshot({path:`${out}/Community-Open-Question.png`});
   await p.addStyleTag({content:"body { background-color: #e8eef8 !important; }"});
   await p.screenshot({path:`${out}/Community-透明换底验收.png`});
   await p.mouse.wheel(0,-280);await wait(p,189);
   assert.match(await p.locator(".idea-progress p").textContent(),/09 \/ 10/);
   await p.mouse.wheel(0,280);await wait(p,217);
-  assert.deepEqual(await transparency(),a,"repainting a transparent frame must not retain old strokes");
+  assert.deepEqual(await vectorProof(),proof,"the vector geometry should be identical on a reverse round trip");
   await p.mouse.wheel(0,860);
   await p.waitForFunction(()=>document.querySelector(".idea-stage").getBoundingClientRect().top < 0);
+  await p.evaluate(y=>scrollTo({top:y,behavior:"instant"}),start);
+  await p.getByRole("button",{name:"第 3 步：Idea Intent"}).click();
+  await wait(p,56);
+  await p.getByRole("button",{name:"跳过讲解"}).click();
+  assert.equal(await p.evaluate(()=>document.activeElement.id),"research-world-end");
+  assert((await stage.boundingBox()).y<0);
+  await p.evaluate(y=>scrollTo({top:y,behavior:"instant"}),start);
+  await p.getByRole("button",{name:"继续讲解"}).click();await wait(p,56);
+  assert.equal(await root.getAttribute("data-engaged"),"true");
+  await p.keyboard.press("Escape");
+  assert.equal(await root.getAttribute("data-engaged"),"false");
   assert.deepEqual(errors,[]);
   console.log("PASS desktop: 10 wheel steps, momentum lock, reverse, re-entrance, transparent redraw and exit");
   const m=await b.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:1});
   await setup(m);
+  await m.getByRole("button",{name:"开始讲解"}).click();
   const c=await m.context().newCDPSession(m);
+  await c.send("Input.dispatchTouchEvent",{type:"touchStart",touchPoints:[{x:121,y:267}]});
+  for(const x of [140,160,200]) await c.send("Input.dispatchTouchEvent",{type:"touchMove",touchPoints:[{x,y:270}]});
+  await c.send("Input.dispatchTouchEvent",{type:"touchEnd",touchPoints:[]});
+  assert.equal(await m.locator("#research-world .idea-vector").getAttribute("data-frame"),"0");
   await c.send("Input.dispatchTouchEvent",{type:"touchStart",touchPoints:[{x:181,y:267}]});
   for(const y of [250,225,190,160]) await c.send("Input.dispatchTouchEvent",{type:"touchMove",touchPoints:[{x:181,y}]});
   await c.send("Input.dispatchTouchEvent",{type:"touchEnd",touchPoints:[]});
@@ -60,10 +104,15 @@ try {
   await m.locator(".idea-mobile-labels").getByText("待验证的问题").waitFor();
   await m.screenshot({path:`${out}/Community-手机版.png`});
   assert(await m.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
-  console.log("PASS mobile: one touch gesture advances one step, readable HTML caption and callout");
+  await c.send("Input.dispatchTouchEvent",{type:"touchStart",touchPoints:[{x:181,y:267}]});
+  for(const y of [245,220,190]) await c.send("Input.dispatchTouchEvent",{type:"touchMove",touchPoints:[{x:181,y}]});
+  await c.send("Input.dispatchTouchEvent",{type:"touchEnd",touchPoints:[]});
+  await m.waitForFunction(()=>document.querySelector(".idea-story").dataset.engaged==="false"&&document.querySelector(".idea-stage").getBoundingClientRect().top<0);
+  console.log("PASS mobile: one touch gesture advances one step, readable HTML caption, and natural handoff after the last step");
   const r=await b.newPage({viewport:{width:390,height:844},reducedMotion:"reduce"});
   await setup(r);
   assert.equal(await r.locator("#research-world").getAttribute("data-manual"),"true");
+  await r.getByRole("button",{name:"开始讲解"}).click();
   await r.getByRole("button",{name:"下一段"}).click();await wait(r,18);
   console.log("PASS reduced motion: manual chapter steps");
 } finally {await b.close();}
