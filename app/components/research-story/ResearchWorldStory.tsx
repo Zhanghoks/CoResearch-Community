@@ -1,182 +1,171 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { chapters } from "../../graph-svg/story";
-import { createSceneRenderer } from "../../graph-svg/scene";
+import { asset, chapters, displayAt, ending, last, makePlayer } from "../../graph-svg/idea-player";
 import { useViewPreferences } from "../view-preferences";
-import { ResearchWorldSvg } from "./ResearchWorldSvg";
-import { StoryNarration } from "./StoryNarration";
-import "./research-story.css";
+import "./idea-story.css";
 
-type Controls = { go: (index: number) => void; cancel: () => void };
+const clamp = (step: number) => Math.max(0, Math.min(last, step));
 
 export function ResearchWorldStory() {
-  const rootRef = useRef<HTMLElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
-  const endRef = useRef<HTMLDivElement>(null);
-  const controlsRef = useRef<Controls | null>(null);
-  const savedIndex = useRef(0);
-  const [active, setActive] = useState(0);
-  const [mode, setMode] = useState<"scroll" | "slides">("scroll");
-  const [ready, setReady] = useState(false);
-  const [error, setError] = useState(false);
+  const root = useRef<HTMLElement>(null);
+  const sticky = useRef<HTMLDivElement>(null);
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const jump = useRef<(step: number) => void>(() => {});
+  const [shown, setShown] = useState({step:0,mask:0});
+  const [failed, setFailed] = useState(false);
   const [reduce, short] = useViewPreferences();
-  const manual = mode === "slides" || reduce || short;
+  const manual = reduce || short;
 
   useEffect(() => {
-    const root = rootRef.current, stage = stageRef.current;
-    if (!root || !stage) return;
-    let disposed = false;
-    let disposeAnimation = () => {};
-    let refreshFrame = 0;
-    const render = createSceneRenderer(root);
-    const resumeIndex = savedIndex.current;
-    const cursor = { step: resumeIndex };
-    const update = () => {
-      const index = render(cursor.step, chapters.length);
-      if (index !== savedIndex.current) {
-        savedIndex.current = index;
-        setActive(index);
-      }
+    const section=root.current, stage=sticky.current, surface=canvas.current;
+    if (!section || !stage || !surface) return;
+    const player=makePlayer(surface);
+    const header=document.querySelector("body > header");
+    let top=0, selected=0, version=0, frameReq=0, wheelTimer=0, blocked=false, deltaSum=0;
+    let touchY:number|null=null, usedTouch=false;
+    const resize=()=>{
+      top=Math.ceil(header?.getBoundingClientRect().height ?? 0);
+      section.style.setProperty("--idea-top",`${top}px`);
     };
-    update();
-
-    void (async () => {
+    resize();
+    const observer=new ResizeObserver(resize);
+    if (header) observer.observe(header);
+    const geometry=()=>{
+      const y=scrollY, start=section.getBoundingClientRect().top+y-top;
+      const length=Math.max(1,section.offsetHeight-stage.offsetHeight);
+      return {y,start,length,end:start+length,index:clamp(Math.round((y-start)/length*last))};
+    };
+    const select=async (index:number, animate:boolean)=>{
+      const stamp=++version;
+      player.cancel();
+      selected=index;
+      setFailed(false);
+      const target=ending(index);
+      const start=animate&&player.frame>=0 ? player.frame : target;
+      const dir=Math.sign(target-start);
       try {
-        const [{ gsap }, { ScrollTrigger }] = await Promise.all([import("gsap"), import("gsap/ScrollTrigger")]);
-        if (disposed) return;
-        gsap.registerPlugin(ScrollTrigger);
-        let navigation: ReturnType<typeof gsap.to> | null = null;
-        let scroll: ReturnType<typeof ScrollTrigger.create> | null = null;
-        let observer: ResizeObserver | null = null;
-        let top = 0;
-        const header = document.querySelector<HTMLElement>("body > header");
-        const measureHeader = () => {
-          const next = Math.ceil(header?.getBoundingClientRect().height ?? 0);
-          if (next !== top) {
-            top = next;
-            root.style.setProperty("--rw-top", `${top}px`);
-            cancelAnimationFrame(refreshFrame);
-            refreshFrame = requestAnimationFrame(() => { if (!disposed) scroll?.refresh(); });
-          }
-        };
-        measureHeader();
-        const cancel = () => { navigation?.kill(); navigation = null; };
-        const ctx = gsap.context(() => {
-          const timeline = gsap.timeline({ paused: true, onUpdate: update });
-          timeline.addLabel(chapters[0].id, 0);
-          for (let i = 1; i < chapters.length; i++) {
-            timeline.fromTo(cursor, { step: i - 1 }, {
-              step: i, duration: .68, ease: "none", immediateRender: false,
-            }, i - .68);
-            // Labels are settled states, NOT the beginning of the transition.
-            timeline.addLabel(chapters[i].id, i);
-          }
-          timeline.to({}, { duration: .32 });
-          timeline.time(resumeIndex, false);
-          if (!manual) {
-            scroll = ScrollTrigger.create({
-              id: "coresearch-svg-story", trigger: root, pin: stage,
-              start: () => `top top+=${top}`,
-              end: () => `+=${Math.max(360, (window.innerHeight - top) * .72) * (chapters.length - 1)}`,
-              animation: timeline, scrub: .35, anticipatePin: 1,
-              invalidateOnRefresh: true,
-            });
-          }
-          const go = (raw: number) => {
-            const index = Math.max(0, Math.min(chapters.length - 1, raw));
-            cancel();
-            if (manual) {
-              if (reduce) timeline.time(timeline.labels[chapters[index].id], false);
-              else navigation = timeline.tweenTo(chapters[index].id, { duration: .65, ease: "power1.inOut" });
-            } else if (scroll) {
-              // Scroll is the single source of truth; do not tween the timeline independently.
-              const position = scroll.labelToScroll(chapters[index].id);
-              const viewport = { y: window.scrollY };
-              navigation = gsap.to(viewport, {
-                y: position, duration: .75, ease: "power2.inOut",
-                onUpdate: () => window.scrollTo({ top: viewport.y, behavior: "instant" }),
-              });
-            }
-          };
-          controlsRef.current = { go, cancel };
-          // Restore the settled chapter when explicitly switching interaction modes.
-          if (scroll && resumeIndex > 0 && root.getBoundingClientRect().top < window.innerHeight && root.getBoundingClientRect().bottom > 0) {
-            window.scrollTo({ top: scroll.labelToScroll(chapters[resumeIndex].id), behavior: "instant" });
-          }
-        }, root);
-        const interruptKey = (event: KeyboardEvent) => {
-          if (["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " "].includes(event.key)) cancel();
-        };
-        window.addEventListener("wheel", cancel, { passive: true });
-        window.addEventListener("touchstart", cancel, { passive: true });
-        window.addEventListener("keydown", interruptKey);
-        if (header && typeof ResizeObserver !== "undefined") {
-          observer = new ResizeObserver(measureHeader);
-          observer.observe(header);
+        for(let n=start;;n+=dir){
+          if(stamp!==version || !await player.draw(n) || stamp!==version) break;
+          const state=displayAt(n);
+          setShown(old=>old.step===state.step&&old.mask===state.mask?old:state);
+          if(n===target) break;
+          if(n%6===0)player.warm(n);
+          await new Promise(resolve=>window.setTimeout(resolve,65));
         }
-        void document.fonts?.ready.then(() => { if (!disposed) scroll?.refresh(); });
-        disposeAnimation = () => {
-          cancel(); observer?.disconnect(); ctx.revert(); controlsRef.current = null;
-          window.removeEventListener("wheel", cancel);
-          window.removeEventListener("touchstart", cancel);
-          window.removeEventListener("keydown", interruptKey);
-        };
-        setReady(true);
-        setError(false);
-      } catch {
-        if (!disposed) { setError(true); setReady(false); }
+        if(stamp===version)player.warm(target);
+      } catch { if(stamp===version)setFailed(true); }
+    };
+    const go=(input:number)=>{
+      const next=clamp(input);
+      if(!manual){ const {start,length}=geometry(); scrollTo({top:Math.round(start+length*next/last),behavior:"instant"}); }
+      if(next!==selected || player.frame<0) void select(next,!manual&&Math.abs(next-selected)===1);
+    };
+    jump.current=go;
+    const consume=(delta:number)=>{
+      const {y,start,end,index}=geometry();
+      if(y<start-2&&delta>0&&y+delta>=start){go(0);return true;}
+      if(y>end+2&&delta<0&&y+delta<=end){go(last);return true;}
+      if(y<start-2||y>end+2)return false;
+      const next=clamp(index+Math.sign(delta));
+      if(next===index)return false;
+      go(next);return true;
+    };
+    const wheel=(ev:WheelEvent)=>{
+      if(ev.ctrlKey||!ev.deltaY||Math.abs(ev.deltaX)>Math.abs(ev.deltaY))return;
+      clearTimeout(wheelTimer);
+      wheelTimer=window.setTimeout(()=>{ blocked=false;deltaSum=0; },170);
+      const d=ev.deltaY*(ev.deltaMode===1?16:ev.deltaMode===2?innerHeight:1);
+      const {y,start,end,index}=geometry();
+      if(y>=start-2&&y<=end+2){
+        if(blocked){ev.preventDefault();return;}
+        if((index===0&&d<0)||(index===last&&d>0))return;
+        deltaSum+=d;
+        if(Math.abs(deltaSum)<24){ev.preventDefault();return;}
       }
-    })();
-    return () => { disposed = true; cancelAnimationFrame(refreshFrame); disposeAnimation(); };
-  }, [manual, reduce]);
+      if(consume(deltaSum||d)){blocked=true;ev.preventDefault();}
+    };
+    const touchstart=(ev:TouchEvent)=>{
+      if(ev.touches.length!==1||(ev.target instanceof Element&&ev.target.closest("button")))return;
+      touchY=ev.touches[0].clientY;usedTouch=false;
+    };
+    const touchmove=(ev:TouchEvent)=>{
+      if(touchY===null||ev.touches.length!==1||!ev.cancelable)return;
+      if(usedTouch){ev.preventDefault();return;}
+      const {y,start,end,index}=geometry();
+      if(y<start-2||y>end+2)return;
+      const d=touchY-ev.touches[0].clientY;
+      if((index===0&&d<0)||(index===last&&d>0))return;
+      if(Math.abs(d)<28){if(Math.abs(d)>6)ev.preventDefault();return;}
+      if(consume(d)){usedTouch=true;ev.preventDefault();}
+    };
+    const touchend=()=>{touchY=null;usedTouch=false;};
+    const sync=()=>{
+      if(frameReq)return;
+      frameReq=requestAnimationFrame(()=>{
+        frameReq=0;
+        const {y,start,end,index}=geometry();
+        if(index!==selected&&y>=start-innerHeight&&y<=end+innerHeight) void select(index,Math.abs(index-selected)===1);
+      });
+    };
+    const preload=new IntersectionObserver(([entry])=>{
+      if(!entry.isIntersecting)return;
+      preload.disconnect();
+      if(player.frame<0)void select(manual?0:geometry().index,false);
+    },{rootMargin:"350px"});
+    preload.observe(stage);
+    if(!manual){
+      window.addEventListener("wheel",wheel,{passive:false});
+      window.addEventListener("scroll",sync,{passive:true});
+      stage.addEventListener("touchstart",touchstart,{passive:true});
+      stage.addEventListener("touchmove",touchmove,{passive:false});
+      stage.addEventListener("touchend",touchend);
+      stage.addEventListener("touchcancel",touchend);
+    }
+    return ()=>{
+      version++;player.cancel();preload.disconnect();observer.disconnect();cancelAnimationFrame(frameReq);clearTimeout(wheelTimer);
+      window.removeEventListener("wheel",wheel);window.removeEventListener("scroll",sync);
+      stage.removeEventListener("touchstart",touchstart);stage.removeEventListener("touchmove",touchmove);
+      stage.removeEventListener("touchend",touchend);stage.removeEventListener("touchcancel",touchend);
+    };
+  },[manual]);
 
-  function go(index: number) { controlsRef.current?.go(index); }
-  function skip() {
-    controlsRef.current?.cancel();
-    endRef.current?.scrollIntoView({ behavior: "instant", block: "start" });
-    endRef.current?.focus({ preventScroll: true });
-  }
-
+  const {step,mask}=shown;
+  const [,name,title,body,items]=chapters[step];
+  const badges=items.filter((_,index)=>mask&(1<<index));
   return (
-    <section ref={rootRef} id="research-world" className={`rw-story${manual ? " rw-manual" : ""}${short ? " rw-short" : ""}`} aria-label="Research World 图谱讲解">
-      <div ref={stageRef} className="rw-stage" onKeyDown={(event) => {
-        if (event.target instanceof HTMLElement && ["INPUT", "SELECT", "TEXTAREA"].includes(event.target.tagName)) return;
-        if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
-          event.preventDefault(); go(active + (event.key === "ArrowRight" ? 1 : -1));
-        }
+    <section ref={root} id="research-world" className="idea-story" data-manual={manual} aria-label="Research World 图谱讲解">
+      <div ref={sticky} className="idea-stage" tabIndex={0} onKeyDown={event=>{
+        if(!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(event.key))return;
+        const next=clamp(step+(["ArrowRight","ArrowDown"].includes(event.key)?1:-1));
+        if(next!==step){event.preventDefault();jump.current(next);}
       }}>
-        <header className="rw-heading">
-          <div><p className="rw-kicker">CORESEARCH / AN EXPLORABLE WORLD</p><h2>研究世界 <span>Research World</span></h2></div>
-          <button type="button" onClick={skip} className="rw-skip">跳过动画 ↓</button>
-        </header>
-        <div className="rw-content">
-          <div className="rw-canvas"><ResearchWorldSvg /></div>
-          <StoryNarration active={active} />
-        </div>
-        <div className="rw-progress-row">
-          <div className="rw-progress-track" aria-hidden="true"><span data-rw-progress="" /></div>
-          <nav className="rw-ticks" aria-label="章节进度点">
-            {chapters.map((chapter, i) => (
-              <button key={chapter.id} type="button" onClick={() => go(i)} aria-label={`第 ${i + 1} 章 · ${chapter.title}`} aria-current={i === active ? "step" : undefined}
-                className={`rw-tick${i < active ? " is-passed" : ""}${i === active ? " is-active" : ""}`} />
-            ))}
-          </nav>
-        </div>
-        <nav className="rw-controls" aria-label="研究故事章节">
-          <div className="rw-mode">
-            {reduce ? <span>已启用减少动态效果</span> : short ? <span>小高度屏幕 · 点击翻页</span> : <button type="button" onClick={() => setMode(mode === "scroll" ? "slides" : "scroll")} aria-pressed={mode === "slides"}>{manual ? "切换滚动讲解" : "切换点击演示"}</button>}
+        <header className="idea-heading">
+          <div>
+            <h2>{step===0?"Research World":"Idea Space"}</h2>
+            {step>0&&<ul className="idea-key"><li>已理解</li><li>正在探索</li><li>未探索</li></ul>}
           </div>
-          <label className="rw-chapter-picker"><span className="rw-sr-only">跳转章节</span><select value={active} onChange={(event) => go(Number(event.target.value))} disabled={!ready}>{chapters.map((chapter, i) => <option key={chapter.id} value={i}>{i + 1} / {chapters.length} · {chapter.title}</option>)}</select></label>
-          <div className="rw-buttons"><button type="button" onClick={() => go(active - 1)} disabled={!ready || active === 0} aria-label="上一场景">← 上一步</button><button type="button" className="rw-next" onClick={() => active === chapters.length - 1 ? go(0) : go(active + 1)} disabled={!ready}>{active === chapters.length - 1 ? "重新观看 ↺" : "下一步 →"}</button></div>
-        </nav>
-        <p className="rw-demo-note">演示图谱 · 非真实文献结论{!manual && " · 向下滚动继续，可向上回看"}</p>
-        {error && <p role="status" className="rw-error">动画暂未加载，请阅读下方完整讲解。</p>}
-        <p className="rw-sr-only" aria-live={manual ? "polite" : "off"}>{chapters[active].title}</p>
-      </div>
-      <div ref={endRef} id="research-story-end" tabIndex={-1} className="rw-transcript">
-        <details><summary>阅读完整文字讲解</summary><div>{chapters.map((chapter) => <article key={chapter.id}><p className="rw-eyebrow">{chapter.tag}</p><h3>{chapter.title}</h3><p>{chapter.body}</p><p>{chapter.takeaway}</p></article>)}</div></details>
-        <p>这是一段产品理念演示，不会发起真实研究任务。候选缺口、方法及边界变化均须进一步核验。</p>
+          <div className="idea-progress">
+            <p>{step===0?"概览":`${String(step).padStart(2,"0")} / 10`} <b>·</b> {name}</p>
+            <nav aria-label="章节进度">{chapters.slice(1).map((chapter,index)=><button key={chapter[0]} type="button" aria-label={`第 ${index+1} 步：${chapter[1]}`} aria-current={step===index+1?"step":undefined} data-passed={step>=index+1} onClick={()=>jump.current(index+1)}><span /></button>)}</nav>
+          </div>
+        </header>
+        <div className="idea-visual">
+          <div className="idea-art">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="idea-poster" src={`${asset}/poster.webp`} alt="" width={1280} height={576}/>
+            <canvas ref={canvas} width={1280} height={576} role="img" aria-label={`研究图谱：${name}`}/>
+            {badges.map(([x,y,X,Y,head,detail,tone])=><div key={head} className="idea-badge" data-tone={tone} style={{left:`${(x+X)/12.8}%`,top:`${(y+Y-76)/5.76}%`,width:`${(X-x)/6.4}%`}}><strong>{head}</strong><small>{detail}</small></div>)}
+          </div>
+        </div>
+        {badges.length>0&&<ul className="idea-mobile-labels">{badges.map(([, , , , head,detail,tone])=><li key={head} data-tone={tone}><strong>{head}</strong><span>{detail}</span></li>)}</ul>}
+        <div className="idea-caption"><h3>{title}</h3><p>{body}</p></div>
+        <footer className="idea-controls">
+          <button type="button" aria-label="上一段" disabled={step===0} onClick={()=>jump.current(step-1)}>←</button>
+          <span>{manual?"切换章节":step===last?"继续下滑查看正文":"下滑一步，展开下一段"}</span>
+          <button type="button" aria-label="下一段" disabled={step===last} onClick={()=>jump.current(step+1)}>→</button>
+        </footer>
+        {failed&&<p className="idea-status" role="status">画面暂未加载，请再试一次。</p>}
       </div>
     </section>
   );
