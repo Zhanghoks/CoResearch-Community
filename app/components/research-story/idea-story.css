@@ -89,3 +89,17 @@
 
 /* Only the opted-in illustration claims vertical touch input; pinch zoom stays native. */
 .idea-story[data-engaged="true"][data-manual="false"] .idea-visual {touch-action:pan-x pinch-zoom;}
+
+/* The wider gutter marks the boundary between the five growth and ten Idea chapters. */
+.idea-progress button[data-phase-start="true"] {margin-inline-start:5px;}
+@media(max-width:370px) {
+ .idea-progress nav {gap:2px;}
+ .idea-progress button {width:7px;}
+}
+
+.idea-key .idea-boundary-key::before {
+  width:10px;height:0;border-top:2px dashed #77638d;background:none;transform:none;
+}
+@media(max-width:600px) {
+  .idea-key {gap:6px 10px;flex-wrap:wrap;}
+}

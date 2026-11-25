@@ -8,14 +8,46 @@ const ts = require("typescript");
 const root = path.resolve(import.meta.dirname, "..");
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "coresearch-story-"));
 try {
-  for (const filename of ["types", "mock-world", "story", "scene"]) {
+  for (const filename of ["types", "mock-world", "story", "scene", "idea-player"]) {
     const result = ts.transpileModule(fs.readFileSync(path.join(root, `app/graph-svg/${filename}.ts`), "utf8"), {
-      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+      compilerOptions: { module: ts.ModuleKind.CommonJS, esModuleInterop: true, target: ts.ScriptTarget.ES2020 },
       reportDiagnostics: true,
     });
     assert.equal((result.diagnostics ?? []).filter((d) => d.category === ts.DiagnosticCategory.Error).length, 0, `${filename} syntax`);
     fs.writeFileSync(path.join(tmp, `${filename}.js`), result.outputText);
   }
+  for (const filename of ["idea-story.json", "idea-label-frames.json", "world-growth.json"]) {
+    fs.copyFileSync(path.join(root, "app/graph-svg", filename), path.join(tmp, filename));
+  }
+  const tour = require(path.join(tmp, "idea-player.js"));
+  const original = require(path.join(root, "app/graph-svg/idea-story.json"));
+  const masks = require(path.join(root, "app/graph-svg/idea-label-frames.json"));
+  const vector = require(path.join(root, "public/research-world/idea-vector.json"));
+  assert.equal(tour.growthCount, 5);
+  assert.equal(tour.last, 15);
+  assert.equal(tour.ending(0), 0);
+  assert.equal(tour.growthFrames.length, 118);
+  assert.equal(tour.growthFrames[0], 0);
+  assert.equal(tour.growthFrames.at(-1), vector.nodes.length);
+  assert(tour.growthFrames.every((count, i, frames) =>
+    Number.isInteger(count) && count >= (frames[i - 1] ?? 0) && count <= vector.nodes.length));
+  for (const [i, [start]] of tour.chapters.entries()) {
+    assert.equal(tour.displayAt(start).step, i);
+    assert.equal(tour.displayAt(tour.ending(i)).step, i);
+  }
+  assert.equal(tour.ending(5) + 1, tour.ideaOffset);
+  assert.equal(vector.timeline.length, 218);
+  assert.equal(masks.length, vector.timeline.length);
+  assert.equal(tour.ending(15), tour.ideaOffset + vector.timeline.length - 1);
+  for (const [i, mask] of masks.entries()) {
+    const current = tour.displayAt(tour.ideaOffset + i);
+    const priorStep = original.findLastIndex(([start]) => start <= i);
+    assert.equal(current.ideaFrame, i);
+    assert.equal(current.mask, mask);
+    assert.equal(current.step, 5 + Math.max(1, priorStep));
+    assert.equal(current.visibleNodes, undefined);
+  }
+  console.log("PASS: active tour has 5 growth + 10 Idea chapters, all 118 + 218 source frames, monotonic births, and exact Idea masks.");
   const { world, nodeAt, communityMeta } = require(path.join(tmp, "mock-world.js"));
   const { chapters, sampleStory, cameraTransform } = require(path.join(tmp, "story.js"));
   const { createSceneRenderer } = require(path.join(tmp, "scene.js"));

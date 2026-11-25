@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { asset, chapters, displayAt, ending, last } from "../../graph-svg/idea-player";
+import { asset, chapters, displayAt, ending, growthCount, last } from "../../graph-svg/idea-player";
 import { IdeaVectorGraph, loadIdeaVector, type IdeaVectorData } from "./IdeaVectorGraph";
 import { useViewPreferences } from "../view-preferences";
 import "./idea-story.css";
@@ -23,7 +23,7 @@ export function ResearchWorldStory() {
   const pause = useRef<() => void>(() => {});
   const [activeMode, setActiveMode] = useState(false);
   const [visited, setVisited] = useState(false);
-  const [shown, setShown] = useState({step:0,mask:0,frame:-1});
+  const [shown, setShown] = useState({...displayAt(0),frame:-1});
   const [failed, setFailed] = useState(false);
   const [reduce, short] = useViewPreferences();
   const manual = reduce || short;
@@ -50,7 +50,7 @@ export function ResearchWorldStory() {
       selected=index;
       setFailed(false);
       const target=ending(index);
-      const start=animate&&currentFrame>=0 ? currentFrame : target;
+      const start=animate&&index===1&&currentFrame<=0 ? 1 : animate&&currentFrame>=0 ? currentFrame : target;
       const dir=Math.sign(target-start);
       stage.dataset.moving=String(dir!==0);
       const interval=Math.max(24, Math.min(42, 630/Math.max(1,Math.abs(target-start))));
@@ -58,7 +58,7 @@ export function ResearchWorldStory() {
         const vectorData=await loadIdeaVector();
         if(stamp!==version)return;
         setVector(vectorData);
-        for(let n=start+dir;;n+=dir){
+        for(let n=start;;n+=dir){
           if(stamp!==version)break;
           currentFrame=n;
           setShown({...displayAt(n),frame:n});
@@ -85,7 +85,7 @@ export function ResearchWorldStory() {
     shift.current=(delta)=>{
       if(!engaged.current)return false;
       const next=clamp(selected+delta);
-      if(next===selected)return false;
+      if(next===selected||next===0)return false;
       go(next);return true;
     };
     const release=()=>{
@@ -101,7 +101,7 @@ export function ResearchWorldStory() {
       },GESTURE_GAP_MS);
       if(blocked){ev.preventDefault();return;}
       const d=ev.deltaY*(ev.deltaMode===1?16:ev.deltaMode===2?innerHeight:1);
-      if((selected===0&&d<0)||(selected===last&&d>0)){release();return;}
+      if((selected<=1&&d<0)||(selected===last&&d>0)){release();return;}
       ev.preventDefault();
       if(deltaSum&&(deltaSum>0)!==(d>0))deltaSum=0;
       deltaSum+=d;
@@ -120,7 +120,7 @@ export function ResearchWorldStory() {
       const d=touch.y-clientY, dx=touch.x-clientX;
       if(!touch.axis&&Math.max(Math.abs(d),Math.abs(dx))>6)touch.axis=Math.abs(dx)>Math.abs(d)?"x":"y";
       if(touch.axis!=="y")return;
-      if((selected===0&&d<0)||(selected===last&&d>0)){
+      if((selected<=1&&d<0)||(selected===last&&d>0)){
         if(!touch.visual){release();return;}
         if(Math.abs(d)<TOUCH_THRESHOLD)return;
         if(ev.cancelable)ev.preventDefault();
@@ -140,7 +140,7 @@ export function ResearchWorldStory() {
     const preload=new IntersectionObserver(([entry])=>{
       if(!entry.isIntersecting)return;
       preload.disconnect();
-      if(currentFrame<0)void select(selected,false);
+      if(currentFrame<0&&selected===0)void select(0,false);
     },{rootMargin:"350px"});
     preload.observe(stage);
     const visibility=new IntersectionObserver(([entry])=>{
@@ -168,7 +168,10 @@ export function ResearchWorldStory() {
     engaged.current=true;
     setActiveMode(true);
     setVisited(true);
-    if(next===undefined)resume.current();
+    if(next===undefined){
+      if(!visited)jump.current(1);
+      else resume.current();
+    }
     else jump.current(next);
     sticky.current?.focus({preventScroll:true});
   }
@@ -179,7 +182,9 @@ export function ResearchWorldStory() {
     exit.current?.scrollIntoView({block:"start",behavior:"instant"});
     exit.current?.focus({preventScroll:true});
   }
-  const {step,mask,frame}=shown;
+  const {step,mask,frame,ideaFrame,visibleNodes}=shown;
+  const isIdea=step>growthCount;
+  const showBoundary=step>=last-1;
   const [,name,title,body,items]=chapters[step];
   const badges=items.filter((_,index)=>mask&(1<<index));
   return (
@@ -194,19 +199,19 @@ export function ResearchWorldStory() {
       }}>
         <header className="idea-heading">
           <div>
-            <h2>{step===0?"Research World":"Idea Space"}</h2>
-            <ul className="idea-key" data-show={step>0} aria-hidden={step===0}><li>已理解</li><li>正在探索</li><li>未探索</li></ul>
+            <h2>{isIdea?"Idea Space":"Research World"}</h2>
+            <ul className="idea-key" data-show={isIdea} aria-hidden={!isIdea}><li>已理解</li><li>正在探索</li><li>未探索</li>{showBoundary&&<li className="idea-boundary-key">已有研究边界</li>}</ul>
           </div>
           <div className="idea-progress">
-            <p>{step===0?"概览":`${String(step).padStart(2,"0")} / 10`} <b>·</b> {name}</p>
-            <nav aria-label="章节进度">{chapters.slice(1).map((chapter,index)=><button key={chapter[0]} type="button" aria-label={`第 ${index+1} 步：${chapter[1]}`} aria-current={step===index+1?"step":undefined} data-passed={step>=index+1} onClick={()=>startStory(index+1)}><span /></button>)}</nav>
+            <p>{step===0?"概览":`${String(step).padStart(2,"0")} / ${last}`} <b>·</b> {name}</p>
+            <nav aria-label="章节进度">{chapters.slice(1).map((chapter,index)=><button key={chapter[0]} type="button" aria-label={`第 ${index+1} 步：${chapter[1]}`} aria-current={step===index+1?"step":undefined} data-passed={step>=index+1} data-phase-start={index===growthCount} onClick={()=>startStory(index+1)}><span /></button>)}</nav>
           </div>
         </header>
         <div className="idea-visual">
           <div className="idea-art">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img className="idea-poster" src={`${asset}/poster.webp`} alt="" width={1280} height={576}/>
-            {vector&&frame>=0&&<IdeaVectorGraph data={vector} frame={frame} step={step} badges={badges} name={name}/>}
+            {vector&&frame>=0&&<IdeaVectorGraph data={vector} frame={ideaFrame} timelineFrame={frame} step={isIdea?step-growthCount:0} visibleNodes={visibleNodes} badges={badges} name={name}/>}
             {badges.map(([x,y,X,Y,head,detail,tone])=><div key={head} className="idea-badge" data-tone={tone} style={{left:`${(x+X)/12.8}%`,top:`${(y+Y-76)/5.76}%`,width:`${(X-x)/6.4}%`}}><strong>{head}</strong><small>{detail}</small></div>)}
           </div>
         </div>
@@ -214,7 +219,7 @@ export function ResearchWorldStory() {
         <div className="idea-caption"><h3>{title}</h3><p>{body}</p></div>
         <footer className="idea-controls">
           {activeMode ? <div className="idea-step-controls">
-            <button type="button" data-dir="back" aria-label="上一段" disabled={step===0} onClick={()=>shift.current(-1)}>←</button>
+            <button type="button" data-dir="back" aria-label="上一段" disabled={step<=1} onClick={()=>shift.current(-1)}>←</button>
             <span className="idea-gesture-track" aria-hidden="true"><i /></span>
             <span>{manual?"切换章节":step===last?"已读完，可以继续下滑":"一滑一步 · 上滑回看"}</span>
             <button type="button" data-dir="forward" aria-label="下一段" disabled={step===last} onClick={()=>shift.current(1)}>→</button>
