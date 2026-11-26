@@ -73,6 +73,12 @@ try {
       main.querySelector("#product-guide"), main.querySelector("[aria-labelledby=product-docs-title]"),
     ].map(node => node && [...main.children].findIndex(child => child === node || child.contains(node)))), [0, 1, 3, 4]);
     assert.equal(await page.getByRole("heading", { level: 1 }).count(), 1);
+    assert.equal(await page.locator("#top, #world, #roles").count(), 0, "No repeated legacy product introduction");
+    assert.ok(await page.locator("#community").evaluate(el => {
+      const docs = document.getElementById("product-docs-title").closest("section");
+      return docs.nextElementSibling?.firstElementChild === el && el.nextElementSibling?.id === "faq";
+    }), "Design docs flow directly into community and FAQ");
+    assert.equal(await page.locator("#faq [aria-expanded]").count(), 2);
     assert.equal(await page.locator("main iframe").count(), 1);
     assert.equal(await page.locator("#product-demo iframe").getAttribute("inert"), "");
     await home.locator("#layout[data-play=playing]").waitFor();
