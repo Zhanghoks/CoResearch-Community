@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>CoResearch · 研究工作台演示</title>
+<style>
+*{box-sizing:border-box} html,body{margin:0;height:100%;background:#19191a;color:#ebebec}
+body{font:12px/1.65 "SF Pro Text","PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;container-type:inline-size}
+:root{--quiet:#a3a4a8;--line:#262627;--card:#181819;--hit:#242425;--violet:#5549e9}
+button,textarea{font:inherit;color:inherit}button{background:transparent;border:0;cursor:pointer;padding:0}button:hover{background:#29292b}button:focus-visible,textarea:focus-visible,svg [tabindex]:focus-visible{outline:1px solid #9a92fa;outline-offset:2px}button:disabled{opacity:.55;cursor:default}
+svg.icon{width:1em;height:1em;flex:none;vertical-align:-.11em}button svg.icon{pointer-events:none}[hidden]{display:none!important}
+.layout{height:100%;display:grid;grid-template-columns:13.65% minmax(0,1fr);font-size:clamp(10px,.83cqw,13px)}
+.layout.hide-side{grid-template-columns:0 minmax(0,1fr)}.hide-side .sidebar{visibility:hidden}
+.sidebar{display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden;border-right:1px solid var(--line)}
+.brand{height:3.95em;display:flex;align-items:center;gap:.43em;padding:0 .95em}.brand-mark{display:grid;place-items:center;width:1.45em;height:1.45em;border-radius:.36em;background:var(--violet);color:white;flex:none}.brand strong{font:600 1.28em Georgia,serif;white-space:nowrap}.fill{flex:1}
+.ico,.toolbar button{display:inline-grid;place-items:center;width:2em;height:2em;border-radius:.42em;color:#bbbcc0;flex:none}
+.side-nav{padding:0 .65em .33em;border-bottom:1px solid var(--line)}.nav-row{display:flex;align-items:center;gap:.9em;width:100%;padding:.32em .66em;border-radius:.52em;white-space:nowrap;text-align:left}.new{margin:.35em .65em;width:auto}
+.side-label,.account{display:flex;align-items:center;justify-content:space-between;padding:.42em 1.15em}.side-label{font-size:.86em}.sessions{flex:1;min-height:0;overflow:auto;padding:0 .72em .5em;scrollbar-width:thin}.folder,.folder-sub{display:flex;align-items:center;gap:.45em;white-space:nowrap;text-align:left;min-width:0;width:100%;padding:.25em .3em}.folder-sub{color:var(--quiet);padding-left:1.1em;font-size:.9em}
+.session{display:block;width:calc(100% - 1.34em);margin:.09em 0 .09em 1.34em;text-align:left;padding:.13em .62em;border-radius:.5em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.session.active{background:var(--hit)}.session.nest{margin-left:2.45em;width:calc(100% - 2.45em);font-size:.91em}.clip{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.account{height:3.35em;border-top:1px solid var(--line);color:var(--quiet);gap:.65em}
+.workspace{display:grid;grid-template-columns:minmax(0,45.3fr) minmax(0,54.7fr);min-width:0;min-height:0;padding:.6em;gap:.6em}.workspace.disk-wide{grid-template-columns:minmax(0,30fr) minmax(0,70fr)}.workspace.disk-only{grid-template-columns:minmax(0,1fr)}.disk-only .chat{display:none}
+.pane{min-width:0;min-height:0;overflow:hidden;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:1em;background:var(--card)}
+.tabbar{height:3.55em;flex:none;display:flex;align-items:center;gap:.45em;padding:0 .9em;border-bottom:1px solid #222223;overflow:hidden}
+.tab{display:flex;min-width:0;align-items:center;gap:.55em;padding:.33em .66em;border-radius:.58em;white-space:nowrap;color:#adadb1}.tab.selected{border:1px solid #242426;color:#ededee}.tabbar .muted{color:#86868b}.graph-tab{min-width:14em}.toolbar{display:flex;gap:.33em;align-items:center}
+.messages{flex:1;overflow:auto;min-height:0;padding:0 1.9em;scrollbar-width:thin;scrollbar-color:#333 transparent;overscroll-behavior:contain}
+.bubble{background:#202021;padding:.59em 1em;border-radius:1.44em;max-width:90%;width:max-content;margin:1em 0 1.9em auto;line-height:1.55}.messages p{margin:0 0 1.03em}.meta{color:var(--quiet);display:flex;align-items:center;gap:.55em;margin:.5em 0 .62em}.meta.rule{border-bottom:1px solid #242425;padding-bottom:.5em;margin-bottom:2.3em}.spacer{height:2.4em}.group{display:flex;justify-content:space-between;align-items:center;gap:.8em;margin:0 0 .85em;padding:.66em .8em;border:1px solid #2a2a2b;border-radius:.8em}.group button{border:1px solid #2d2d2e;border-radius:.5em;padding:.09em .6em;white-space:nowrap;font-size:.84em}.group.attention{border-color:#666080}
+.result-list{display:grid;gap:.35em;margin:.6em 0 1em}.result-list button{text-align:left;padding:.48em .72em;border:1px solid #2a2a2e;border-radius:.5em}.result-list button[aria-pressed=true]{border-color:#77747f;background:#222225}
+.composer{margin:.65em 1.03em 1.04em;padding:.85em 1em .65em;border:1px solid #2a2a2b;border-radius:1.45em;background:#19191a}.source{margin:0 0 .65em;padding:.25em .65em;border:1px solid #2c2c2e;background:#202021;border-radius:.6em;color:#a5a5a9;font-size:.83em}.composer textarea{display:block;background:transparent;border:0;resize:none;width:100%;height:3.25em;padding:.25em .1em;scrollbar-width:thin;line-height:1.45}.composer textarea::placeholder{color:var(--quiet)}.composer footer{display:flex;align-items:center;gap:.7em;white-space:nowrap;font-size:.88em}.composer small{color:var(--quiet);font-size:.9em}.composer .model{max-width:45%}.send{display:grid;place-items:center;height:2.55em;width:2.55em;border-radius:.8em;background:#f0f0f0;color:#161617;flex:none}.send:not(:disabled):hover{background:#d4cdf8}.control-chip{padding:.12em .48em;border-radius:.4em}.draft{color:#d0c5ef;font-size:.85em;margin-bottom:.25em}.draft button{margin-left:.5em;color:inherit}
+.graph-title{display:flex;align-items:center;gap:.55em;height:2.35em;flex:none;padding:0 1.1em;border-bottom:1px solid #222223;font-size:.89em}.graph-tools{display:flex;justify-content:end;align-items:end;height:3.2em;flex:none;padding-right:.73em}
+.segments{display:flex;width:max-content;border:1px solid #39393c;border-radius:.55em;background:#29292b;overflow:hidden;color:#babcbe;font-size:.87em;white-space:nowrap}.segments button{padding:.19em .57em;display:flex;gap:.35em;align-items:center}.segments button[aria-pressed=true]{background:#424244;color:#f7f7f8}
+.stage{position:relative;flex:1;min-height:0;overflow:hidden;margin:0 .65em .6em;border:1px solid #29292b;border-radius:.73em;background:#0d0e12;background-image:radial-gradient(ellipse at 48% 48%,#121316,transparent 76%)}
+#chart{display:block;width:100%;height:100%;position:absolute;inset:0;touch-action:pan-y;user-select:none}.stage .segments{position:absolute;top:.75em;left:.73em}.stage text{pointer-events:none}.stage [data-node]{cursor:pointer}.stage [data-node]:hover .face,.stage [data-node]:focus-visible .face{filter:brightness(1.38);stroke:#98979a}
+.mini{position:absolute;bottom:1.35em;right:1.3em;display:grid;justify-items:center;gap:.38em;color:#99999e;font-size:.68em;background:transparent!important;min-width:90px}.mini svg{width:10.1em;height:10.1em}.actions{position:absolute;bottom:.55em;left:.7em;display:flex;flex-direction:column;gap:.73em;max-width:calc(100% - 8.3em);font-size:.87em}.action-row{display:flex;flex-wrap:wrap;gap:.65em}.actions button{padding:.25em .65em;border-radius:.53em;white-space:nowrap}.actions button:first-child,.inspect{background:#1f1f21;border:1px solid #2f2f32}.inspect{align-self:start}.inspector{position:absolute;z-index:2;bottom:5.15em;left:.7em;width:min(270px,calc(100% - 1.4em));padding:1em;background:#202023;border:1px solid #3b3b41;border-radius:.65em}.inspector p{margin:.35em 0;color:#bbbcc1}
+.drawer{background:#202023;border:1px solid #37373e;border-radius:.65em;padding:1em;position:absolute;z-index:4;left:1em;top:4em;width:min(225px,calc(100% - 2em))}.drawer label,.drawer button{display:block;margin-bottom:.56em}.drawer input{max-width:100%;background:#17171a;border:1px solid #555;color:white;padding:.4em}
+.mobile-nav{display:none}.overlay-control{position:absolute;z-index:3;right:1.5em;bottom:1.4em;font-size:.87em}.overlay-control:hover{background:#333}
+@media(max-width:720px){.layout,.layout.hide-side{display:flex;flex-direction:column;font-size:12px}.sidebar{display:none}.workspace{flex:1;display:flex;padding:.4em;gap:0}.pane{width:100%}.layout[data-mobile=chat] .graph,.layout[data-mobile=graph] .chat{display:none}.mobile-nav{height:3em;display:flex;align-items:center;gap:.4em;padding:0 .65em;border-bottom:1px solid #303033}.mobile-nav button{padding:.17em .55em;border-radius:.4em}.mobile-nav [aria-pressed=true]{background:#39393c}.messages{padding:0 1em}.tabbar{padding:0 .5em}.tabbar .hide-narrow,.graph-tools .hide-narrow,.composer .hide-narrow{display:none}.composer footer{gap:.3em}.mini{right:.5em;bottom:.75em;min-width:0}.mini svg{width:7em;height:7em}.mobile-nav strong{margin-right:auto;white-space:nowrap}.action-row{gap:.18em}.actions{max-width:calc(100% - 6.3em)}.actions button{padding:.25em .4em}.toolbar{gap:0}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+/* Product-page presentation only. The standalone and homepage keep their own UI. */
+html.showcase,html.showcase body{background:#fafafa;color:#202125;color-scheme:light}
+.showcase{--quiet:#62656e;--line:#ececf0;--card:#fff;--hit:#eeeeef;--violet:#4f46e5}
+.showcase .layout{font-size:clamp(10px,.92cqw,13px)}
+.showcase .sidebar{background:#f7f8fa;color:#25262a}
+.showcase .sidebar .account,.showcase .folder-sub{color:#62656e}
+.showcase .brand strong{color:#23232a}
+.showcase .workspace{background:#fafafa}
+.showcase .tabbar,.showcase .graph-title{border-color:var(--line);color:#36383e}
+.showcase .tab,.showcase .ico,.showcase .toolbar button{color:#646770}
+.showcase .tab.selected{color:#24262c;border-color:#e8e9ed;background:#fafafa}
+.showcase .tabbar .muted{color:#666872}
+.showcase .messages{position:relative;padding:.95em 1.9em .2em;scrollbar-width:none}
+.showcase .bubble{background:#f3f4f6;color:#23252a;margin:.1em 0 1.45em auto;padding:.67em 1em;border:1px solid #f0f0f3}
+.showcase .composer{background:#fff;border-color:#e2e4e9;margin:.65em 1.03em 1.04em}
+.showcase .composer footer{color:#525660}
+.showcase .composer .source{background:#f6f7f9;border-color:#e9ebef;color:#535761}
+.showcase .draft{color:#365caa}
+.showcase .send{background:#272a31;color:#fff}
+.showcase .send:disabled{background:#e9eaec;color:#585b63;opacity:1}
+.showcase .segments{border-color:#e1e2e6;background:#f4f4f6;color:#555863}
+.showcase .segments button[aria-pressed=true]{background:#e6e7eb;color:#202227}
+.showcase .stage{
+ background-color:#f8fafc;
+ background-image:radial-gradient(ellipse at 38% 50%,#ffffffa6,transparent 75%),radial-gradient(circle,#aab9ce50 .8px,transparent 1px);
+ background-size:100% 100%,18px 18px;
+ border-color:#e1e7ef;isolation:isolate;
+ --dial-ring:#c9d4e2;--dial-major:#7c90ab;--dial-minor:#bac8da;
+ --dial-dot:#879bb8;--dial-selected-start:#edf4ff;--dial-selected-end:#d6e5fa;
+ --dial-bezel:#e7edf5;--dial-overview-panel:#f3f6fa;--dial-overview-line:#b0bed1;
+ --dial-background:#fff;--dial-hub-line:#879bb6;--dial-neutral:#f4f7fb;--dial-neutral-line:#c4d0df;
+ --dial-selected-line:#6487ba;--dial-ink:#263858;--dial-muted:#52647f;
+ --dial-micro:#596a81;--dial-accent:#45699e;--dial-connector:#6689bb;
+ --dial-child:#eaf2fd;--dial-child-line:#8faed1;
+}
+.showcase .stage>.segments{background:#fffffff0;border-color:#d9e1ec;color:#4b596f}
+.showcase .stage>.segments button[aria-pressed=true]{background:#e6edf7;color:#293d61}
+.showcase .mobile-nav{display:none}
+.showcase #chart{overflow:hidden;touch-action:auto}
+.showcase .stage .mini{z-index:1;color:#4b5d76}
+.showcase .stage .actions{color:#3d4b61}
+.showcase .stage .actions button:first-child,.showcase .stage .inspect{background:#fff;border-color:#d7e0ed}
+.showcase .compare-receipt{display:flex;align-items:center;justify-content:space-between;gap:.5em;border:1px solid #ececf0;border-radius:.7em;padding:.5em .7em;margin:0 0 .62em;color:#292b30}
+.showcase .compare-receipt span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.showcase .compare-receipt b{font-weight:560;white-space:nowrap;padding:.18em .55em;border-radius:.4em;border:1px solid #e3e5e9;font-size:.82em}
+.showcase .agent-kicker{display:flex;align-items:center;gap:.45em;color:#5a5d65;margin-bottom:.56em}
+.showcase .agent-kicker i{display:none}
+.showcase .show-copy{color:#25272c;line-height:1.58;margin-bottom:.62em}
+.showcase .show-prose{color:#32353c;line-height:1.64;margin-top:.9em}
+.showcase .show-prose p{margin:0 0 .88em}
+.showcase .show-prose ul{margin:.25em 0 .95em;padding-left:1.5em}
+.showcase .show-prose li+li{margin-top:.38em}
+.showcase .show-prose .meta{margin:.65em 0 .46em}
+.showcase .wait-pips{display:inline-flex;gap:.24em;align-items:center;margin-left:.36em}
+.showcase .wait-pips b{width:.36em;height:.36em;border-radius:50%;background:#788397;animation:breathe .9s ease-in-out infinite alternate}
+.showcase .wait-pips b:nth-child(2){animation-delay:.16s}.showcase .wait-pips b:nth-child(3){animation-delay:.32s}
+.showcase .show-list{display:grid;gap:.4em}
+.showcase .show-item{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.58em;padding:.53em .66em;border:1px solid #e8eaf0;border-radius:.58em;background:#fcfcfd;color:#272a32}
+.showcase .show-item small{display:block;color:#5e6470;font-size:.83em}
+.showcase .show-item em{font-size:.72em;color:#345aa6;font-style:normal;white-space:nowrap}
+.showcase .show-item strong{display:block;line-height:1.35}
+.showcase .show-item .index{display:grid;place-items:center;width:1.75em;height:1.75em;border-radius:5px;background:#eff0f3;color:#666c75;font-size:.85em;font-variant-numeric:tabular-nums}
+.showcase .show-item.active{border-color:#c4d3ee;background:#f1f5fd}
+.showcase .show-item.active .index{background:#e4ecfb;color:#345895}
+.showcase .show-item.child{background:#f9fafc;border-color:#e6e9f0}
+.showcase .show-branch{margin-top:.72em;padding-left:.72em;border-left:2px solid #c6d4ed;color:#303743}
+.showcase .show-branch>b{display:block;margin-bottom:.36em}
+.showcase .overview-scene,.showcase .focus-scene{transform-origin:325px 356px}
+.showcase .overview-scene{opacity:0;visibility:hidden}
+.showcase [data-phase="0"] .overview-scene{opacity:.34;visibility:visible}
+.showcase [data-phase="1"] .overview-scene{visibility:visible;animation:form-wheel .68s cubic-bezier(.2,.8,.2,1) both}
+.showcase [data-phase="0"] .focus-scene,.showcase [data-phase="1"] .focus-scene{visibility:hidden}
+.showcase [data-phase="2"] .focus-scene{animation:camera-enter .66s cubic-bezier(.19,.76,.24,1) both}
+.showcase .focus-scene .expansion{visibility:hidden}
+.showcase [data-phase="3"] .focus-scene .expansion{visibility:visible}
+.showcase [data-phase="3"] .leaf-preview{visibility:hidden}
+.showcase [data-phase="3"] .branch-edge{stroke-dasharray:1;stroke-dashoffset:1;animation:trace .67s cubic-bezier(.16,1,.3,1) forwards}
+.showcase [data-phase="3"] .child-sector{animation:reveal-branch .58s cubic-bezier(.18,.74,.23,1) .16s both;transform-origin:232px 356px}
+.showcase [data-phase="3"] .child-second{animation-delay:.30s}
+.showcase .show-enter{animation:enter .36s cubic-bezier(.22,.68,.32,1) both}
+.showcase .show-item.show-enter:nth-child(2){animation-delay:.10s}
+.showcase [data-play="paused"] *{animation-play-state:paused!important}
+@keyframes camera-enter{from{opacity:0;transform:translateX(38px) scale(.89)}to{opacity:1;transform:none}}
+@keyframes breathe{from{opacity:.32;transform:translateY(1px)}to{opacity:1;transform:translateY(-1px)}}
+@keyframes form-wheel{from{opacity:0;transform:scale(.89)}to{opacity:1;transform:scale(1)}}
+@keyframes trace{to{stroke-dashoffset:0}}
+@keyframes reveal-branch{from{opacity:0;transform:scale(.78)}to{opacity:1;transform:scale(1)}}
+@keyframes enter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(max-width:720px){
+ .showcase .layout{font-size:11.5px}
+ .showcase .workspace{display:grid;grid-template-columns:1fr;grid-template-rows:170px minmax(0,1fr);padding:.44em;gap:.4em}
+ .showcase .layout[data-mobile] .chat,.showcase .layout[data-mobile] .graph{display:flex}
+ .showcase .tabbar{height:2.35em}
+ .showcase .chat .tabbar .ico,.showcase .chat .tabbar .fill,.showcase .toolbar,.showcase .graph .tabbar>i,.showcase .composer footer,.showcase .composer .source,.showcase .graph-tools,.showcase .graph-title,.showcase .stage .mini,.showcase .stage .actions{display:none}
+ .showcase .messages{padding:.55em .7em 0;line-height:1.35}
+ .showcase .bubble{margin:.08em 0 .5em auto;padding:.34em .7em}
+ .showcase .composer{margin:.3em .65em .5em;padding:.28em .55em}
+ .showcase .composer textarea{height:1.45em;line-height:1.3;padding:0}
+ .showcase .composer #pin{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0}
+ .showcase .composer #pin button,.showcase .show-item small,.showcase .compare-receipt,.showcase .show-prose,.showcase .desktop-context{display:none}
+ .showcase .agent-kicker{margin-bottom:.25em}
+ .showcase .show-copy{font-size:11px;margin-bottom:.38em}
+ .showcase .show-list{gap:.25em}
+ .showcase .show-item{padding:.25em .45em}
+ .showcase .show-item strong{font-size:.93em}
+ .showcase .show-branch{margin-top:.32em}
+ .showcase [data-phase="1"] .messages>.bubble,
+ .showcase [data-phase="3"] .messages>.show-enter:not(.show-branch),
+ .showcase [data-phase="3"] .messages>.show-list .show-item:not(.active){display:none}
+ .showcase .stage{margin:.36em}
+ .showcase .stage>.segments{top:.42em;left:.55em}
+}
+</style>
+</head>
+<body>
+<div class="layout" id="layout" data-mobile="chat">
+ <nav class="mobile-nav" aria-label="切换演示面板"><strong>CoResearch</strong><button type="button" data-mobile-tab="chat" aria-pressed="true">研究对话</button><button type="button" data-mobile-tab="graph" aria-pressed="false">研究图谱</button></nav>
+ <aside class="sidebar" aria-label="会话与项目">
+  <div class="brand"><span class="brand-mark" data-icon="book-open"></span><strong>CoResearch</strong><span class="fill"></span><button type="button" class="ico" data-action="sidebar" data-icon="panel-left" aria-label="收起侧栏"></button></div>
+  <nav class="side-nav" aria-label="工作台导航">
+   <button type="button" class="nav-row" data-action="home"><i data-icon="house"></i>首页</button><button type="button" class="nav-row" data-action="search"><i data-icon="search"></i>搜索</button>
+   <button type="button" class="nav-row" data-action="radar"><i data-icon="radar"></i>论文雷达</button><button type="button" class="nav-row" data-action="browse"><i data-icon="layout-grid"></i>浏览</button>
+  </nav>
+  <button class="nav-row new" type="button" data-action="reset"><i data-icon="plus"></i>新建会话</button>
+  <div class="side-label"><b>项目</b><i data-icon="folder-plus"></i></div>
+  <div class="sessions"><button type="button" class="folder" data-action="project" aria-expanded="true"><i data-icon="folder"></i><span class="clip">Auto Research · 工作空间</span></button>
+   <div id="project"><div class="folder-sub"><i data-icon="chevron-down"></i><i data-icon="message-square"></i>会话<span class="fill"></span><span>23</span><i data-icon="plus"></i></div><div id="sessions"></div></div>
+  </div>
+  <div class="account"><span>Demo</span><span class="fill"></span><i data-icon="shield-user"></i><button type="button" class="ico" data-action="settings" data-icon="settings" aria-label="设置"></button></div>
+ </aside>
+ <main class="workspace" id="workspace">
+  <section class="pane chat" aria-label="研究对话">
+   <div class="tabbar"><button type="button" class="ico" data-action="sidebar" data-icon="grip-vertical" aria-label="切换侧栏"></button><span class="tab muted hide-narrow">Codex… / 新颖…</span><button type="button" class="tab selected" data-action="home"><span class="clip">Codex… / Explore</span><i data-icon="x"></i></button><span class="tab muted hide-narrow">Codex QA… / 新</span><button type="button" class="tab muted hide-narrow" data-action="frontier" aria-label="探索 Auto Research 前沿五方向全景">Code… / 探…</button><span class="fill"></span><i class="hide-narrow" data-icon="star"></i><button type="button" class="ico" data-action="help" data-icon="ellipsis" aria-label="演示说明"></button></div>
+   <div class="messages" id="messages" role="region" aria-label="对话记录"></div>
+   <form class="composer" id="composer">
+    <div id="source" class="source" hidden><b>来源策略</b>　默认全部常用数据源</div><div class="draft" id="pin" hidden><span></span><button type="button" data-action="unpin" aria-label="移除方向引用">×</button></div>
+    <textarea id="input" aria-label="输入你的问题" placeholder="输入你的问题" rows="2"></textarea>
+    <footer><button type="button" class="ico" data-icon="paperclip" data-action="cite" aria-label="加入上下文"></button><span class="model clip">DeepSeek V4.1 Flash（百炼）</span><span class="hide-narrow">Auto <i data-icon="chevron-down"></i></span><span class="control-chip hide-narrow">+ skills <i data-icon="chevron-down"></i></span><span class="fill"></span><small id="context-label" class="hide-narrow">上下文 — 模型用量暂不可用</small><button type="submit" class="send" data-icon="arrow-up" aria-label="发送" disabled></button></footer>
+   </form>
+  </section>
+  <section class="pane graph" aria-label="对话研究图谱">
+   <div class="tabbar"><i data-icon="grip-vertical"></i><button type="button" class="tab selected graph-tab" data-action="overview"><i data-icon="workflow"></i><span class="clip">对话研究图谱</span><span class="fill"></span><i data-icon="x"></i></button><span class="tab hide-narrow"><i data-icon="git-branch"></i>分支</span><span class="fill"></span><div class="toolbar"><button type="button" class="hide-narrow" data-icon="plus" data-action="split" aria-label="细分方向"></button><button type="button" class="hide-narrow" data-icon="globe" data-action="overview" aria-label="全景"></button><button type="button" class="hide-narrow" data-icon="file-text" data-action="details" aria-label="查看详解"></button><button type="button" class="hide-narrow" data-icon="layout-grid" data-action="tree" aria-label="树状图"></button><button type="button" data-icon="rotate-cw" data-action="overview" aria-label="复位"></button><button type="button" data-icon="panel-right" data-action="wide" aria-label="切换全幅"></button></div></div>
+   <div class="graph-title"><i data-icon="workflow"></i><span class="clip" id="graphLabel"></span></div>
+   <div class="graph-tools"><div class="segments"><button data-action="tree" data-view="tree" type="button"><i data-icon="network"></i>思维导图</button><button data-action="disk" data-view="disk" type="button"><i data-icon="disc-3"></i>知识盘</button><button data-action="expand" id="expand" type="button" aria-pressed="false"><i data-icon="maximize-2"></i>展开</button></div></div>
+   <div class="stage" id="stage">
+    <svg id="chart" viewBox="0 0 650 712" preserveAspectRatio="none" role="group" aria-label="可交互的研究方向盘"></svg>
+    <div class="segments"><button data-action="disk" data-view="disk" type="button"><i data-icon="disc-3"></i>圆盘</button><button data-action="tree" data-view="tree" type="button"><i data-icon="list-tree"></i>树状图</button><button data-action="overview" type="button"><i data-icon="chart-pie"></i>总览</button></div>
+    <button type="button" class="mini" data-action="overview" aria-label="返回全景"><svg id="minimap" viewBox="0 0 100 100" aria-hidden="true"></svg><span id="miniLabel"></span></button>
+    <div class="actions" id="actions"><button type="button" class="inspect" data-action="details"><i data-icon="file-text"></i> 查看详解</button><div class="action-row"><button data-action="split" type="button">细分方向</button><button data-action="cite" type="button">加入上下文</button><button data-action="analysis" type="button">分析整张图</button><button data-action="fork" type="button">Prepare fork</button></div></div>
+    <div class="inspector" id="inspector" hidden></div>
+   </div>
+  </section>
+ </main>
+ <section class="drawer" id="drawer" hidden aria-label="演示工具"></section>
+ <span id="status" role="status" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)"></span>
+</div>
+<script>
+/* Standalone UI, static example content, no remote I/O.
+
+ISC License
+
+Copyright (c) 2026 Lucide Icons and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+---
+
+The following Lucide icons are derived from the Feather project:
+
+airplay, alert-circle, alert-octagon, alert-triangle, aperture, arrow-down-circle, arrow-down-left, arrow-down-right, arrow-down, arrow-left-circle, arrow-left, arrow-right-circle, arrow-right, arrow-up-circle, arrow-up-left, arrow-up-right, arrow-up, at-sign, calendar, cast, check, chevron-down, chevron-left, chevron-right, chevron-up, chevrons-down, chevrons-left, chevrons-right, chevrons-up, circle, clipboard, clock, code, columns, command, compass, corner-down-left, corner-down-right, corner-left-down, corner-left-up, corner-right-down, corner-right-up, corner-up-left, corner-up-right, crosshair, database, divide-circle, divide-square, dollar-sign, download, external-link, feather, frown, hash, headphones, help-circle, info, italic, key, layout, life-buoy, link-2, link, loader, lock, log-in, log-out, maximize, meh, minimize, minimize-2, minus-circle, minus-square, minus, monitor, moon, more-horizontal, more-vertical, move, music, navigation-2, navigation, octagon, pause-circle, percent, plus-circle, plus-square, plus, power, radio, rss, search, server, share, shopping-bag, sidebar, smartphone, smile, square, table-2, tablet, target, terminal, trash-2, trash, triangle, tv, type, upload, x-circle, x-octagon, x-square, x, zoom-in, zoom-out
+
+The MIT License (MIT) (for the icons listed above)
+
+Copyright (c) 2013-present Cole Bemis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+const ICONS={"arrow-up":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"m5 12 7-7 7 7\" /> <path d=\"M12 19V5\" /> </svg>","book-open":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"M12 5v16\" /> <path d=\"M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z\" /> </svg>","chart-pie":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z\" /> <path d=\"M21.21 15.89A10 10 0 1 1 8 2.83\" /> </svg>","chevron-down":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"m6 9 6 6 6-6\" /> </svg>","chevron-right":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"m9 18 6-6-6-6\" /> </svg>","disc-3":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M6 12c0-1.7.7-3.2 1.8-4.2\" /> <circle cx=\"12\" cy=\"12\" r=\"2\" /> <path d=\"M18 12c0 1.7-.7 3.2-1.8 4.2\" /> </svg>","ellipsis":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <circle cx=\"12\" cy=\"12\" r=\"1\" /> <circle cx=\"19\" cy=\"12\" r=\"1\" /> <circle cx=\"5\" cy=\"12\" r=\"1\" /> </svg>","file-text":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z\" /> <path d=\"M14 2v5a1 1 0 0 0 1 1h5\" /> <path d=\"M10 9H8\" /> <path d=\"M16 13H8\" /> <path d=\"M16 17H8\" /> </svg>","folder":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z\" /> </svg>","folder-plus":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"M12 10v6\" /> <path d=\"M9 13h6\" /> <path d=\"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z\" /> </svg>","git-branch":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"M15 6a9 9 0 0 0-9 9V3\" /> <circle cx=\"18\" cy=\"6\" r=\"3\" /> <circle cx=\"6\" cy=\"18\" r=\"3\" /> </svg>","globe":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20\" /> <path d=\"M2 12h20\" /> </svg>","grip-vertical":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <circle cx=\"9\" cy=\"12\" r=\"1\" /> <circle cx=\"9\" cy=\"5\" r=\"1\" /> <circle cx=\"9\" cy=\"19\" r=\"1\" /> <circle cx=\"15\" cy=\"12\" r=\"1\" /> <circle cx=\"15\" cy=\"5\" r=\"1\" /> <circle cx=\"15\" cy=\"19\" r=\"1\" /> </svg>","house":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\" /> <path d=\"M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\" /> </svg>","layout-grid":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <rect width=\"7\" height=\"7\" x=\"3\" y=\"3\" rx=\"1\" /> <rect width=\"7\" height=\"7\" x=\"14\" y=\"3\" rx=\"1\" /> <rect width=\"7\" height=\"7\" x=\"14\" y=\"14\" rx=\"1\" /> <rect width=\"7\" height=\"7\" x=\"3\" y=\"14\" rx=\"1\" /> </svg>","list-tree":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"M8 5h13\" /> <path d=\"M13 12h8\" /> <path d=\"M13 19h8\" /> <path d=\"M3 10a2 2 0 0 0 2 2h3\" /> <path d=\"M3 5v12a2 2 0 0 0 2 2h3\" /> </svg>","maximize-2":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"M15 3h6v6\" /> <path d=\"m21 3-7 7\" /> <path d=\"m3 21 7-7\" /> <path d=\"M9 21H3v-6\" /> </svg>","message-square":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z\" /> </svg>","network":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <rect x=\"16\" y=\"16\" width=\"6\" height=\"6\" rx=\"1\" /> <rect x=\"2\" y=\"16\" width=\"6\" height=\"6\" rx=\"1\" /> <rect x=\"9\" y=\"2\" width=\"6\" height=\"6\" rx=\"1\" /> <path d=\"M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3\" /> <path d=\"M12 12V8\" /> </svg>","panel-left":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" /> <path d=\"M9 3v18\" /> </svg>","panel-right":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" /> <path d=\"M15 3v18\" /> </svg>","paperclip":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551\" /> </svg>","plus":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"M5 12h14\" /> <path d=\"M12 5v14\" /> </svg>","radar":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"M19.07 4.93A10 10 0 0 0 6.99 3.34\" /> <path d=\"M4 6h.01\" /> <path d=\"M2.29 9.62A10 10 0 1 0 21.31 8.35\" /> <path d=\"M16.24 7.76A6 6 0 1 0 8.23 16.67\" /> <path d=\"M12 18h.01\" /> <path d=\"M17.99 11.66A6 6 0 0 1 15.77 16.67\" /> <circle cx=\"12\" cy=\"12\" r=\"2\" /> <path d=\"m13.41 10.59 5.66-5.66\" /> </svg>","rotate-cw":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8\" /> <path d=\"M21 3v5h-5\" /> </svg>","search":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"m21 21-4.34-4.34\" /> <circle cx=\"11\" cy=\"11\" r=\"8\" /> </svg>","settings":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915\" /> <circle cx=\"12\" cy=\"12\" r=\"3\" /> </svg>","shield-user":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\" /> <path d=\"M6.376 18.91a6 6 0 0 1 11.249.003\" /> <circle cx=\"12\" cy=\"11\" r=\"4\" /> </svg>","star":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z\" /> </svg>","workflow":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <rect width=\"8\" height=\"8\" x=\"3\" y=\"3\" rx=\"2\" /> <path d=\"M7 11v4a2 2 0 0 0 2 2h4\" /> <rect width=\"8\" height=\"8\" x=\"13\" y=\"13\" rx=\"2\" /> </svg>","x":"<!-- @license lucide-static v1.80.0 - ISC --> <svg class=\"icon\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> <path d=\"M18 6 6 18\" /> <path d=\"m6 6 12 12\" /> </svg>"};
+const q=(s)=>document.querySelector(s), qa=(s)=>[...document.querySelectorAll(s)];
+const escaped=(value)=>String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[ch]);
+const referenceTopics=[
+ {id:"gap",name:"证据覆盖缺口：新颖性判定",short:"证据覆盖缺口：新颖性判…",note:"对照专家判断，验证证据覆盖是否改变新颖性结论。",paper:"Human-judged novelty benchmark",children:[["gap-1","新颖性裁判的证据检索"],["gap-2","专家标注的一致性对照"]]},
+ {id:"surface",name:"表面线索耦合：表述像已有",short:"表面线索耦合：表述像…",note:"将 LLM 的创意产出评估与专家打分对照。",paper:"Evaluating Creative Output With Expert Rubrics",children:[["surface-1","控制术语重合的对照"],["surface-2","隐性方法等价识别"]]}
+];
+const frontiers=[
+ ["end","全流程科研的AI科学家","评估端到端流程能否复现并检验结论。"],
+ ["world","长程执行与世界模型：让智能体不断线","留下可恢复的状态，用长程任务对照。"],
+ ["hypothesis","假设的严格检验：可证伪代价","对照有无预登记流程的验证结果。"],
+ ["bench","评估什么：用独立基准比较","用独立盲评对照不同代理的排序稳定性。"],
+ ["reliable","可重复性：实验结论能否复现","比较跨环境复现率和人工审阅结果。"]
+].map(([id,name,note])=>({id,name,short:name.length>17?name.slice(0,16)+"…":name,note,paper:"示例证据 · 研究方法对照",children:[[id+"-1","建立可验证的对照组"],[id+"-2","检验跨任务泛化"]]}));
+let topics=referenceTopics, frontier=false;
+const original="端到端自动科研：从「基线论文的局限」到「领域级空白」";
+const opening="探索一下关于 Auto Research 的前沿研究";
+const startReply="自动科研不仅要跑通流程，还要证明结果有价值。下面两条方向分别检查证据覆盖和表面线索，适合设计对照实验。";
+const trail=["探索 auto research 前沿","调研 LLM Agent 长程上下文","Explore auto research…","新颖性判定：LLM 裁判能否…","Explore auto research frontiers","研究 CEO 薪酬治理机制","设计 CEO 薪酬治理研究方向","提出 CEO 薪酬治理研究方向","Federated learning non-IID…","Map non-IID federated learning","研究 AI 推理引擎加速方向","研究开源 Agent 基准","研究长视频的一致性","复盘文献检索结果","回复重连场景","分析 CEO 薪酬与公司运营","搜索 agent harness 评估","查看研究日程","设计 Text2SQL 评估指标","Text2SQL 评估指标设计","探索最新研究方向","研究 agent 记忆"];
+let mode="focus", picked="surface", pinned=null, replyTimer=0, playTimer=0, busy=false, playStep=-1, turn=0, rotation=0, mounted=new Set(), dialW=650,dialH=712, anim=0, playState="idle", linked=null;
+const chart=q("#chart"), field=q("#input"), messages=q("#messages"), status=q("#status"), workspace=q("#workspace");
+const showcase=new URLSearchParams(location.search).get("mode")==="showcase";
+const reduce=matchMedia("(prefers-reduced-motion: reduce)");
+const topic=(id)=>[...referenceTopics,...frontiers].find(x=>x.id===id);
+const actionIcon=(name)=>ICONS[name]||"";
+const emit=(s)=>{status.textContent=s};
+const mobile=(view)=>{q("#layout").dataset.mobile=view;qa("[data-mobile-tab]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mobileTab===view)));};
+const toBottom=()=>{messages.scrollTop=messages.scrollHeight};
+function updateInput(){q(".send").disabled=busy||!field.value.trim();q("#pin").hidden=!pinned;q("#pin span").textContent=pinned?"引用方向 · "+topic(pinned).name:"";}
+function setInput(value,id=null,focus=false){pinned=id;field.value=value;updateInput();if(focus)field.focus();}
+function group(){return '<div class="group"><strong>方向组 · '+topics.length+' research directions · 已保存</strong><button type="button" data-action="open">在工作区打开</button></div>'}
+function cards(){return '<div class="result-list">'+topics.map(n=>'<button type="button" data-pick="'+n.id+'" aria-pressed="'+(n.id===picked)+'"><b>'+n.name+'</b><br><small>'+n.note+'</small></button>').join("")+'</div>'}
+function referenceChat(){
+ return '<p style="margin-top:-.7em;min-height:2.25em">这两条方向用来区分「真正的研究空白」和「只是表述看起来相似」。便于后续设计验证指标。</p>'+group()+
+ '<div class="meta" style="margin-top:1.15em">1 paper '+actionIcon("chevron-right")+'</div><div class="spacer"></div><div class="meta">已处理 for 2m 29s '+actionIcon("chevron-right")+'</div><div class="spacer"></div>'+
+ '<div class="bubble">我的 idea state 状态吗</div><div class="meta rule">You stopped after 3s</div><div class="bubble">我的 idea state 状态呢</div>'+
+ '<div class="meta">已处理 for 52s '+actionIcon("chevron-right")+'</div><p>这个会话里还没有绑定 Living Idea。</p><p>说清楚现状：</p><ul><li>刚才输出的是 <b>Explore 的方向组</b>，产物是 Direction 卡片，不是 Idea。方向卡片用来比较证据、假设和可能的研究空白。</li><li>如果要验证一个具体问题，可以先选定这个方向，并把它带进下一条消息。</li></ul><p>例如右侧选中的「表面线索耦合」，可以用控制术语重合程度的对照，测试新颖性判定有没有把表述相近误当成方法相同。</p><p>或者先查看每个方向的论文依据，确认你想把哪一条变成 Living Idea。</p>';
+}
+function frontierChat(){
+ return '<div class="bubble">'+opening+'</div><div class="meta">已处理 for 5m 53s '+actionIcon("chevron-right")+'</div><p>我把 Auto Research 的前沿拆成了五张方向卡，先说结论：这个领域的分水岭已经不再是能不能自动做完，而是能不能验证它做出来的东西。</p><p>在说卡片前，先把领域现在的位置讲清楚。早期的主线是流程闭环：想法 → 代码 → 实验 → 论文 → 自查。现在还需要让不同研究团队复现结果，并检验证据和结论是否真的匹配。</p><p>接下来用长程稳定性、验证质量和新颖性三种不同视角拆开看。右侧知识盘把五张方向卡连回同一个研究目标。选择任一扇区，可以查看它的证据和下一条验证路径。</p>'+frontiers.map((n,i)=>'<p><b>卡片 '+(i+1)+'｜'+n.name+'</b>　'+n.note+' 要把任务完成和科学结论拆开验证，并明确哪些比较在同样的任务与证据预算下成立。</p>').join("")+group()+cards();
+}
+function cancelRun(){clearTimeout(replyTimer);replyTimer=0;busy=false;turn++;q("#pending")?.remove();}
+function pauseReplay(stopped){clearTimeout(playTimer);playTimer=0;if(playState==="playing"){playState=stopped?"idle":"paused";if(stopped)playStep=-1;}window.parent!==window&&window.parent.postMessage({type:"co-demo-status",state:playState},"*");}
+function resetDemo(reference,isFrontier=false){pauseReplay(true);cancelRun();frontier=isFrontier;topics=frontier?frontiers:referenceTopics;q("#source").hidden=!frontier;q("#context-label").textContent=frontier?"上下文 8%":"上下文 — 模型用量暂不可用";mode=frontier?"overview":reference?"focus":"empty";picked=reference&&!frontier?"surface":null;linked=null;rotation=0;mounted=new Set();q("#inspector").hidden=true;workspace.classList.remove("disk-wide","disk-only");q("#expand").setAttribute("aria-pressed","false");setInput("");messages.innerHTML=frontier?frontierChat():reference?referenceChat():'<p class="meta">新会话。输入一个研究问题，或播放上方的演示。</p>';mobile(reference?"graph":"chat");render();}
+function addMsg(markup,scroll=true){messages.insertAdjacentHTML("beforeend",markup);if(scroll)toBottom();}
+function send(){
+ const input=field.value.trim();if(!input||busy)return;
+ const parent=pinned,key=++turn;
+ setInput("");busy=true;updateInput();addMsg('<div class="bubble">'+escaped(input)+'</div><div id="pending" class="meta">正在整理示例方向…</div>');
+ emit("已发送演示消息");replyTimer=setTimeout(()=>{
+  if(turn!==key)return;
+  replyTimer=0;busy=false;updateInput();q("#pending")?.remove();
+  if(parent){
+   const n=topic(parent);mounted.add(parent);
+   addMsg('<div class="meta">已处理 · 演示</div><p>我将 <b>'+escaped(n.name)+'</b> 细分为两条可验证路径，已挂到该方向。</p><div class="result-list">'+n.children.map(([id,name])=>'<button type="button" data-child="'+id+'" data-parent="'+parent+'">'+name+'</button>').join("")+'</div>');
+   if(picked===parent&&!q("#inspector").hidden)inspect();
+   render();emit("两个新分支已加入提交时引用的方向。");
+  }else{
+   if(mode==="empty"){mode="overview";rotation=0;}
+   addMsg('<div class="meta">已处理 · 演示</div><p>'+startReply+'</p>'+group()+cards());
+   render();emit("示例方向组已生成。");
+  }
+ },reduce.matches?180:900);
+}
+function select(id,fromChat=false){
+ if(!topic(id))return;
+ const old=mode;mode="focus";picked=id;linked=null;
+ qa("[data-pick]").forEach(el=>el.setAttribute("aria-pressed",String(el.dataset.pick===id)));
+ q("#inspector").hidden=true;mobile("graph");render(old==="overview"&&!fromChat);
+ emit("知识盘聚焦 "+topic(id).name);
+}
+function overview(){mode="overview";picked=null;rotation=0;linked=null;q("#inspector").hidden=true;mobile("graph");render();}
+function prepare(kind){
+ if(!picked){if(mode==="empty"){emit("请先发送研究问题。");return;}picked=topics[0].id;}
+ const n=topic(picked);
+ const draft={split:"请细分「"+n.name+"」，列出两条可验证的研究路径。",cite:"基于「"+n.name+"」整理证据与可验证的假设。",analysis:"请比较这张方向图里的证据与研究空白。",fork:"基于「"+n.name+"」准备独立研究分支。"}[kind];
+ setInput(draft,kind==="analysis"?null:n.id);workspace.classList.remove("disk-only");mobile("chat");field.focus({preventScroll:true});emit("草稿已准备，等待发送。");
+}
+function inspect(force=false){
+ const host=q("#inspector");if(!picked){emit("先选中一个扇区。");return;}const n=topic(picked);
+ if(force===true){host.hidden=true;return;}
+ host.innerHTML='<strong>'+escaped(n.name)+'</strong><p>'+escaped(n.note)+'</p><p>示例证据 · '+escaped(n.paper)+'</p>'+(mounted.has(n.id)?'<p>已添加两个细分方向。</p>':'');
+ host.hidden=false;
+}
+const pt=(cx,cy,r,a)=>[cx+r*Math.cos(a*Math.PI/180),cy+r*Math.sin(a*Math.PI/180)];
+const vertex=(p)=>p.map(x=>x.toFixed(2)).join(" ");
+function wedge(cx,cy,r0,r1,a,b){
+ const big=b-a>180?1:0;
+ return 'M '+vertex(pt(cx,cy,r1,a))+' A '+r1+' '+r1+' 0 '+big+' 1 '+vertex(pt(cx,cy,r1,b))+' L '+vertex(pt(cx,cy,r0,b))+' A '+r0+' '+r0+' 0 '+big+' 0 '+vertex(pt(cx,cy,r0,a))+' Z';
+}
+function ring(cx,cy,r,step=5,off=0){
+ let out='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="var(--dial-ring,#313137)" stroke-width=".75"/>';
+ for(let a=0;a<360;a+=step){
+  const major=a%30===0;
+  out+='<path d="M '+vertex(pt(cx,cy,r-(major?1:5),a+off))+' L '+vertex(pt(cx,cy,r+(major?11:0),a+off))+'" stroke="'+(major?"var(--dial-major,#53545a)":"var(--dial-minor,#303137)")+'" stroke-width=".65"/>';
+ }return out;
+}
+function tx(x,y,s,size=10,color="#aaa9aa",more=""){return '<text x="'+x+'" y="'+y+'" font-size="'+size+'" fill="'+color+'" '+more+'>'+escaped(s)+'</text>'}
+function path(d,fill="none",stroke="#38393d",sw=1){return '<path d="'+d+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+sw+'"/>'}
+function diskContent(state={mode,picked,rotation,linked,mounted,dialW,dialH,topics},presentation=false){
+ const {mode,picked,rotation,linked,mounted,dialW,dialH,topics}=state;
+ const h=dialH,w=dialW,cy=h/2;
+ let out='<defs><pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r=".5" fill="var(--dial-dot,#777880)" opacity=".14"/></pattern><linearGradient id="activeFill"><stop stop-color="var(--dial-selected-start,#222325)"/><stop offset="1" stop-color="var(--dial-selected-end,#4b4e56)"/></linearGradient></defs><rect width="'+w+'" height="'+h+'" fill="url(#dots)"/>';
+ if(mode==="empty"){return out+tx(w/2,cy,"发送研究问题后，方向组将在这里显示。",12,"var(--dial-muted,#a7a7ab)",'text-anchor="middle"');}
+ if(mode==="tree"){
+   let x=w*.52;const interval=topics.length>2?56:140;
+   topics.forEach((n,i)=>{const y=cy+(i-(topics.length-1)/2)*interval;out+=path('M '+(w*.18)+' '+cy+' H '+(w*.30)+' V '+y+' H '+x);});
+   out+=tx(w*.10,cy-11,"研究目标",12,"#c4bda9");
+   topics.forEach((n,i)=>{let y=cy+(i-(topics.length-1)/2)*interval;out+='<g tabindex="0" role="button" data-node="'+n.id+'" aria-label="'+n.name+'"><rect class="face" x="'+x+'" y="'+(y-20)+'" width="'+(w*.43)+'" height="40" rx="6" fill="#1c1c20" stroke="#3a393b"/>'+tx(x+9,y+4,n.short,10,"#e4e3e4")+'</g>'});
+   return out;
+ }
+ if(mode==="overview"){
+   const cx=w/2,r=Math.min(w,h)*.326;
+   out+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(r+7)+'" fill="var(--dial-bezel,#1a1a1d)"/>'+ring(cx,cy,r,6,rotation);
+   topics.forEach((n,i)=>{
+    const pitch=360/topics.length;const a=rotation-90+i*pitch, a2=a+pitch, m=(a+a2)/2, p=pt(cx,cy,r*.59,m);
+    const angle=m+90;const upright=((angle%360+540)%360-180);const labelAngle=upright>90?upright-180:upright< -90?upright+180:upright;
+    out+='<g tabindex="0" role="button" data-node="'+n.id+'" aria-label="'+n.name+'"><path class="face" d="'+wedge(cx,cy,r*.18,r,a+.2,a2-.2)+'" fill="var(--dial-overview-panel,#1d1c1c)" stroke="var(--dial-overview-line,#595044)" stroke-width=".7"/>'+tx(p[0],p[1],n.short,11,"var(--dial-ink,#d4cfc5)",'text-anchor="middle" transform="rotate('+labelAngle+' '+p.join(" ")+')"')+'</g>';
+   });
+   out+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(r*.178)+'" fill="var(--dial-background,#141417)" stroke="var(--dial-hub-line,#e4e3e0)" stroke-width="1.5"/>'+tx(cx,cy-6,"核心研究问题",8,"var(--dial-accent,#afa07e)",'text-anchor="middle"')+tx(cx,cy+7,"Not recorded",8,"var(--dial-ink,#e0ddd4)",'text-anchor="middle"');
+   return out;
+ }
+ const cx=w*.365-406,r0=234,r1=405,r2=475,r3=654;
+ out+=ring(cx,cy,216,4)+ring(cx,cy,231,5)+ring(cx,cy,426,3)+ring(cx,cy,680,2);
+ [-61,-41,41,61].forEach(a=>{out+=path('M '+vertex(pt(cx,cy,225,a))+' L '+vertex(pt(cx,cy,426,a)),"none","var(--dial-ring,#27282d)",.8);});
+ const idx=topics.findIndex(n=>n.id===picked),around=(offset)=>topics[(idx+offset+topics.length)%topics.length];const has=mounted.has(picked);
+ [[-56,around(-2)],[-31,around(-1)],[0,around(0)],[31,around(1)],[56,around(2)]].forEach(([a,n])=>{
+  const on=a===0,p=pt(cx,cy,on?r0+9:287,a);
+  out+='<g tabindex="'+(Math.abs(a)===56?"-1":"0")+'" role="button" data-node="'+n.id+'" aria-label="'+n.name+'">';
+  out+='<path class="face" d="'+wedge(cx,cy,r0,r1,a-(on?13:14),a+(on?13:14))+'" fill="'+(on?"url(#activeFill)":"var(--dial-neutral,#121317)")+'" stroke="'+(on?"var(--dial-selected-line,#e1e1e3)":"var(--dial-neutral-line,#2d2e33)")+'" stroke-width="'+(on?1.15:.72)+'"/>';
+  if(on){
+   let [x,y]=p;
+   out+=tx(x,y-46,String(topics.indexOf(n)+1).padStart(2,"0")+"/"+String(topics.length).padStart(2,"0")+"  ·  草稿",7,"var(--dial-muted,#e0dfda)")+tx(x,y-31,n.name,11,"var(--dial-ink,#f2f1ed)",'font-weight="650"')+tx(x,y-19,n.note,6.5,"var(--dial-muted,#c9c1b3)");
+   for(let i=0;i<14;i++)out+='<rect x="'+(x+i*3.1)+'" y="'+(y-9-(i%4)*1.5)+'" width="1.3" height="'+(3+(i%4)*1.5)+'" fill="'+(i<4?"var(--dial-accent,#dcd8cd)":"var(--dial-minor,#777063)")+'"/>';
+   out+=tx(x+52,y-8,"关联论文  1",6.5,"var(--dial-muted,#a29b8d)")+path('M '+x+' '+y+' h 140',"none","var(--dial-minor,#636060)",.5)+tx(x,y+12,"01  2025  ·  "+n.paper.slice(0,25)+"…",7,"var(--dial-ink,#dedbd3)")+tx(x+12,y+21,n.paper.slice(0,29)+"…",6,"var(--dial-muted,#a8a192)");
+  }else{
+   out+='<g transform="translate('+p.join(" ")+') rotate('+a+')">'+tx(0,-6,n.id==="gap"?"01/02":"02/02",6.5,"var(--dial-micro,#696970)")+tx(0,6,n.short,8,"var(--dial-muted,#9e9c98)")+tx(0,17,"0 分支 · 1 论文",6,"var(--dial-micro,#686870)")+'</g>';
+  }
+  out+="</g>";
+ });
+ out+=path('M '+(cx+r1)+' '+cy+' H '+(cx+r2+4),"none","var(--dial-connector,#8e764f)",.8)+'<circle cx="'+(cx+r1+2)+'" cy="'+cy+'" r="3" fill="var(--dial-background,#19191a)" stroke="var(--dial-selected-line,#e6e0d6)"/>';
+ out+=tx(Math.max(7,cx+182),cy-4,"L2  ·  末梢",6,"var(--dial-accent,#a68e63)")+tx(Math.max(7,cx+182),cy+8,"← 全景",7,"var(--dial-muted,#dad5cb)");
+ out+=path('M '+(cx+667)+' '+cy+' h55',"none","var(--dial-major,#a09ea3)",.7);
+ if(!has){
+   out+='<g'+(presentation?' class="leaf-preview"':'')+'>'+path(wedge(cx,cy,r2,r3,-13,13),"var(--dial-neutral,#121317)","var(--dial-neutral-line,#2a2b30)",.8)+tx(cx+566,cy-4,"末梢节点",8.5,"var(--dial-muted,#a6a7ad)",'text-anchor="middle"')+tx(cx+566,cy+10,"当前分支暂无更深层级",6.5,"var(--dial-micro,#74767c)",'text-anchor="middle"')+'</g>';
+ }else{
+   topic(picked).children.forEach(([id,name],i)=>{
+     const a=i===0?-7:7,loc=pt(cx,cy,560,a);
+     out+='<g role="button" tabindex="0" data-leaf="'+id+'" aria-label="'+name+'"><path class="face" d="'+wedge(cx,cy,r2,r3,a-6.4,a+6.4)+'" fill="'+(linked===id?"#24434b":"#182128")+'" stroke="#597f88" />'+tx(loc[0],loc[1],name,9.5,"#bacfd1",'text-anchor="middle"')+'</g>';
+   });
+ }
+ return out;
+}
+function render(animate=false){
+ if(showcase){fitShowDisk();return;}
+ const width=chart.clientWidth,height=chart.clientHeight;
+ if(width&&height){
+  dialW=width<510?Math.max(445,width):width;dialH=height*dialW/width;
+ }
+ const content=diskContent();
+ chart.setAttribute("viewBox","0 0 "+dialW+" "+dialH);
+ chart.innerHTML=content;
+ if(animate&&!reduce.matches)chart.animate([{opacity:.62,transform:"translateX(20px) scale(1.025)"},{opacity:1,transform:"none"}],{duration:325,easing:"cubic-bezier(.22,.61,.36,1)"});
+ q("#graphLabel").textContent=mode==="empty"?"研究目标":frontier?"研究目标（Auto Research 领域前沿）":original;
+ q("#actions").hidden=mode!=="focus";q(".mini").hidden=mode==="empty";
+ q("#miniLabel").textContent=mode==="focus"?(mounted.has(picked)?"L2 · 2 分支 · 返回全景":"L2 · 末梢 · 返回全景"):"已居中 · "+Math.round(rotation)+"°";
+ q("#minimap").innerHTML='<circle cx="50" cy="50" r="47" fill="#111215" stroke="#504a3f"/><circle cx="50" cy="50" r="39" fill="#1d1e22" stroke="#383a42"/>'+ring(50,50,43,15)+'<circle cx="50" cy="50" r="28" fill="#16181d" stroke="#373b46" stroke-width="3"/>'+path(wedge(50,50,15,40,mode==="focus"?-46:rotation-90,mode==="focus"?47:rotation+90),"#414246","#62636e",.7)+'<circle cx="50" cy="50" r="10" fill="#101216" stroke="#bbb7ad"/><path d="M45 50h10 M50 45v10 M67 50h8" stroke="#b39f74" stroke-width="1.1"/>';
+ qa("[data-view]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.view===(mode==="tree"?"tree":"disk"))));
+}
+function showDrawer(kind){
+ const drawer=q("#drawer");
+ const content={
+  settings:'<b>演示设置</b><p>此工作台使用离线示例数据。动效遵循系统的减少动态效果设置。</p>',
+  radar:'<b>论文雷达</b><p>在右侧选中一个方向，再点「查看详解」看这条方向的示例证据。</p><button data-action="details" type="button">查看当前方向证据</button>',
+  browse:'<b>浏览演示会话</b><button type="button" data-action="home">探索 Auto Research 前沿</button>',
+  search:'<label for="query">搜索演示会话</label><input id="query" placeholder="输入关键词"><div id="queryResults"></div>',
+  help:'<b>产品演示</b><p>试着点开方向组、选择扇区，或细分方向后发送。</p><button type="button" data-action="replay">播放演示</button><button type="button" data-action="pause">暂停演示</button><button type="button" data-action="home">还原界面</button><button type="button" data-action="frontier">探索 Auto Research 前沿</button>'
+ };
+ drawer.innerHTML=content[kind]+'<button type="button" data-action="close">关闭</button>';drawer.hidden=false;
+ const query=q("#query");
+ if(query){
+   const filter=()=>{q("#queryResults").innerHTML=trail.filter(t=>t.toLowerCase().includes(query.value.toLowerCase())).slice(0,4).map(t=>'<button type="button" data-action="home">'+escaped(t)+'</button>').join("")||"<p>没有匹配会话</p>";};
+   filter();query.addEventListener("input",filter);query.focus();
+ }
+}
+function action(action){
+ switch(action){
+ case "home":case "reset":case "frontier":resetDemo(action!=="reset",action==="frontier");q("#drawer").hidden=true;break;
+ case "sidebar":q("#layout").classList.toggle("hide-side");render();break;
+ case "project":q("#project").hidden=!q("#project").hidden;q('[data-action="project"]').setAttribute("aria-expanded",String(!q("#project").hidden));break;
+ case "overview":case "open":if(mode!=="empty"){overview();if(action==="open")toBottom();}break;
+ case "disk":if(mode==="tree")overview();break;
+ case "tree":if(mode!=="empty"){mode="tree";q("#inspector").hidden=true;mobile("graph");render();}break;
+ case "expand":case "wide":{
+  const active=workspace.classList.toggle(action==="expand"?"disk-wide":"disk-only");
+  workspace.classList.remove(action==="expand"?"disk-only":"disk-wide");
+  q("#expand").setAttribute("aria-pressed",String(action==="expand"&&active));render();break;
+ }
+ case "split":case "cite":case "analysis":case "fork":prepare(action);break;
+ case "details":q("#drawer").hidden=true;if(!q("#inspector").hidden)inspect(true);else{mobile("graph");inspect();}break;
+ case "unpin":setInput(field.value);break;
+ case "replay":q("#drawer").hidden=true;startReplay();break;
+ case "pause":pauseReplay(false);q("#drawer").hidden=true;break;
+ case "close":q("#drawer").hidden=true;break;
+ default:showDrawer(action);
+ }
+}
+const beats=[
+ [0,()=>setInput(opening)],
+ [930,send],
+ [1480,()=>overview()],
+ [1210,()=>select("surface")],
+ [1350,()=>prepare("split")],
+ [1320,send],
+ [1480,()=>{mobile("graph");render();emit("回放完成，可以继续探索。");}]
+];
+function nextBeat(){
+ if(playState!=="playing")return;
+ if(playStep>=beats.length){playState="idle";playStep=-1;syncPlay();return;}
+ const [wait,execute]=beats[playStep];
+ playTimer=setTimeout(()=>{if(playState!=="playing")return;execute();playStep++;nextBeat();},reduce.matches?Math.min(wait,300):wait);
+}
+function syncPlay(){if(window.parent!==window)window.parent.postMessage({type:"co-demo-status",state:playState},"*");}
+function startReplay(force=false){
+ if(force||playStep<0){resetDemo(false);playStep=0;}
+ if(playState==="playing"&&!force)return;
+ playState="playing";syncPlay();nextBeat();
+}
+addEventListener("message",e=>{
+ if(window.parent===window||e.source!==window.parent||!e.data||e.data.type!=="co-demo-control")return;
+ if(showcase){controlShowcase(e.data.command);return;}
+ if(e.data.command==="start")startReplay();
+ else if(e.data.command==="restart")startReplay(true);
+ else if(e.data.command==="pause")pauseReplay(false);
+ else if(e.data.command==="ping")syncPlay();
+});
+document.addEventListener("click",e=>{
+ const el=e.target.closest("[data-action],[data-node],[data-leaf],[data-pick],[data-child],[data-mobile-tab]");
+ if(!el)return;
+ if(el.dataset.action!=="replay")pauseReplay(false);
+ if(el.dataset.action)action(el.dataset.action);
+ else if(el.dataset.mobileTab)mobile(el.dataset.mobileTab);
+ else if(el.dataset.node)select(el.dataset.node);
+ else if(el.dataset.pick)select(el.dataset.pick,true);
+ else if(el.dataset.child){select(el.dataset.parent,true);linked=el.dataset.child;render();}
+ else if(el.dataset.leaf){linked=el.dataset.leaf;render();chart.querySelector('[data-leaf="'+linked+'"]')?.focus();emit(el.getAttribute("aria-label"));}
+});
+q("#composer").addEventListener("submit",e=>{e.preventDefault();pauseReplay(false);send();});
+field.addEventListener("input",()=>{pauseReplay(false);updateInput();});
+document.addEventListener("keydown",e=>{
+ if(e.key==="Escape"){
+  if(!q("#drawer").hidden)q("#drawer").hidden=true;
+  else if(!q("#inspector").hidden)inspect(true);
+  else if(mode!=="empty")overview();
+ }
+ if(e.target.matches("#chart [tabindex]")&&(e.key==="Enter"||e.key===" ")){
+  e.preventDefault();const id=e.target.dataset.node;
+  e.target.dispatchEvent(new MouseEvent("click",{bubbles:true}));
+  if(id)chart.querySelector('[data-node="'+id+'"][tabindex="0"]')?.focus();
+ }
+});
+let drag=null,suppressClick=false;
+chart.addEventListener("pointerdown",e=>{if(mode==="overview"&&e.isPrimary&&e.button===0)drag={x:e.clientX,from:rotation,id:e.pointerId};});
+chart.addEventListener("pointermove",e=>{
+ if(!drag||e.pointerId!==drag.id||Math.abs(e.clientX-drag.x)<7&&!suppressClick)return;
+ if(!suppressClick){suppressClick=true;chart.setPointerCapture(e.pointerId);pauseReplay(false);}
+ rotation=(drag.from+(e.clientX-drag.x)*.6)%360;render();
+});
+function stopDrag(){drag=null;if(suppressClick)setTimeout(()=>{suppressClick=false},0);}
+chart.addEventListener("pointerup",stopDrag);chart.addEventListener("pointercancel",stopDrag);
+chart.addEventListener("click",e=>{if(suppressClick)e.stopPropagation();});
+new ResizeObserver(()=>{cancelAnimationFrame(anim);anim=requestAnimationFrame(()=>render())}).observe(chart);
+q("#sessions").innerHTML=trail.map((n,i)=>'<button data-action="'+(i===4?'frontier':'home')+'" type="button" class="session '+(i===0||i===2||i===3||i===6?'active ':'')+(i===3?'nest':'')+'">'+escaped(n)+'</button>').join("");
+qa("[data-icon]").forEach(el=>{el.innerHTML=actionIcon(el.dataset.icon);});
+// Stable geometry: the selected sector stays anchored while its two children unfold.
+let showStep=0, showBeat=0, showState="idle", showTimer=0, deadline=0, remaining=0;
+const showNames=["证据覆盖缺口","表面线索耦合"];
+function agentLine(content, waiting=false){
+ return '<div class="show-enter"><div class="agent-kicker"><i>'+actionIcon("book-open")+'</i>研究 Agent'+(waiting?'<span class="wait-pips"><b></b><b></b><b></b></span>':'')+'</div><div class="show-copy">'+content+'</div></div>';
+}
+function showItem(index,title,note, active=false, child=false, referenceLabel="已选中"){
+ return '<div class="show-item show-enter '+(active?'active ':'')+(child?'child':'')+'"><span class="index">'+index+'</span><span><strong>'+title+'</strong><small>'+note+'</small></span>'+(active?'<em>'+referenceLabel+'</em>':'')+'</div>';
+}
+// Public-facing demonstration copy, not a prior conversation or evidence record.
+const comparisonNotes='<div class="show-prose show-enter"><p>要判断一个想法有没有新意，先把它提出的研究问题、借用的方法和预期贡献分开。然后找最接近的工作，问具体差异在哪一层。</p><ul><li><b>方向 01：</b>比较检索覆盖不足时，评审会不会遗漏已经发表的工作。</li><li><b>方向 02：</b>把表述相近和方法相同分开，避免把其中一个当成另一个的证据。</li></ul><div class="meta">1 paper · 示例来源 '+actionIcon("chevron-right")+'</div></div>';
+const focusNotes='<div class="show-prose show-enter"><p>先忘掉措辞，只比较方法是否等价：输入、核心步骤和适用条件有没有改变？如果三者都不变，只换术语不应被算成新方法。</p><p>下一步可以做两组对照：改写术语但保留方法，或保留术语但改变方法。判断两组时用同一份评审标准。</p></div>';
+const receipt='<div class="compare-receipt show-enter"><span>方向组 · 2 research directions · 已保存</span><b>在工作区打开</b></div>';
+function showList(active=false, label){
+ return '<div class="show-list">'+showItem("01",showNames[0],"证据不足，会改变新颖性结论吗？")+showItem("02",showNames[1],"术语相似，方法也一定相同吗？",active,false,label)+'</div>';
+}
+function fitShowDisk(){chart.setAttribute("viewBox",matchMedia("(max-width: 720px)").matches?"6 122 565 468":"0 0 650 712");}
+function showDisk(){
+ const w=650,h=712,cy=356,cx=325;
+ const focused=-168.75, r1=405;
+ const base={dialW:w,dialH:h,topics:referenceTopics,rotation:0,linked:null};
+ const overview=diskContent({...base,mode:"overview",picked:null,mounted:new Set()});
+ const focus=diskContent({...base,mode:"focus",picked:"surface",mounted:new Set()},true);
+ const leaf=(i,radius,a,name,subtitle,id,extra="")=>{
+   const [x,y]=pt(focused,cy,radius,a);
+   return '<g class="child-sector '+extra+'" data-show-child="'+id+'">'+
+   path(wedge(focused,cy,475,654,a-6.4,a+6.4),"var(--dial-child,#20232d)","var(--dial-child-line,#71798b)",1)+
+   tx(x,y-10,"02."+i,8,"var(--dial-muted,#a4a9b6)",'text-anchor="middle"')+
+   tx(x,y+7,name,12,"var(--dial-ink,#f5f4f2)",'text-anchor="middle" font-weight="650"')+
+   tx(x,y+22,subtitle,8,"var(--dial-muted,#a9aebc)",'text-anchor="middle"')+'</g>';
+ };
+ const origin=focused+r1,hub=origin+67;
+ const edges='<path class="branch-edge" pathLength="1" d="M'+origin+' '+cy+' H'+hub+' M'+hub+' '+cy+' Q'+(hub+8)+' '+cy+' '+(hub+17)+' '+(cy-27)+' M'+hub+' '+cy+' Q'+(hub+8)+' '+cy+' '+(hub+17)+' '+(cy+27)+'" fill="none" stroke="var(--dial-connector,#bb9e6d)" stroke-width="1.35"/>';
+ chart.setAttribute("viewBox","0 0 650 712");
+ chart.setAttribute("preserveAspectRatio","xMidYMid meet");
+ chart.setAttribute("role","img");
+ chart.setAttribute("aria-label","对话研究图谱，方向总览与 L2 局部");
+ const unique=(svg,suffix)=>svg.replace(/id="(dots|activeFill)"/g,'id="$1-'+suffix+'"').replace(/url\(#(dots|activeFill)\)/g,'url(#$1-'+suffix+')');
+ chart.innerHTML='<g class="overview-scene">'+unique(overview,'overview')+'</g>'+
+  '<g class="focus-scene">'+unique(focus,'focus')+'<g class="expansion" aria-label="新增两条子分支">'+edges+
+  leaf(1,565,-7,"控制术语重合","对照试验","surface-1")+
+  leaf(2,565,7,"检验方法等价","独立评审","surface-2","child-second")+'</g></g>';
+ fitShowDisk();
+}
+function setShowStep(step){
+ showStep=step;
+ q("#layout").dataset.phase=String(step);
+ q("#graphLabel").textContent=step===0?"研究目标 · Auto Research":original;
+ q("#actions").hidden=step<2;
+ q(".mini").hidden=step===0;
+ q("#miniLabel").textContent=step<2?"已居中 · 0°":step===2?"L2 · 末梢 · 返回全景":"L2 · 2 分支 · 返回全景";
+ q("#minimap").innerHTML='<circle cx="50" cy="50" r="47" fill="var(--dial-background,#111215)" stroke="var(--dial-hub-line,#504a3f)"/><circle cx="50" cy="50" r="39" fill="var(--dial-neutral,#1d1e22)" stroke="var(--dial-ring,#383a42)"/>'+ring(50,50,43,15)+path(wedge(50,50,15,40,step<2?-90:-39,step<2?90:39),"var(--dial-child,#414246)","var(--dial-child-line,#62636e)",.7)+'<circle cx="50" cy="50" r="10" fill="var(--dial-background,#101216)" stroke="var(--dial-hub-line,#bbb7ad)"/><path d="M45 50h10 M50 45v10 M67 50h8" stroke="var(--dial-accent,#b39f74)" stroke-width="1.1"/>';
+}
+const openQuestion="怎么判断 AI 提出的是新方法，还是只换了说法？";
+const chip="表面线索耦合";
+const initial='<div class="bubble show-enter">'+openQuestion+'</div>';
+function showChat(content){
+ messages.innerHTML=content;
+ toBottom();
+}
+function showInit(){
+ q("#layout").dataset.play=showState;
+ document.documentElement.classList.add("showcase");
+ workspace.inert=true;
+ q(".sidebar").inert=true;
+ document.querySelector('meta[name="color-scheme"]').content="light";
+ q(".chat .tab.selected .clip").textContent="Codex… / Explore";
+ q("#source").hidden=false;
+ q("#context-label").textContent="上下文 8%";
+ qa("[data-view=disk]").forEach(el=>el.setAttribute("aria-pressed","true"));
+ field.placeholder="输入你的问题";
+ setInput("");
+ q("#pin").hidden=true;
+ showChat("");
+ setShowStep(0);
+ showDisk();
+}
+const storyBeats=[
+ [300,()=>setInput("怎么判断 AI")],
+ [250,()=>setInput("怎么判断 AI 提出的是新方法")],
+ [250,()=>setInput(openQuestion)],
+ [390,()=>{setInput("");showChat(initial+agentLine("正在整理两条可比较的研究方向…",true));}],
+ [1450,()=>{setShowStep(1);showChat(initial+agentLine("先区分证据不足和表述相似。我整理了两个可以单独验证的方向。")+comparisonNotes+receipt+showList());}],
+ [3150,()=>{setShowStep(2);showChat('<div class="desktop-context">'+initial+receipt+'</div>'+agentLine("聚焦 02：表述相似，不一定代表方法相同。")+focusNotes+showList(true));}],
+ [950,()=>{setInput("把 02 拆成可以验证的实验。","surface");q("#pin span").textContent="引用方向 · 02 "+chip;q(".show-item.active em").textContent="已引用";}],
+ [2180,()=>{setInput("");showChat('<div class="bubble show-enter">把 02 拆成可以验证的实验。</div>'+agentLine("沿方向 02 设计两条验证路径…",true));}],
+ [1300,()=>{setShowStep(3);showChat('<div class="desktop-context"><div class="bubble show-enter">把 02 拆成可以验证的实验。</div></div>'+agentLine("沿方向 02 生成两条子分支。")+showList(true,"已引用")+'<div class="show-branch show-enter"><b>02 的两条实验路径</b><div class="show-list">'+showItem("01","控制术语重合","验证表述是否影响判定",false,true)+showItem("02","检验方法等价","让专家独立比对方法",false,true)+'</div></div>');}],
+ [3800,()=>{showState="done";}]
+];
+function reportShow(){
+ q("#layout").dataset.play=showState;
+ if(window.parent!==window)window.parent.postMessage({type:"co-product-motion",state:showState,step:showStep},"*");
+}
+function scheduleShow(){
+ deadline=performance.now()+remaining;
+ showTimer=setTimeout(()=>{
+  if(showState!=="playing")return;
+  const [,execute]=storyBeats[showBeat++];
+  execute();
+  reportShow();
+  if(showBeat<storyBeats.length){remaining=storyBeats[showBeat][0];scheduleShow();}
+ },remaining);
+}
+function controlShowcase(command){
+ if(command==="ping"){reportShow();return;}
+ if(command==="pause"&&showState==="playing"){
+  clearTimeout(showTimer);remaining=Math.max(0,deadline-performance.now());showState="paused";reportShow();
+ }else if(command==="restart"||(command==="start"&&showState==="idle")){
+  clearTimeout(showTimer);showBeat=0;remaining=storyBeats[0][0];showInit();showState="playing";reportShow();scheduleShow();
+ }else if(command==="start"&&showState==="paused"){
+  showState="playing";reportShow();scheduleShow();
+ }
+}
+
+if(showcase){showInit();reportShow();}else resetDemo(true);
+</script>
+</body>
+</html>

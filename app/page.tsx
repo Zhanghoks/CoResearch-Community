@@ -1,4 +1,5 @@
 import { ResearchWorldStory } from "./components/research-story/ResearchWorldStory";
+import { ExploreDemo } from "./components/product-demo/ExploreDemo";
 import { SiteStory } from "./components/site-story";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -23,6 +24,7 @@ export default function Home() {
         </div>
       </section>
       <ResearchWorldStory />
+      <ExploreDemo />
       <SiteStory />
     </main>
   );

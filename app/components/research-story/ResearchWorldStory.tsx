@@ -20,10 +20,12 @@ export function ResearchWorldStory() {
   const exit = useRef<HTMLDivElement>(null);
   const engaged = useRef(false);
   const resume = useRef<() => void>(() => {});
+  const restart = useRef<() => void>(() => {});
+  const position = useRef({ chapter: last, frame: -1 });
   const pause = useRef<() => void>(() => {});
   const [activeMode, setActiveMode] = useState(false);
   const [visited, setVisited] = useState(false);
-  const [shown, setShown] = useState({...displayAt(0),frame:-1});
+  const [shown, setShown] = useState(() => ({...displayAt(ending(last)),frame:-1}));
   const [failed, setFailed] = useState(false);
   const [reduce, short] = useViewPreferences();
   const manual = reduce || short;
@@ -31,9 +33,9 @@ export function ResearchWorldStory() {
   useEffect(() => {
     const section=root.current, stage=sticky.current;
     if (!section || !stage) return;
-    let currentFrame=-1;
+    let currentFrame=position.current.frame;
     const header=document.querySelector("body > header");
-    let selected=0, version=0, wheelTimer=0, blocked=false, deltaSum=0;
+    let selected=position.current.chapter, version=0, wheelTimer=0, blocked=false, deltaSum=0;
     let touch:{x:number;y:number;axis:"x"|"y"|null;used:boolean;visual:boolean}|null=null;
     const feedback=(distance:number, threshold:number)=>{
       stage.style.setProperty("--idea-gesture", String(Math.min(1,Math.abs(distance)/threshold)));
@@ -45,12 +47,13 @@ export function ResearchWorldStory() {
     resize();
     const observer=new ResizeObserver(resize);
     if(header)observer.observe(header);
-    const select=async (index:number, animate:boolean)=>{
+    const select=async (index:number, animate:boolean, fromBeginning=false)=>{
       const stamp=++version;
       selected=index;
+      position.current.chapter=index;
       setFailed(false);
       const target=ending(index);
-      const start=animate&&index===1&&currentFrame<=0 ? 1 : animate&&currentFrame>=0 ? currentFrame : target;
+      const start=animate&&index===1&&(fromBeginning||currentFrame<=0) ? 1 : animate&&currentFrame>=0 ? currentFrame : target;
       const dir=Math.sign(target-start);
       stage.dataset.moving=String(dir!==0);
       const interval=Math.max(24, Math.min(42, 630/Math.max(1,Math.abs(target-start))));
@@ -61,6 +64,7 @@ export function ResearchWorldStory() {
         for(let n=start;;n+=dir){
           if(stamp!==version)break;
           currentFrame=n;
+          position.current.frame=n;
           setShown({...displayAt(n),frame:n});
           if(n===target) break;
           await new Promise(resolve=>window.setTimeout(resolve,interval));
@@ -74,6 +78,7 @@ export function ResearchWorldStory() {
       const next=clamp(input);
       if(next!==selected || currentFrame!==ending(next)) void select(next,!manual&&Math.abs(next-selected)===1);
     };
+    restart.current=()=>{void select(1,!manual,true);};
     resume.current=()=>{if(currentFrame!==ending(selected))void select(selected,!manual&&currentFrame>=0);};
     pause.current=()=>{
       version++;clearTimeout(wheelTimer);
@@ -140,7 +145,7 @@ export function ResearchWorldStory() {
     const preload=new IntersectionObserver(([entry])=>{
       if(!entry.isIntersecting)return;
       preload.disconnect();
-      if(currentFrame<0&&selected===0)void select(0,false);
+      if(currentFrame<0&&version===0)void select(selected,false);
     },{rootMargin:"350px"});
     preload.observe(stage);
     const visibility=new IntersectionObserver(([entry])=>{
@@ -155,7 +160,7 @@ export function ResearchWorldStory() {
       stage.addEventListener("touchcancel",touchend);
     }
     return ()=>{
-      shift.current=()=>false;resume.current=()=>{};pause.current=()=>{};
+      shift.current=()=>false;resume.current=()=>{};restart.current=()=>{};pause.current=()=>{};
       delete stage.dataset.moving;feedback(0,1);
       version++;preload.disconnect();visibility.disconnect();observer.disconnect();clearTimeout(wheelTimer);
       stage.removeEventListener("wheel",wheel);
@@ -169,7 +174,7 @@ export function ResearchWorldStory() {
     setActiveMode(true);
     setVisited(true);
     if(next===undefined){
-      if(!visited)jump.current(1);
+      if(!visited||shown.step===last)restart.current();
       else resume.current();
     }
     else jump.current(next);
@@ -212,7 +217,7 @@ export function ResearchWorldStory() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img className="idea-poster" src={`${asset}/poster.webp`} alt="" width={1280} height={576}/>
             {vector&&frame>=0&&<IdeaVectorGraph data={vector} frame={ideaFrame} timelineFrame={frame} step={isIdea?step-growthCount:0} visibleNodes={visibleNodes} badges={badges} name={name}/>}
-            {badges.map(([x,y,X,Y,head,detail,tone])=><div key={head} className="idea-badge" data-tone={tone} style={{left:`${(x+X)/12.8}%`,top:`${(y+Y-76)/5.76}%`,width:`${(X-x)/6.4}%`}}><strong>{head}</strong><small>{detail}</small></div>)}
+            {vector&&badges.map(([x,y,X,Y,head,detail,tone])=><div key={head} className="idea-badge" data-tone={tone} style={{left:`${(x+X)/12.8}%`,top:`${(y+Y-76)/5.76}%`,width:`${(X-x)/6.4}%`}}><strong>{head}</strong><small>{detail}</small></div>)}
           </div>
         </div>
         <ul className="idea-mobile-labels">{badges.map(([, , , , head,detail,tone])=><li key={head} data-tone={tone}><strong>{head}</strong><span>{detail}</span></li>)}</ul>
@@ -223,7 +228,7 @@ export function ResearchWorldStory() {
             <span className="idea-gesture-track" aria-hidden="true"><i /></span>
             <span>{manual?"切换章节":step===last?"已读完，可以继续下滑":"一滑一步 · 上滑回看"}</span>
             <button type="button" data-dir="forward" aria-label="下一段" disabled={step===last} onClick={()=>shift.current(1)}>→</button>
-          </div> : <button type="button" className="idea-start" onClick={()=>startStory()}>{visited?"继续讲解":"开始讲解"} <span aria-hidden="true">→</span></button>}
+          </div> : <button type="button" className="idea-start" onClick={()=>startStory()}>{visited?(step===last?"从头再看":"继续讲解"):"开始讲解"} <span aria-hidden="true">→</span></button>}
           <button type="button" className="idea-skip" onClick={skipStory}>{activeMode?"跳过讲解":"直接去正文"} <span aria-hidden="true">↓</span></button>
         </footer>
         {failed&&<p className="idea-status" role="status">画面暂未加载，请再试一次。</p>}

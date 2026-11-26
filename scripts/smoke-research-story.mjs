@@ -12,7 +12,11 @@ const wait=(p,n)=>p.locator(`#research-world .idea-vector[data-frame="${n}"]`).w
 async function setup(p) {
   await p.goto(url,{waitUntil:"networkidle"});
   await p.locator("#research-world").evaluate(el=>scrollTo({top:el.getBoundingClientRect().top+scrollY-Math.ceil(document.querySelector("body > header").getBoundingClientRect().height),behavior:"instant"}));
-  await wait(p,0);
+  await wait(p,ends[15]);
+  assert.match(await p.locator(".idea-progress p").textContent(),/15 \/ 15/);
+  await p.locator(".idea-vector [data-frontier-boundary=breached]").waitFor();
+  await p.locator(".idea-vector [data-open-question]").waitFor();
+  assert.equal(await p.locator("#research-world").getAttribute("data-engaged"), "false");
 }
 try {
   const p=await b.newPage({viewport:{width:1280,height:900}});
@@ -26,9 +30,9 @@ try {
   await p.mouse.wheel(0,92);
   await p.waitForFunction(y=>Math.abs(scrollY-(y+67))<=2,start);
   assert.equal(await root.getAttribute("data-engaged"),"false");
-  assert.equal(await p.locator("#research-world .idea-vector").getAttribute("data-frame"),"0");
+  assert.equal(await p.locator("#research-world .idea-vector").getAttribute("data-frame"),String(ends[15]));
   await p.evaluate(y=>scrollTo({top:y,behavior:"instant"}),start);
-  await p.screenshot({path:`${out}/Community-自然进入.png`});
+  await p.screenshot({path:`${out}/Community-默认第15页.png`});
   await p.mouse.wheel(0,1000);
   await p.waitForFunction(()=>document.querySelector("#research-world").getBoundingClientRect().bottom<0);
   await p.evaluate(y=>scrollTo({top:y,behavior:"instant"}),start);
@@ -131,6 +135,8 @@ try {
   await p.mouse.wheel(0,860);
   await p.waitForFunction(()=>document.querySelector(".idea-stage").getBoundingClientRect().top < 0);
   await p.evaluate(y=>scrollTo({top:y,behavior:"instant"}),start);
+  await p.getByRole("button",{name:"从头再看"}).click();
+  await wait(p,ends[1]);
   await p.getByRole("button",{name:"第 8 步：Idea Intent"}).click();
   await wait(p,ends[8]);
   await p.getByRole("button",{name:"跳过讲解"}).click();
@@ -141,10 +147,15 @@ try {
   assert.equal(await root.getAttribute("data-engaged"),"true");
   await p.keyboard.press("Escape");
   assert.equal(await root.getAttribute("data-engaged"),"false");
+  await p.reload({waitUntil:"networkidle"});
+  await wait(p,ends[15]);
+  await p.getByRole("button",{name:"开始讲解"}).click();
+  await wait(p,ends[1]);
   assert.deepEqual(errors,[]);
-  console.log("PASS desktop: 15 chapters, momentum lock, reverse, re-entrance, transparent redraw and exit");
+  console.log("PASS desktop: default 15/15 on visit/reload, start from chapter 1, 15 chapters, momentum lock, reverse, re-entrance, transparent redraw and exit");
   const m=await b.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:1});
   await setup(m);
+  await m.screenshot({path:`${out}/Community-默认第15页-手机.png`});
   await m.getByRole("button",{name:"开始讲解"}).click();
   await wait(m,ends[1]);
   const c=await m.context().newCDPSession(m);
