@@ -38,12 +38,12 @@ export function SiteHeader() {
         <Link href="/" className="order-1 text-lg font-semibold tracking-tight">
           CoResearch
         </Link>
-        <Link
-          href="/#community"
+        <a
+          href="mailto:zhangmingjian711@gmail.com"
           className="order-2 inline-flex min-h-9 shrink-0 items-center whitespace-nowrap rounded-full bg-[#262626] px-4 py-2 text-sm font-medium text-white hover:bg-[#41413b] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#262626] md:order-3"
         >
           Contact Us
-        </Link>
+        </a>
         <nav className="order-3 flex w-full flex-wrap gap-x-5 gap-y-2 text-sm font-medium md:order-2 md:w-auto">
           {links.map((link) =>
             link.href.startsWith("http") ? (
