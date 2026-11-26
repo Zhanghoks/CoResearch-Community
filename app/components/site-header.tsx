@@ -1,29 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { githubUrl } from "../content";
 
 const links = [
   { href: "/", label: "首页" },
-  { href: "/product", label: "产品" },
+  { href: "/#product-guide", label: "产品" },
   { href: "/docs", label: "文档" },
 ];
 
 export function SiteHeader() {
-  const ref = useRef<HTMLElement>(null);
   const [glass, setGlass] = useState(false);
 
   useEffect(() => {
     const update = () => {
-      const header = ref.current;
-      if (!header) return;
-      const line = header.getBoundingClientRect().bottom;
-      const hero = document.querySelector("[data-home-hero]");
-      if (hero) {
-        setGlass(hero.getBoundingClientRect().top < line - 1);
-        return;
-      }
       setGlass(window.scrollY > 4);
     };
 
@@ -38,7 +29,6 @@ export function SiteHeader() {
 
   return (
     <header
-      ref={ref}
       className={`sticky top-0 z-20 border-b transition-[background-color,border-color,backdrop-filter] duration-200 ${
         glass
           ? "border-white/40 bg-[#fdfff7]/40 backdrop-blur-md"

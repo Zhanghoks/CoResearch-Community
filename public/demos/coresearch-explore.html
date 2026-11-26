@@ -43,6 +43,20 @@ html.showcase,html.showcase body{background:#fafafa;color:#202125;color-scheme:l
 .showcase .layout{font-size:clamp(10px,.92cqw,13px)}
 .showcase .sidebar{background:#f7f8fa;color:#25262a}
 .showcase .sidebar .account,.showcase .folder-sub{color:#62656e}
+.showcase .fixture-project{margin-bottom:.54em}
+.showcase .fixture-project .folder{gap:.36em;font-weight:590}
+.showcase .fixture-project .folder .icon,.showcase .fixture-session .icon{width:1.02em;height:1.02em;flex:none}
+.showcase .fixture-count{margin-left:auto;font-size:.8em;color:#646977;font-variant-numeric:tabular-nums}
+.showcase .fixture-session{display:flex;gap:.44em;align-items:center;padding:.37em .44em;margin:.1em 0 .1em .65em;border-radius:.45em;color:#4f5360;white-space:nowrap}
+.showcase .fixture-session.current{background:#e9edf8;color:#253c6e;font-weight:620}
+.showcase .fixture-session.current>.icon{color:#405d9c}
+.showcase .fixture-session.child{margin-left:1.28em;position:relative;color:#545e75;font-size:.94em}
+.showcase .fixture-session.child[hidden]{display:none}
+.showcase .fixture-session.child.ready{background:#eef2fb;color:#25477c}
+.showcase .fixture-session.child.ready>.icon{color:#496ca8}
+.showcase .fixture-session .clip{flex:1}
+.showcase .fixture-tab.current{flex:0 1 auto}
+.showcase .fixture-tab.muted{flex:1 1 0;max-width:11em}
 .showcase .brand strong{color:#23232a}
 .showcase .workspace{background:#fafafa}
 .showcase .tabbar,.showcase .graph-title{border-color:var(--line);color:#36383e}
@@ -524,9 +538,58 @@ function showItem(index,title,note, active=false, child=false, referenceLabel="�
  return '<div class="show-item show-enter '+(active?'active ':'')+(child?'child':'')+'"><span class="index">'+index+'</span><span><strong>'+title+'</strong><small>'+note+'</small></span>'+(active?'<em>'+referenceLabel+'</em>':'')+'</div>';
 }
 // Public-facing demonstration copy, not a prior conversation or evidence record.
-const comparisonNotes='<div class="show-prose show-enter"><p>要判断一个想法有没有新意，先把它提出的研究问题、借用的方法和预期贡献分开。然后找最接近的工作，问具体差异在哪一层。</p><ul><li><b>方向 01：</b>比较检索覆盖不足时，评审会不会遗漏已经发表的工作。</li><li><b>方向 02：</b>把表述相近和方法相同分开，避免把其中一个当成另一个的证据。</li></ul><div class="meta">1 paper · 示例来源 '+actionIcon("chevron-right")+'</div></div>';
+// Separate public fixture for the passive promo; no account or research records are copied.
+const showcaseProjects=[
+ {id:"novelty",name:"AI 科研新颖性",sessions:[
+  {id:"screen",name:"相关工作初筛"},
+  {id:"novel-method",name:"新方法还是改写？"},
+  {id:"validation",name:"方向 02 验证方案",parent:"novel-method"},
+  {id:"rubric",name:"专家盲评量表"},
+  {id:"rater",name:"评审一致性检查"},
+  {id:"replication",name:"跨领域复测计划"}
+ ]},
+ {id:"retrieval",name:"文献检索评测",sessions:[
+  {id:"coverage",name:"引文覆盖抽样"},{id:"gold",name:"相关文献标注"},
+  {id:"budget",name:"检索预算对照"},{id:"errors",name:"漏检成因归类"}
+ ]},
+ {id:"reproduce",name:"实验复现与归档",sessions:[
+  {id:"runtime",name:"运行环境记录"},{id:"seed",name:"随机种子复测"},{id:"artifacts",name:"复现材料清单"}
+ ]}
+];
+const demoSession=showcaseProjects[0].sessions.find(session=>session.id==="novel-method");
+const validationSession=showcaseProjects[0].sessions.find(session=>session.parent===demoSession.id);
+function initShowcaseWorkspace(){
+ q(".sidebar .sessions").innerHTML=showcaseProjects.map((project,i)=>{
+  const expanded=i===0;
+  return '<div class="fixture-project" data-fixture-project="'+project.id+'"><div class="folder">'+
+   actionIcon(expanded?"chevron-down":"chevron-right")+actionIcon("folder")+
+   '<span class="clip" title="'+escaped(project.name)+'">'+escaped(project.name)+'</span>'+
+   '<span class="fixture-count">'+project.sessions.filter(s=>!s.parent).length+'</span></div>'+
+   (expanded?project.sessions.map(session=>
+    '<div class="fixture-session'+(session.id===demoSession.id?' current':'')+(session.parent?' child':'')+'" data-fixture-session="'+session.id+'"'+
+    (session.id===demoSession.id?' aria-current="true"':'')+(session.parent?' hidden':'')+'>'+
+    actionIcon(session.parent?"git-branch":"message-square")+
+    '<span class="clip" title="'+escaped(session.name)+'">'+escaped(session.name)+'</span></div>'
+   ).join(""):"")+'</div>';
+ }).join("");
+ q(".sidebar .account>span").textContent="演示工作区";
+ const tabs=q(".chat .tabbar");
+ const selected=tabs.querySelector(".tab.selected");
+ selected.classList.add("fixture-tab","current");
+ selected.querySelector(".clip").textContent=demoSession.name;
+ const adjacent=[showcaseProjects[0].sessions[0],showcaseProjects[0].sessions.find(session=>session.id==="rubric")];
+ [...tabs.querySelectorAll(".tab.muted")].forEach((tab,i)=>{
+  if(!adjacent[i]){tab.remove();return;}
+  tab.classList.add("fixture-tab");
+  tab.innerHTML='<span class="clip">'+escaped(adjacent[i].name)+'</span>';
+ });
+ q(".composer .model").textContent="研究 Agent";
+ q("#source").innerHTML="<b>来源策略</b>　示例论文摘要";
+ q("#context-label").textContent="演示数据";
+}
+const comparisonNotes='<div class="show-prose show-enter"><p>要判断一个想法有没有新意，先把它提出的研究问题、借用的方法和预期贡献分开。然后找最接近的工作，问具体差异在哪一层。</p><ul><li><b>方向 01：</b>对照「只读摘要」和「补齐近邻文献」两组，记录有多少新颖性判断发生反转。</li><li><b>方向 02：</b>用同一方法的改写稿和同一术语下的不同方法做对照。</li></ul><div class="meta">2 组对照 · 待验证 '+actionIcon("chevron-right")+'</div></div>';
 const focusNotes='<div class="show-prose show-enter"><p>先忘掉措辞，只比较方法是否等价：输入、核心步骤和适用条件有没有改变？如果三者都不变，只换术语不应被算成新方法。</p><p>下一步可以做两组对照：改写术语但保留方法，或保留术语但改变方法。判断两组时用同一份评审标准。</p></div>';
-const receipt='<div class="compare-receipt show-enter"><span>方向组 · 2 research directions · 已保存</span><b>在工作区打开</b></div>';
+const receipt='<div class="compare-receipt show-enter"><span>方向组 · 2 个待验证方向</span><b>在工作区打开</b></div>';
 function showList(active=false, label){
  return '<div class="show-list">'+showItem("01",showNames[0],"证据不足，会改变新颖性结论吗？")+showItem("02",showNames[1],"术语相似，方法也一定相同吗？",active,false,label)+'</div>';
 }
@@ -561,7 +624,10 @@ function showDisk(){
 function setShowStep(step){
  showStep=step;
  q("#layout").dataset.phase=String(step);
- q("#graphLabel").textContent=step===0?"研究目标 · Auto Research":original;
+ q("#graphLabel").textContent=step===0?"研究目标 · "+showcaseProjects[0].name:step===1?demoSession.name+" · 方向组":"方向 02 · "+chip;
+ const branch=q('[data-fixture-session="'+validationSession.id+'"]');
+ branch.hidden=step<3;
+ branch.classList.toggle("ready",step===3);
  q("#actions").hidden=step<2;
  q(".mini").hidden=step===0;
  q("#miniLabel").textContent=step<2?"已居中 · 0°":step===2?"L2 · 末梢 · 返回全景":"L2 · 2 分支 · 返回全景";
@@ -580,9 +646,7 @@ function showInit(){
  workspace.inert=true;
  q(".sidebar").inert=true;
  document.querySelector('meta[name="color-scheme"]').content="light";
- q(".chat .tab.selected .clip").textContent="Codex… / Explore";
  q("#source").hidden=false;
- q("#context-label").textContent="上下文 8%";
  qa("[data-view=disk]").forEach(el=>el.setAttribute("aria-pressed","true"));
  field.placeholder="输入你的问题";
  setInput("");
@@ -628,7 +692,7 @@ function controlShowcase(command){
  }
 }
 
-if(showcase){showInit();reportShow();}else resetDemo(true);
+if(showcase){initShowcaseWorkspace();showInit();reportShow();}else resetDemo(true);
 </script>
 </body>
 </html>

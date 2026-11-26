@@ -1,6 +1,5 @@
 import { FaqList } from "./faq-list";
 import { SpaceSwitcher } from "./space-switcher";
-import { Workflow } from "./workflow";
 import { githubUrl, issuesUrl, newIssueUrl, principles, roles, spaceDocUrl } from "../content";
 
 export function SiteStory() {
@@ -60,18 +59,6 @@ export function SiteStory() {
               </ul>
             </article>
           </div>
-        </div>
-      </section>
-
-      <section id="workflow" className="mx-auto max-w-6xl px-5 py-20">
-        <h2 className="max-w-3xl text-4xl font-semibold tracking-tight text-balance md:text-5xl">
-          四步，从兴趣走到可验证的下一步
-        </h2>
-        <p className="mt-5 max-w-2xl text-lg leading-8 text-[#3f413c]">
-          研究者不必先写好完整计划。CoResearch 希望把探索、深读、边界判断和修订连成一条可以回头的路径。
-        </p>
-        <div className="mt-12">
-          <Workflow />
         </div>
       </section>
 

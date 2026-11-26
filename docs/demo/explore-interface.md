@@ -1,6 +1,6 @@
 # Explore: conversation ↔ direction wheel
 
-The original standalone fixture at `public/demos/coresearch-explore.html` has two modes. The homepage embeds the dark, interactive workbench with playback and manual controls; compact screens switch between conversation and graph. The product page embeds the read-only, fully light workbench and wheel in a single macOS-style window, with the product introduction above it. The product window plays when visible unless reduced motion is enabled, and has a keyboard-accessible playback control. Both modes use illustrative data with no network requests or persistence; neither runs real research.
+The original standalone fixture at `public/demos/coresearch-explore.html` has two modes. The standalone file opens the dark, interactive workbench with playback and manual controls; compact screens switch between conversation and graph. The homepage opens with the read-only light workbench and wheel in a single macOS-style window, followed by the concept graph and workflow guide. The product route remains available for existing links. The product window plays when visible unless reduced motion is enabled, and has a keyboard-accessible playback control. Both modes use illustrative data with no network requests or persistence; neither runs real research.
 
 ## Source comparison
 
@@ -22,3 +22,8 @@ Guided playback and a manually submitted fixture reply have independent timers. 
 ## Owner-supplied 1:1 design update
 
 The current standalone screen follows the dark three-column Web workspace in the supplied `CoResearch-product-demo.zip`: two-direction L2 focus (`design-1to1.png`) and a second conversation with a five-direction overview (`product-ui.png`). The fixture data is independently authored and the reference images are not shipped. See [design QA](../../design-qa.md). Standalone users can replay from the chat overflow menu. Product-page autoplay is non-interactive apart from pause, resume, and replay.
+
+
+## Product showcase fixture
+
+The passive product-page window uses a separate synthetic workspace. The active project is AI research novelty, with an active Explore session and adjacent screening, rubric, and replication sessions. Retrieval evaluation and experimental reproducibility are adjacent projects. The scripted conversation starts by distinguishing rewritten claims from genuinely different methods, identifies two testable directions, and adds a nested “方向 02 验证方案” session only when its two proposed tests appear on the wheel. Replay restores the initial sidebar. No user workspaces, unpublished results, or real model calls are used.

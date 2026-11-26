@@ -51,7 +51,7 @@ export function ProductHero() {
   }, [ready]);
 
   return (
-    <section id="product-demo" aria-labelledby="product-title" className="mx-auto max-w-[1600px] px-3 pb-6 pt-3 sm:px-7 sm:pt-6 lg:px-10">
+    <section id="product-demo" aria-labelledby="product-title" className="scroll-mt-28 mx-auto max-w-[1600px] px-3 pb-6 pt-3 sm:px-7 sm:pt-6 lg:px-10">
       <div className="relative isolate overflow-hidden rounded-[22px] bg-[#e9eadc] px-3 py-6 sm:rounded-[26px] sm:px-7 sm:py-9 lg:px-14 lg:py-12">
         <Image priority src={`${base}/hero-wanderer.jpg?v=576`} alt="" fill sizes="100vw" className="-z-10 object-cover object-[center_26%]" />
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-56 bg-gradient-to-b from-[#f8f6e8]/65 to-transparent sm:h-72" />
